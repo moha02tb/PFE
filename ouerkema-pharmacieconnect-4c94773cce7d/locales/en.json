@@ -1,0 +1,79 @@
+
+
+{
+  "home": {
+    "nearbyPharmacies": "Nearby Pharmacies",
+    "searchPlaceholder": "Search for a pharmacy...",
+    "searchPlacePlaceholder": "Search a place...",
+    "myLocation": "My Location",
+    "open": "Open",
+    "closed": "Closed",
+    "emergency": "Emergency",
+    "call": "Call",
+    "directions": "Directions",
+    "locationPermissionDenied": "Permission denied to access location",
+    "locationError": "Error retrieving location",
+    "enableLocationFirst": "Please enable location first."
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "darkMode": "Dark Mode",
+    "notifications": "Notifications",
+    "notificationSettings": "Notification Settings",
+    "setupDailyReminder": "Setup Daily Reminder",
+    "clearAllNotifications": "Clear All Notifications",
+    "notificationPermissionWarning": "Notification permissions are required to receive alerts",
+    
+    "contactSupport": "Contact Support",
+    "chooseLanguage": "Choose Language",
+    "cancel": "Cancel",
+    "close": "Close",
+    "aboutDeveloper": "About the Developer",
+    "developerInfo": "This app is developed by XYZ Solutions.",
+    "testNotification": "Test Notifications",
+    "notificationInfo": "Notification Information",
+    "notificationDescription": "You will receive notifications for duty pharmacies and daily reminders."
+  },
+  "navigation": {
+    "home": "Pharmacies on Duty",
+    "map": "Map",
+    "calendar": "Calendar",
+    "settings": "Settings"
+  },
+  "calendar": {
+    "title": "Pharmacy Duty Calendar",
+    "noEventsToday": "No events today",
+    "selectDate": "Select a date",
+    "pharmaciesOnDuty": "Pharmacies on duty this day"
+  },
+  "map": {
+    "title": "Pharmacy Map",
+    "nearbyPharmacies": "Nearby Pharmacies",
+    "userLocation": "Your Location",
+    "getDirections": "Get Directions",
+    "loading": "Loading map...",
+    "tileProviderChanged": "Tile Provider Changed",
+    "nowUsing": "Now using:",
+    "mapboxTokenRequired": "Mapbox API Token Required",
+    "mapboxInstructions": "Please get your free API token from mapbox.com and replace YOUR_MAPBOX_API_TOKEN_HERE in MapboxMapScreen.js",
+    "searchPlacePlaceholder": "Search a place..."
+  },
+  "pharmacies": {
+    "central": "Central Pharmacy",
+    "centralAddress": "123 Habib Bourguiba Street, Tunis",
+    "ennour": "Ennour Pharmacy",
+    "ennourAddress": "Farhat Hached Avenue, Sfax",
+    "salam": "Salam Pharmacy",
+    "salamAddress": "45 Republic Avenue, Tunis",
+    "nour": "Nour Pharmacy",
+    "nourAddress": "78 Liberty Street, Ariana",
+    "medina": "Medina Pharmacy",
+    "medinaAddress": "12 Jamaa Ez Zitouna Street, Tunis"
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "close": "Close"
+  }
+}

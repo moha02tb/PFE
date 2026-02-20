@@ -1,0 +1,76 @@
+{
+  "home": {
+    "nearbyPharmacies": "الصيدليات القريبة",
+    "searchPlaceholder": "البحث عن صيدلية...",
+    "searchPlacePlaceholder": "ابحث عن مكان...",
+    "myLocation": "موقعي",
+    "open": "مفتوحة",
+    "closed": "مغلقة",
+    "emergency": "طوارئ",
+    "call": "اتصال",
+    "directions": "اتجاهات",
+    "locationPermissionDenied": "تم رفض الإذن للوصول إلى الموقع",
+    "locationError": "خطأ في الحصول على الموقع",
+    "enableLocationFirst": "يرجى تفعيل الموقع أولاً."
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "language": "اللغة",
+    "darkMode": "الوضع الليلي",
+    "notifications": "الإشعارات",
+    "contactSupport": "الاتصال بالدعم",
+    "chooseLanguage": "اختر اللغة",
+    "cancel": "إلغاء",
+    "close": "إغلاق",
+    "aboutDeveloper": "عن المطور",
+    "developerInfo": "تم تطوير هذا التطبيق بواسطة شركة XYZ للحلول.",
+    "notificationSettings": "إعدادات الإشعارات",
+    "testNotification": "اختبار الإشعارات",
+    "setupDailyReminder": "تعيين تذكير يومي",
+    "notificationInfo": "معلومات الإشعارات",
+    "notificationDescription": "ستتلقى إشعارات للصيدليات المناوبة والتذكيرات اليومية.",
+    "clearAllNotifications": "مسح جميع الإشعارات",
+    "notificationPermissionWarning": "مطلوب إذن الإشعارات لتلقي التنبيهات."
+  },
+  "navigation": {
+    "home": "الصيدليات المناوبة",
+    "map": "الخريطة",
+    "calendar": "التقويم",
+    "settings": "الإعدادات"
+  },
+  "calendar": {
+    "title": "تقويم الصيدليات المناوبة",
+    "noEventsToday": "لا توجد أحداث اليوم",
+    "selectDate": "اختر تاريخًا",
+    "pharmaciesOnDuty": "الصيدليات المناوبة في هذا اليوم"
+  },
+  "map": {
+    "title": "خريطة الصيدليات",
+    "nearbyPharmacies": "الصيدليات القريبة",
+    "userLocation": "موقعك",
+    "getDirections": "الحصول على الاتجاهات",
+    "loading": "جاري تحميل الخريطة...",
+    "tileProviderChanged": "تم تغيير مزود الخرائط",
+    "nowUsing": "يستخدم الآن:",
+    "mapboxTokenRequired": "مطلوب رمز API لـ Mapbox",
+    "mapboxInstructions": "يرجى الحصول على رمز API المجاني من mapbox.com واستبدال YOUR_MAPBOX_API_TOKEN_HERE في MapboxMapScreen.js",
+    "searchPlacePlaceholder": "ابحث عن مكان..."
+  },
+  "pharmacies": {
+    "central": "الصيدلية المركزية",
+    "centralAddress": "123 شارع الحبيب بورقيبة، تونس",
+    "ennour": "صيدلية النور",
+    "ennourAddress": "شارع فرحات حشاد، صفاقس",
+    "salam": "صيدلية السلام",
+    "salamAddress": "45 شارع الجمهورية، تونس",
+    "nour": "صيدلية نور",
+    "nourAddress": "78 شارع الحرية، أريانة",
+    "medina": "صيدلية المدينة",
+    "medinaAddress": "12 شارع جامع الزيتونة، تونس"
+  },
+  "common": {
+    "ok": "موافق",
+    "cancel": "إلغاء",
+    "close": "إغلاق"
+  }
+}

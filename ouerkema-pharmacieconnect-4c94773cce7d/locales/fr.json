@@ -1,0 +1,76 @@
+{
+  "home": {
+    "nearbyPharmacies": "Pharmacies proches",
+    "searchPlaceholder": "Rechercher une pharmacie...",
+    "searchPlacePlaceholder": "Rechercher un lieu...",
+    "myLocation": "Ma position",
+    "open": "Ouverte",
+    "closed": "Fermée",
+    "emergency": "Urgence",
+    "call": "Appeler",
+    "directions": "Itinéraire",
+    "locationPermissionDenied": "Permission refusée pour accéder à la localisation",
+    "locationError": "Erreur lors de la récupération de la localisation",
+    "enableLocationFirst": "Veuillez activer la géolocalisation d'abord."
+  },
+  "settings": {
+    "title": "Paramètres",
+    "language": "Langue",
+    "darkMode": "Mode sombre",
+    "notifications": "Notifications",
+    "contactSupport": "Contacter le support",
+    "chooseLanguage": "Choisir la langue",
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "aboutDeveloper": "À propos du développeur",
+    "developerInfo": "Cette application est développée par XYZ Solutions.",
+    "notificationSettings": "Paramètres de notification",
+    "testNotification": "Tester les notifications",
+    "setupDailyReminder": "Configurer le rappel quotidien",
+    "notificationInfo": "Informations sur les notifications",
+    "notificationDescription": "Vous recevrez des notifications pour les pharmacies de garde et les rappels quotidiens.",
+    "clearAllNotifications": "Effacer toutes les notifications",
+    "notificationPermissionWarning": "Permissions de notification requises pour recevoir des alertes."
+  },
+  "navigation": {
+    "home": "Pharmacies de Garde",
+    "map": "Carte",
+    "calendar": "Calendrier",
+    "settings": "Paramètres"
+  },
+  "calendar": {
+    "title": "Calendrier des Pharmacies de Garde",
+    "noEventsToday": "Aucun événement aujourd'hui",
+    "selectDate": "Sélectionnez une date",
+    "pharmaciesOnDuty": "Pharmacies de garde ce jour"
+  },
+  "map": {
+    "title": "Carte des Pharmacies",
+    "nearbyPharmacies": "Pharmacies à proximité",
+    "userLocation": "Votre position",
+    "getDirections": "Obtenir l'itinéraire",
+    "loading": "Chargement de la carte...",
+    "tileProviderChanged": "Fournisseur de Cartes Changé",
+    "nowUsing": "Utilise maintenant:",
+    "mapboxTokenRequired": "Token API Mapbox Requis",
+    "mapboxInstructions": "Veuillez obtenir votre token API gratuit sur mapbox.com et remplacer YOUR_MAPBOX_API_TOKEN_HERE dans MapboxMapScreen.js",
+      "searchPlacePlaceholder": "Rechercher un lieu..."
+   },
+  "pharmacies": {
+    "central": "Pharmacie Centrale",
+    "centralAddress": "123 Rue Habib Bourguiba, Tunis",
+    "ennour": "Pharmacie Ennour",
+    "ennourAddress": "Avenue Farhat Hached, Sfax",
+    "salam": "Pharmacie Salam",
+    "salamAddress": "45 Avenue de la République, Tunis",
+    "nour": "Pharmacie Nour",
+    "nourAddress": "78 Rue de la Liberté, Ariana",
+    "medina": "Pharmacie de la Médina",
+    "medinaAddress": "12 Rue Jamaa Ez Zitouna, Tunis"
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Annuler",
+    "close": "Fermer"
+  }
+}

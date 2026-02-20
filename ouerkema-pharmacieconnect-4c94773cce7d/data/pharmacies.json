@@ -1,0 +1,67 @@
+[
+  {
+    "id": 1,
+    "nameKey": "pharmacies.central",
+    "addressKey": "pharmacies.centralAddress",
+    "phone": "71123456",
+    "isOpen": true,
+    "openHours": "20:00 - 08:00",
+    "emergency": true,
+    "coordinates": {
+      "latitude": 36.8065,
+      "longitude": 10.1815
+    }
+  },
+  {
+    "id": 2,
+    "nameKey": "pharmacies.ennour",
+    "addressKey": "pharmacies.ennourAddress",
+    "phone": "74456789",
+    "isOpen": false,
+    "openHoursKey": "home.closed",
+    "emergency": false,
+    "coordinates": {
+      "latitude": 36.8125,
+      "longitude": 10.1785
+    }
+  },
+  {
+    "id": 3,
+    "nameKey": "pharmacies.salam",
+    "addressKey": "pharmacies.salamAddress",
+    "phone": "71987654",
+    "isOpen": true,
+    "openHours": "08:00 - 20:00",
+    "emergency": false,
+    "coordinates": {
+      "latitude": 36.8095,
+      "longitude": 10.1795
+    }
+  },
+  {
+    "id": 4,
+    "nameKey": "pharmacies.nour",
+    "addressKey": "pharmacies.nourAddress",
+    "phone": "74321098",
+    "isOpen": true,
+    "openHours": "24h/24",
+    "emergency": true,
+    "coordinates": {
+      "latitude": 36.8055,
+      "longitude": 10.1825
+    }
+  },
+  {
+    "id": 5,
+    "nameKey": "pharmacies.medina",
+    "addressKey": "pharmacies.medinaAddress",
+    "phone": "71555777",
+    "isOpen": false,
+    "openHoursKey": "home.closed",
+    "emergency": false,
+    "coordinates": {
+      "latitude": 36.8075,
+      "longitude": 10.1805
+    }
+  }
+]
