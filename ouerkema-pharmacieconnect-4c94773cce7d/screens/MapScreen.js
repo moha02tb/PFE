@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from './ThemeContext';
 import { useLanguage } from './LanguageContext';
 import { useForceUpdate } from '../hooks/useForceUpdate';
+import logger from '../utils/logger';
 
 // Tile provider configurations - Choose the one that works best for Tunisia
 const TILE_PROVIDERS = {
@@ -60,7 +61,7 @@ export default function MapScreen({ route }) {
     if (initialLocation) {
       setLocation(initialLocation);
     } else {
-      (async () => {
+      (async() => {
         try {
           const { status } = await Location.requestForegroundPermissionsAsync();
           if (status !== 'granted') {
@@ -75,7 +76,7 @@ export default function MapScreen({ route }) {
           setLocation(coords);
         } catch (error) {
           setErrorMsg(t('home.locationError'));
-          console.error(error);
+          logger.error('MapScreen', 'Error getting location', error);
         }
       })();
     }
@@ -103,7 +104,7 @@ export default function MapScreen({ route }) {
   };
 
   // Place search using Nominatim (OpenStreetMap)
-  const handlePlaceSearch = async () => {
+  const handlePlaceSearch = async() => {
     const query = searchTerm?.trim();
     if (!query) return;
     try {
@@ -125,7 +126,7 @@ export default function MapScreen({ route }) {
         }));
       }
     } catch (e) {
-      console.warn('Place search failed', e);
+      logger.warn('MapScreen', 'Place search failed', e);
     }
   };
 
@@ -181,7 +182,7 @@ export default function MapScreen({ route }) {
       </View>
 
       {/* Tile Provider Selector Button (icon only to hide provider name) */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.providerButton}
         onPress={() => setShowProviderSelector(!showProviderSelector)}
         accessibilityLabel={t('map.changeTileProvider', 'Change tile provider')}

@@ -21,7 +21,7 @@ export default function RTLTestComponent() {
       <Text style={styles.status}>
         RTL Mode: {isRTL ? 'Active' : 'Inactive'}
       </Text>
-      
+
       <View style={styles.testRow}>
         <Feather name="star" size={20} color="#FFD700" />
         <Text style={styles.testText}>Icon + Text Test</Text>

@@ -18,6 +18,7 @@ import { useLanguage } from './LanguageContext';
 import RTLUtils from '../utils/RTLUtils';
 import { useForceUpdate } from '../hooks/useForceUpdate';
 import { loadPharmacies } from '../utils/pharmacyDataLoader';
+import logger from '../utils/logger';
 
 export default function CalendarScreen({ navigation }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -44,7 +45,7 @@ export default function CalendarScreen({ navigation }) {
       const pharmaciesData = loadPharmacies(t, date);
       setPharmacies(pharmaciesData);
     } catch (error) {
-      console.error('Error loading pharmacies data:', error);
+      logger.error('CalendarScreen', 'Error loading pharmacies data', error);
       // Fallback to empty array if data loading fails
       setPharmacies([]);
     }
@@ -53,7 +54,7 @@ export default function CalendarScreen({ navigation }) {
   const callPhone = (phoneNumber) => {
     const url = `tel:${phoneNumber}`;
     Linking.openURL(url).catch((err) =>
-      console.error('Erreur lors de l’appel', err)
+      logger.error('CalendarScreen', 'Erreur lors de l\'appel', err)
     );
   };
 
@@ -64,7 +65,7 @@ export default function CalendarScreen({ navigation }) {
     });
 
     Linking.openURL(url).catch(err =>
-      console.error("Erreur lors de l’ouverture de la carte", err)
+      logger.error('CalendarScreen', 'Erreur lors de l\'ouverture de la carte', err)
     );
   };
 
@@ -76,7 +77,7 @@ export default function CalendarScreen({ navigation }) {
   const convertToWesternDigits = (str) => {
     const arabicDigits = '٠١٢٣٤٥٦٧٨٩';
     const westernDigits = '0123456789';
-    
+
     return str.replace(/[٠-٩]/g, (digit) => {
       return westernDigits[arabicDigits.indexOf(digit)];
     });
@@ -84,16 +85,16 @@ export default function CalendarScreen({ navigation }) {
 
   const displayDate = (date) => {
     const currentLang = getCurrentLanguageKey();
-    
+
     // Map language keys to locale strings
     const localeMap = {
       'fr': 'fr-FR',
       'en': 'en-US',
       'ar': 'ar-SA' // Arabic (Saudi Arabia) - more universal Arabic locale
     };
-    
+
     const locale = localeMap[currentLang] || 'fr-FR';
-    
+
     try {
       let formattedDate = date.toLocaleDateString(locale, {
         weekday: 'long',
@@ -101,16 +102,16 @@ export default function CalendarScreen({ navigation }) {
         month: 'long',
         day: 'numeric',
       });
-      
+
       // Convert Arabic-Indic digits to Western digits for Arabic locale
       if (currentLang === 'ar') {
         formattedDate = convertToWesternDigits(formattedDate);
       }
-      
+
       return formattedDate;
     } catch (error) {
       // Fallback to French if locale is not supported
-      console.warn('Date locale not supported, falling back to French:', error);
+      logger.warn('CalendarScreen', 'Date locale not supported, falling back to French', error);
       return date.toLocaleDateString('fr-FR', {
         weekday: 'long',
         year: 'numeric',
@@ -174,7 +175,7 @@ export default function CalendarScreen({ navigation }) {
             style={[
               styles.card,
               {
-                ...(isRTL 
+                ...(isRTL
                   ? { borderRightColor: item.isOpen ? '#4CAF50' : '#ccc' }
                   : { borderLeftColor: item.isOpen ? '#4CAF50' : '#ccc' }
                 ),
@@ -220,7 +221,7 @@ export default function CalendarScreen({ navigation }) {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.button, styles.mapButton]}
-                onPress={async () => {
+                onPress={async() => {
                   try {
                     const { status } = await Location.requestForegroundPermissionsAsync();
                     if (status !== 'granted') {

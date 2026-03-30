@@ -7,14 +7,15 @@ import { useLanguage } from './LanguageContext';
 import { useNotifications } from './NotificationContext';
 import RTLUtils from '../utils/RTLUtils';
 import { useForceUpdate } from '../hooks/useForceUpdate';
+import logger from '../utils/logger';
 
 export default function SettingsScreen() {
   const { isDarkMode, setIsDarkMode } = useTheme();
   const { language, setLanguage, availableLanguages, isRTL } = useLanguage();
   const { t } = useTranslation();
-  const { 
-    notificationsEnabled, 
-    toggleNotifications, 
+  const {
+    notificationsEnabled,
+    toggleNotifications,
     isLoading: notificationLoading,
     permissionStatus,
     sendPharmacyReminder,
@@ -41,7 +42,7 @@ export default function SettingsScreen() {
     Linking.openURL('tel:+1234567890');
   };
 
-  const handleNotificationToggle = async (enabled) => {
+  const handleNotificationToggle = async(enabled) => {
     try {
       await toggleNotifications(enabled);
       if (enabled) {
@@ -52,11 +53,11 @@ export default function SettingsScreen() {
         );
       }
     } catch (error) {
-      console.error('Error handling notification toggle:', error);
+      logger.error('SettingsScreen', 'Error handling notification toggle', error);
     }
   };
 
-  const testNotification = async () => {
+  const testNotification = async() => {
     try {
       await sendPharmacyReminder(
         'Test Pharmacie',
@@ -64,25 +65,25 @@ export default function SettingsScreen() {
       );
       setModalNotificationVisible(false);
     } catch (error) {
-      console.error('Error sending test notification:', error);
+      logger.error('SettingsScreen', 'Error sending test notification', error);
     }
   };
 
-  const setupDailyReminder = async () => {
+  const setupDailyReminder = async() => {
     try {
       await sendDailyReminder();
       setModalNotificationVisible(false);
     } catch (error) {
-      console.error('Error setting up daily reminder:', error);
+      logger.error('SettingsScreen', 'Error setting up daily reminder', error);
     }
   };
 
-  const handleClearNotifications = async () => {
+  const handleClearNotifications = async() => {
     try {
       await clearAllNotifications();
       setModalNotificationVisible(false);
     } catch (error) {
-      console.error('Error clearing notifications:', error);
+      logger.error('SettingsScreen', 'Error clearing notifications', error);
     }
   };
 
@@ -132,8 +133,8 @@ export default function SettingsScreen() {
       </View>
 
       {notificationsEnabled && (
-        <TouchableOpacity 
-          style={styles.option} 
+        <TouchableOpacity
+          style={styles.option}
           onPress={() => setModalNotificationVisible(true)}
         >
           <Feather name="settings" size={20} color={styles.icon.color} />
@@ -234,7 +235,7 @@ export default function SettingsScreen() {
               <Text style={styles.contactText}>+1 234 567 890</Text>
             </TouchableOpacity>
 
-            <View style={{marginTop: 20}}>
+            <View style={{ marginTop: 20 }}>
               <Text style={styles.infoTitle}>{t('settings.aboutDeveloper')}</Text>
               <Text style={styles.infoText}>
                 {t('settings.developerInfo')}

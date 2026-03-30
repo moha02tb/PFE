@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from './ThemeContext';
 import { useLanguage } from './LanguageContext';
 import { useForceUpdate } from '../hooks/useForceUpdate';
+import logger from '../utils/logger';
 
 // Mapbox configuration
 // Get your free API token from: https://account.mapbox.com/access-tokens/
@@ -54,7 +55,7 @@ export default function MapboxMapScreen({ route }) {
     if (initialLocation) {
       setLocation(initialLocation);
     } else {
-      (async () => {
+      (async() => {
         try {
           const { status } = await Location.requestForegroundPermissionsAsync();
           if (status !== 'granted') {
@@ -69,7 +70,7 @@ export default function MapboxMapScreen({ route }) {
           setLocation(coords);
         } catch (error) {
           setErrorMsg(t('home.locationError'));
-          console.error(error);
+          logger.error('MapboxMapScreen', 'Error getting location', error);
         }
       })();
     }
@@ -154,7 +155,7 @@ export default function MapboxMapScreen({ route }) {
       </View>
 
       {/* Style Selector Button (icon only to hide visible label) */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.styleButton}
         onPress={() => setShowStyleSelector(!showStyleSelector)}
         accessibilityLabel={t('map.changeMapStyle', 'Change map style')}
@@ -212,7 +213,7 @@ export default function MapboxMapScreen({ route }) {
             coordinate={ph.coords}
             title={ph.name}
             description={ph.address}
-            pinColor={ph.isOpen ? "green" : "red"}
+            pinColor={ph.isOpen ? 'green' : 'red'}
           />
         ))}
 
@@ -232,21 +233,21 @@ export default function MapboxMapScreen({ route }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  loaderContainer: { 
-    flex: 1, 
-    justifyContent: 'center', 
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    padding: 20 
+    padding: 20
   },
   loadingText: { marginTop: 16, fontSize: 16 },
-  warningText: { 
-    marginTop: 16, 
-    fontSize: 18, 
+  warningText: {
+    marginTop: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center'
   },
-  instructionText: { 
-    marginTop: 10, 
+  instructionText: {
+    marginTop: 10,
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20

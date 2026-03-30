@@ -7,7 +7,7 @@ export const RTLAnimatedView = ({ children, style = {}, animationDuration = 300 
   const { isRTL } = useLanguage();
   const translateX = useRef(new Animated.Value(0)).current;
   const scaleX = useRef(new Animated.Value(1)).current;
-  
+
   useEffect(() => {
     // Animate the transition when RTL changes
     Animated.parallel([

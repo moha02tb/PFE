@@ -12,7 +12,7 @@ const LANGUAGE_STORAGE_KEY = '@PharmaciesDeGarde_Language';
 const languageDetector = {
   type: 'languageDetector',
   async: true,
-  detect: async function (callback) {
+  detect: async function(callback) {
     try {
       const savedLanguage = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
       if (savedLanguage) {
@@ -26,7 +26,7 @@ const languageDetector = {
     }
   },
   init: () => {},
-  cacheUserLanguage: async function (language) {
+  cacheUserLanguage: async function(language) {
     try {
       await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, language);
     } catch (error) {

@@ -4,6 +4,7 @@ import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+import logger from '../utils/logger';
 
 // Note: With Expo SDK 53+, push notifications are not available in Expo Go
 // Only local notifications work. For push notifications, use a development build.
@@ -15,7 +16,7 @@ const NOTIFICATION_STORAGE_KEY = '@PharmaciesDeGarde_Notifications';
 
 // Configure notification handling
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
+  handleNotification: async() => ({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
@@ -32,7 +33,7 @@ export const NotificationProvider = ({ children }) => {
     loadNotificationSettings();
   }, []);
 
-  const loadNotificationSettings = async () => {
+  const loadNotificationSettings = async() => {
     try {
       const saved = await AsyncStorage.getItem(NOTIFICATION_STORAGE_KEY);
       if (saved !== null) {
@@ -42,12 +43,12 @@ export const NotificationProvider = ({ children }) => {
           await registerForPushNotificationsAsync();
         }
       }
-      
+
       // Check current permission status
       const { status } = await Notifications.getPermissionsAsync();
       setPermissionStatus(status);
     } catch (error) {
-      console.log('Error loading notification settings:', error);
+      logger.error('NotificationContext', 'Error loading notification settings', error);
       // Set default values on error
       setNotificationsEnabled(false);
       setPermissionStatus('undetermined');
@@ -56,7 +57,7 @@ export const NotificationProvider = ({ children }) => {
     }
   };
 
-  const registerForPushNotificationsAsync = async () => {
+  const registerForPushNotificationsAsync = async() => {
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {
         name: 'default',
@@ -69,35 +70,35 @@ export const NotificationProvider = ({ children }) => {
     if (Device.isDevice) {
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
-      
+
       if (existingStatus !== 'granted') {
         const { status } = await Notifications.requestPermissionsAsync();
         finalStatus = status;
       }
-      
+
       if (finalStatus !== 'granted') {
-        console.log('Failed to get notification permissions!');
+        logger.warn('NotificationContext', 'Failed to get notification permissions', { status: finalStatus });
         setPermissionStatus(finalStatus);
         return;
       }
-      
+
       // Note: Push tokens are not available in Expo Go with SDK 53+
       // Local notifications will still work without push tokens
-      console.log('Local notifications are ready to use');
+      logger.info('NotificationContext', 'Local notifications are ready to use');
       setPermissionStatus('granted');
       return null;
     } else {
-      console.log('Must use physical device for notifications');
+      logger.warn('NotificationContext', 'Must use physical device for notifications');
       setPermissionStatus('unavailable');
       return null;
     }
   };
 
-  const toggleNotifications = async (enabled) => {
+  const toggleNotifications = async(enabled) => {
     try {
       setNotificationsEnabled(enabled);
       await AsyncStorage.setItem(NOTIFICATION_STORAGE_KEY, JSON.stringify(enabled));
-      
+
       if (enabled) {
         await registerForPushNotificationsAsync();
       } else {
@@ -107,13 +108,13 @@ export const NotificationProvider = ({ children }) => {
         await Notifications.cancelAllScheduledNotificationsAsync();
       }
     } catch (error) {
-      console.log('Error toggling notifications:', error);
+      logger.error('NotificationContext', 'Error toggling notifications', error);
     }
   };
 
-  const scheduleNotification = async (title, body, trigger = null) => {
+  const scheduleNotification = async(title, body, trigger = null) => {
     if (!notificationsEnabled) {
-      console.log('Notifications are disabled');
+      logger.debug('NotificationContext', 'Notifications are disabled');
       return;
     }
 
@@ -126,15 +127,15 @@ export const NotificationProvider = ({ children }) => {
         },
         trigger: trigger || null, // null means immediate
       });
-      
-      console.log('Notification scheduled with ID:', id);
+
+      logger.debug('NotificationContext', 'Notification scheduled with ID', { id });
       return id;
     } catch (error) {
-      console.log('Error scheduling notification:', error);
+      logger.error('NotificationContext', 'Error scheduling notification', error);
     }
   };
 
-  const sendPharmacyReminder = async (pharmacyName, address) => {
+  const sendPharmacyReminder = async(pharmacyName, address) => {
     if (!notificationsEnabled) return;
 
     return await scheduleNotification(
@@ -146,7 +147,7 @@ export const NotificationProvider = ({ children }) => {
     );
   };
 
-  const sendDailyReminder = async () => {
+  const sendDailyReminder = async() => {
     if (!notificationsEnabled) return;
 
     return await scheduleNotification(
@@ -160,31 +161,31 @@ export const NotificationProvider = ({ children }) => {
     );
   };
 
-  const cancelNotification = async (notificationId) => {
+  const cancelNotification = async(notificationId) => {
     try {
       await Notifications.cancelScheduledNotificationAsync(notificationId);
-      console.log('Notification cancelled:', notificationId);
+      logger.debug('NotificationContext', 'Notification cancelled', { notificationId });
     } catch (error) {
-      console.log('Error cancelling notification:', error);
+      logger.error('NotificationContext', 'Error cancelling notification', error);
     }
   };
 
-  const getAllScheduledNotifications = async () => {
+  const getAllScheduledNotifications = async() => {
     try {
       const notifications = await Notifications.getAllScheduledNotificationsAsync();
       return notifications;
     } catch (error) {
-      console.log('Error getting scheduled notifications:', error);
+      logger.error('NotificationContext', 'Error getting scheduled notifications', error);
       return [];
     }
   };
 
-  const clearAllNotifications = async () => {
+  const clearAllNotifications = async() => {
     try {
       await Notifications.cancelAllScheduledNotificationsAsync();
-      console.log('All notifications cleared');
+      logger.debug('NotificationContext', 'All notifications cleared');
     } catch (error) {
-      console.log('Error clearing notifications:', error);
+      logger.error('NotificationContext', 'Error clearing notifications', error);
     }
   };
 
@@ -209,10 +210,53 @@ export const NotificationProvider = ({ children }) => {
   );
 };
 
+/**
+ * Hook to access notification context
+ * @returns {object} Notification context object with notification management functions
+ * @requires Must be wrapped with NotificationProvider component
+ * @fails_safely Returns default context with noop functions if not wrapped with provider (development warning)
+ *
+ * Usage:
+ * ```
+ * const { notificationsEnabled, sendPharmacyReminder } = useNotifications();
+ * ```
+ */
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
+
+  // Fail-safe: return sensible defaults if context not available
   if (!context) {
-    throw new Error('useNotifications must be used within a NotificationProvider');
+    logger.warn(
+      'NotificationContext',
+      'useNotifications called outside of NotificationProvider. Returning default values with disabled notifications.'
+    );
+
+    return {
+      notificationsEnabled: false,
+      toggleNotifications: async() => {
+        logger.warn('NotificationContext', 'toggleNotifications called but provider not available');
+      },
+      isLoading: false,
+      expoPushToken: null,
+      permissionStatus: 'undetermined',
+      scheduleNotification: async() => {
+        logger.warn('NotificationContext', 'scheduleNotification called but provider not available');
+      },
+      sendPharmacyReminder: async() => {
+        logger.warn('NotificationContext', 'sendPharmacyReminder called but provider not available');
+      },
+      sendDailyReminder: async() => {
+        logger.warn('NotificationContext', 'sendDailyReminder called but provider not available');
+      },
+      cancelNotification: async() => {
+        logger.warn('NotificationContext', 'cancelNotification called but provider not available');
+      },
+      getAllScheduledNotifications: async() => [],
+      clearAllNotifications: async() => {
+        logger.warn('NotificationContext', 'clearAllNotifications called but provider not available');
+      },
+    };
   }
+
   return context;
 };

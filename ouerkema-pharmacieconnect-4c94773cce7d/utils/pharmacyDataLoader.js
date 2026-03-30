@@ -24,7 +24,7 @@ export const loadPharmacies = (t, date = new Date()) => {
 export const getPharmacyById = (id, t) => {
   const pharmacy = pharmaciesData.find(p => p.id === id);
   if (!pharmacy) return null;
-  
+
   return {
     ...pharmacy,
     name: t(pharmacy.nameKey),
@@ -41,7 +41,7 @@ export const getPharmacyById = (id, t) => {
  */
 export const filterPharmacies = (pharmacies, searchTerm) => {
   if (!searchTerm.trim()) return pharmacies;
-  
+
   const term = searchTerm.toLowerCase();
   return pharmacies.filter(pharmacy =>
     pharmacy.name.toLowerCase().includes(term) ||

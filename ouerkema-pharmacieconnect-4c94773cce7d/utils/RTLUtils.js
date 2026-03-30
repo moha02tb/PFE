@@ -39,16 +39,16 @@ export const RTLUtils = {
   },
 
   // Position helpers
-  left: (value, isRTL = I18nManager.isRTL) => 
+  left: (value, isRTL = I18nManager.isRTL) =>
     isRTL ? { right: value } : { left: value },
 
-  right: (value, isRTL = I18nManager.isRTL) => 
+  right: (value, isRTL = I18nManager.isRTL) =>
     isRTL ? { left: value } : { right: value },
 
   // Transform helper for absolute positioning
   transform: (transforms, isRTL = I18nManager.isRTL) => {
     if (!isRTL) return transforms;
-    
+
     return transforms.map(transform => {
       if (transform.scaleX !== undefined) {
         return { scaleX: -transform.scaleX };

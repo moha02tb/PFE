@@ -28,7 +28,7 @@ const AppNavigator = () => {
   // Force re-render when RTL changes for instant navigation updates
   useEffect(() => {
     forceUpdate();
-    
+
     // Update I18nManager for navigation headers
     if (I18nManager.isRTL !== isRTL) {
       I18nManager.allowRTL(isRTL);
@@ -65,7 +65,7 @@ const AppNavigator = () => {
             left: 300,
             alignItems: 'flex-end'
           } : {
-            left: 16,  
+            left: 16,
             right: 60,
             alignItems: 'flex-start'
           },
@@ -86,50 +86,50 @@ const AppNavigator = () => {
           },
         }}
       >
-<Tab.Screen 
-  name="Accueil"
-  component={HomeScreen} 
-  options={{ 
-    title: t('navigation.home'),
-    headerTitleAlign: isRTL ? 'right' : 'left',
-    headerTitleStyle: getHeaderTitleStyle(),
-    headerTitleContainerStyle: isRTL ? {
-      right: 0,
-      left: 235,
-      alignItems: 'flex-end'
-    } : {
-      left: 16,  
-      right: 60,
-      alignItems: 'flex-start'
-    },
-    tabBarLabel: ({ focused }) => (
-      <Text style={{ 
-        fontSize: 9,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        color: focused ? '#2196f3' : (isDarkMode ? '#ccc' : '#666'),
-        lineHeight: 11,
-        paddingHorizontal: 2,
-        width: 80,
-        flexWrap: 'wrap',
-        numberOfLines: 3,
-        textAlignVertical: 'center'
-      }}>
-        {t('navigation.home').split(' ').join('\n')}
-      </Text>
-    ),
-    tabBarIcon: () => <Text style={{ fontSize: 18 }}>⚕️</Text>
-  }} 
-/>
-        <Tab.Screen 
-          name="Carte" 
-          component={MapScreen} 
-          options={{ 
+        <Tab.Screen
+          name="Accueil"
+          component={HomeScreen}
+          options={{
+            title: t('navigation.home'),
+            headerTitleAlign: isRTL ? 'right' : 'left',
+            headerTitleStyle: getHeaderTitleStyle(),
+            headerTitleContainerStyle: isRTL ? {
+              right: 0,
+              left: 235,
+              alignItems: 'flex-end'
+            } : {
+              left: 16,
+              right: 60,
+              alignItems: 'flex-start'
+            },
+            tabBarLabel: ({ focused }) => (
+              <Text style={{
+                fontSize: 9,
+                fontWeight: 'bold',
+                textAlign: 'center',
+                color: focused ? '#2196f3' : (isDarkMode ? '#ccc' : '#666'),
+                lineHeight: 11,
+                paddingHorizontal: 2,
+                width: 80,
+                flexWrap: 'wrap',
+                numberOfLines: 3,
+                textAlignVertical: 'center'
+              }}>
+                {t('navigation.home').split(' ').join('\n')}
+              </Text>
+            ),
+            tabBarIcon: () => <Text style={{ fontSize: 18 }}>⚕️</Text>
+          }}
+        />
+        <Tab.Screen
+          name="Carte"
+          component={MapScreen}
+          options={{
             title: t('navigation.map'),
             headerTitleAlign: isRTL ? 'right' : 'left',
             headerTitleStyle: getHeaderTitleStyle(),
             tabBarLabel: ({ focused }) => (
-              <Text style={{ 
+              <Text style={{
                 fontSize: 9,
                 fontWeight: 'bold',
                 textAlign: 'center',
@@ -145,17 +145,17 @@ const AppNavigator = () => {
               </Text>
             ),
             tabBarIcon: () => <Text style={{ fontSize: 18 }}>🗺️</Text>
-          }} 
+          }}
         />
-        <Tab.Screen 
-          name="Calendrier" 
-          component={CalendarScreen} 
-          options={{ 
+        <Tab.Screen
+          name="Calendrier"
+          component={CalendarScreen}
+          options={{
             title: t('navigation.calendar'),
             headerTitleAlign: isRTL ? 'right' : 'left',
             headerTitleStyle: getHeaderTitleStyle(),
             tabBarLabel: ({ focused }) => (
-              <Text style={{ 
+              <Text style={{
                 fontSize: 9,
                 fontWeight: 'bold',
                 textAlign: 'center',
@@ -171,17 +171,17 @@ const AppNavigator = () => {
               </Text>
             ),
             tabBarIcon: () => <Text style={{ fontSize: 18 }}>📅</Text>
-          }} 
+          }}
         />
-        <Tab.Screen 
-          name="Paramètres" 
-          component={SettingsScreen} 
-          options={{ 
+        <Tab.Screen
+          name="Paramètres"
+          component={SettingsScreen}
+          options={{
             title: t('navigation.settings'),
             headerTitleAlign: isRTL ? 'right' : 'left',
             headerTitleStyle: getHeaderTitleStyle(),
             tabBarLabel: ({ focused }) => (
-              <Text style={{ 
+              <Text style={{
                 fontSize: 9,
                 fontWeight: 'bold',
                 textAlign: 'center',
@@ -197,7 +197,7 @@ const AppNavigator = () => {
               </Text>
             ),
             tabBarIcon: () => <Text style={{ fontSize: 18 }}>⚙️</Text>
-          }} 
+          }}
         />
       </Tab.Navigator>
       <StatusBar style={isDarkMode ? 'light' : 'dark'} />
@@ -215,4 +215,4 @@ export default function App() {
       </LanguageProvider>
     </ThemeProvider>
   );
-};
+}

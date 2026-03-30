@@ -17,6 +17,7 @@ import { useNotifications } from './NotificationContext';
 import { useLanguage } from './LanguageContext';
 import { useForceUpdate } from '../hooks/useForceUpdate';
 import { loadPharmacies, filterPharmacies } from '../utils/pharmacyDataLoader';
+import logger from '../utils/logger';
 
 const HomeScreen = ({ navigation }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,13 +34,13 @@ const HomeScreen = ({ navigation }) => {
       const pharmaciesData = loadPharmacies(t);
       setPharmacies(pharmaciesData);
     } catch (error) {
-      console.error('Error loading pharmacies data:', error);
+      logger.error('HomeScreen', 'Error loading pharmacies data', error);
       // Fallback to empty array if data loading fails
       setPharmacies([]);
     }
   }, [t]);
 
-  const goToUserLocation = async () => {
+  const goToUserLocation = async() => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -86,7 +87,7 @@ const HomeScreen = ({ navigation }) => {
   const callPhone = (phoneNumber) => {
     const url = `tel:${phoneNumber.replace(/\s+/g, '')}`;
     Linking.openURL(url).catch((err) =>
-      console.error('Erreur lors de l’appel', err)
+      logger.error('HomeScreen', 'Erreur lors de l\'appel', err)
     );
   };
 
@@ -130,7 +131,7 @@ const HomeScreen = ({ navigation }) => {
           <View style={[
             styles.card,
             isRTL ? { borderRightColor: item.isOpen ? '#4CAF50' : '#ccc' }
-                  : { borderLeftColor: item.isOpen ? '#4CAF50' : '#ccc' }
+              : { borderLeftColor: item.isOpen ? '#4CAF50' : '#ccc' }
           ]}>
             <View style={styles.header}>
               <Text style={styles.pharmacyName}>{item.name}</Text>
@@ -177,7 +178,7 @@ const HomeScreen = ({ navigation }) => {
 
               <TouchableOpacity
                 style={[styles.button, styles.mapButton]}
-                onPress={async () => {
+                onPress={async() => {
                   try {
                     const { status } = await Location.requestForegroundPermissionsAsync();
                     if (status !== 'granted') {

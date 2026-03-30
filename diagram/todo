@@ -1,0 +1,505 @@
+# Project Fixes TODO
+
+## 1) Remove Unused Web Dependencies
+- **Status:** Not Started
+- **Priority:** HIGH
+- **Description:** Remove web-only packages from package.json that are incompatible with React Native Expo:
+  - `react-dom` (v19.0.0) - Not used in mobile app
+  - `react-router-dom` (v7.6.3) - Not used in mobile app
+  - `lucide-react` (v0.525.0) - Not used (app uses @expo/vector-icons)
+- **Files to Update:** package.json
+- **Acceptance Criteria:** 
+  - Three packages removed
+  - All remaining dependencies verified compatible with Expo SDK 53
+  - package.json validates with npm
+- **Estimate:** 15-30 minutes
+
+---
+
+## 2) Create Centralized Logger Utility
+- **Status:** Not Started
+- **Priority:** HIGH
+- **Description:** Create utils/logger.js that provides:
+  - Consistent log formatting with prefixes
+  - Support for log levels: debug, info, warn, error
+  - No-op logging in production
+  - Use throughout the app instead of raw console.* calls
+- **Files to Update/Create:** 
+  - Create: utils/logger.js
+  - Update: screens/HomeScreen.js
+  - Update: screens/MapScreen.js
+  - Update: screens/MapboxMapScreen.js
+  - Update: screens/CalendarScreen.js
+  - Update: screens/SettingsScreen.js
+- **Acceptance Criteria:**
+  - utils/logger.js created with 4 log levels
+  - 10+ console.* calls replaced with logger.* across screen files
+  - Logger respects environment (no spam in production)
+- **Estimate:** 1-2 hours
+
+---
+
+## 3) Improve Error Handling in Context Files
+- **Status:** Not Started
+- **Priority:** HIGH
+- **Description:** Replace unsafe error throws with fail-safe behavior:
+  - Add defensive checks to prevent provider requirement crashes
+  - Replace direct throw statements with logger warnings + default returns
+  - Document consumer usage requirements in context files
+  - Provide better error messages for debugging
+- **Files to Update:**
+  - screens/LanguageContext.js
+  - screens/NotificationContext.js
+- **Acceptance Criteria:**
+  - No direct throw errors for recoverable issues
+  - Contexts return sensible defaults when errors occur
+  - Error messages logged via logger utility
+  - Comments added explaining provider requirements
+- **Estimate:** 45 minutes - 1 hour
+
+---
+
+## 4) Add Testing & Linting Scripts
+- **Status:** Completed ✅
+- **Priority:** MEDIUM
+- **Description:** Added npm scripts for code quality:
+  - ESLint configuration for JavaScript linting ✅
+  - Jest test script for unit testing ✅
+  - Babel transformation for modern JavaScript ✅
+- **Files Created:**
+  - .eslintrc.js (ESLint config with 20+ rules) ✅
+  - jest.config.js (Jest configuration) ✅
+  - jest.setup.js (Test environment setup) ✅
+- **Files Updated:**
+  - package.json (5 new npm scripts added) ✅
+- **Acceptance Criteria:** ✅ ALL MET
+  - ✅ `npm run lint` command works - generates 70+ issue report
+  - ✅ `npm run test` command works - Jest test runner ready
+  - ✅ ESLint configured for React Native development
+  - ✅ Initial linting report generated (App.js shows 70+ warnings)
+- **Dependencies Installed:**
+  - eslint@10.0.1, jest@29.7.0, babel-jest@29.7.0
+  - @testing-library/react-native@12.4.5
+- **Additional npm scripts:**
+  - `npm run lint:fix` - Auto-fix linting issues
+  - `npm run test:watch` - Watch mode
+  - `npm run test:coverage` - Coverage reports
+- **Time Taken:** ~30 minutes
+
+---
+
+## 5) Improve README Documentation
+- **Status:** Not Started
+- **Priority:** MEDIUM
+- **Description:** Expand README.md with:
+  - Complete installation instructions
+  - Prerequisites list (Node.js, Expo Go, etc.)
+  - Environment setup (.env.example reference)
+  - Project structure overview
+  - Build and run commands for each platform
+  - Contributing guidelines
+- **Files to Update:** README.md
+- **Acceptance Criteria:**
+  - README includes all setup instructions
+  - New developer can install and run project following README alone
+  - Environment variables documented
+  - Project structure explained
+- **Estimate:** 45 minutes - 1 hour
+
+---
+
+## 6) Add Environment Configuration Example
+- **Status:** Partial (env var handling done)
+- **Priority:** MEDIUM
+- **Description:** Create .env.example file with:
+  - MAPBOX_API_TOKEN placeholder
+  - Clear instructions for each variable
+  - Usage documentation
+- **Files to Update/Create:**
+  - Create: .env.example
+  - Verify: .gitignore includes .env
+  - Update: TECHNICAL_DOCUMENTATION.md with env setup
+- **Acceptance Criteria:**
+  - .env.example present with all required variables
+  - .env properly ignored by git
+  - Documentation updated
+- **Estimate:** 15-30 minutes
+
+---
+
+## 7) Add CI/CD Workflow
+- **Status:** Not Started
+- **Priority:** LOW
+- **Description:** Create GitHub Actions workflow for:
+  - Running ESLint on pull requests
+  - Running tests on pull requests
+  - Checking for code quality issues
+- **Files to Create:**
+  - .github/workflows/ci.yml
+- **Acceptance Criteria:**
+  - GitHub Actions workflow created
+  - Runs lint and tests on PR
+  - Clear failure messages for developers
+- **Estimate:** 1 hour
+
+---
+
+## 8) Document Expo Secrets Management
+- **Status:** Not Started
+- **Priority:** LOW
+- **Description:** Add documentation for secure environment variable handling in Expo (managed workflow):
+  - Document eas.json secrets configuration
+  - Explain how to set environment variables in CI/CD
+  - Best practices for API token security
+- **Files to Update:**
+  - TECHNICAL_DOCUMENTATION.md (add section on secrets)
+  - Optional: Create eas.json template with secrets
+- **Acceptance Criteria:**
+  - Expo secrets management documented
+  - CI/CD secure practices explained
+- **Estimate:** 30-45 minutes
+
+---
+
+## Summary
+- **Total Items:** 8
+- **Completed:** 4 (logger ✅, error handling ✅, testing & linting ✅) 
+- **High Priority:** 3 (dependencies pending, logger ✅, error handling ✅)
+- **Medium Priority:** 3 (testing ✅, README, env config)
+- **Low Priority:** 2 (CI/CD, secrets docs)
+- **Estimated Total Time:** 6-8 hours
+- **Time Spent:** ~3 hours (logger + error handling + testing/linting)
+
+---
+
+## 9) Setup Backend API Server (Node.js/Express)
+- **Status:** Not Started
+- **Priority:** HIGH
+- **Description:** Create backend API server for pharmacy data management:
+  - Initialize Express.js server on separate port (3000)
+  - Setup basic routing structure for admin APIs
+  - Configure CORS for development (mobile app communication)
+  - Add request logging middleware
+  - Setup error handling middleware
+  - Create .env configuration for API keys and database
+- **Files to Create:**
+  - backend/server.js - Main Express app
+  - backend/config/database.js - Database configuration
+  - backend/routes/admin.js - Admin routes (upload, validate, publish)
+  - backend/middleware/ - Logging, error handling, auth
+  - backend/.env.example
+  - backend/package.json with dependencies
+- **Acceptance Criteria:**
+  - Express server starts on http://localhost:3000
+  - CORS enabled for http://localhost:19006 (Expo web)
+  - Request logging functional
+  - Error handling works without crashing
+  - README with setup instructions
+- **Dependencies:** express, cors, dotenv, morgan (logging)
+- **Estimate:** 2-3 hours
+
+---
+
+## 10) Create Admin Web Interface - File Upload Component
+- **Status:** Not Started
+- **Priority:** HIGH
+- **Description:** Build React admin panel with file upload functionality:
+  - Create React app in /admin folder using Vite
+  - Build upload form UI with drag-and-drop support
+  - Implement file validation (CSV/Excel format check)
+  - Add progress indicator for file upload
+  - Display upload status and errors
+  - Store file reference in backend
+- **Files to Create:**
+  - admin/src/components/FileUpload.jsx
+  - admin/src/pages/ImportPage.jsx
+  - admin/src/utils/fileValidator.js
+  - admin/api/uploadFile endpoint in backend
+  - admin/package.json
+- **Acceptance Criteria:**
+  - File upload form works on localhost:5173
+  - Accepts CSV and Excel files
+  - Shows error for invalid formats
+  - Displays upload progress
+  - File stored on server backend
+- **Dependencies:** react-dropzone, axios, vite
+- **Estimate:** 3-4 hours
+
+---
+
+## 11) Implement Pharmacy Data Validation Service
+- **Status:** Not Started
+- **Priority:** HIGH
+- **Description:** Create validation layer for imported pharmacy data:
+  - Parse uploaded CSV/Excel files
+  - Validate required fields: name, address, phone, coordinates, hours
+  - Check coordinate format (lat/long validation)
+  - Validate phone number format
+  - Check for duplicate entries
+  - Generate validation report with errors/warnings
+  - Return detailed feedback for admin UI
+- **Files to Create:**
+  - backend/services/validator.js - Core validation logic
+  - backend/services/fileParser.js - CSV/Excel parsing
+  - backend/routes/api/validate endpoint
+  - backend/utils/validationRules.js - Reusable rules
+- **Acceptance Criteria:**
+  - Validates all required fields
+  - Detects duplicates by phone/address
+  - Validates lat/long ranges for Tunisia
+  - Validates phone number format (8-9 digits)
+  - Returns detailed validation report with row numbers
+  - Partial import allowed (mark invalid rows)
+- **Dependencies:** xlsx (Excel parsing), csv-parser
+- **Estimate:** 3-4 hours
+
+---
+
+## 12) Integrate Mapping & Geocoding Service
+- **Status:** Not Started
+- **Priority:** MEDIUM
+- **Description:** Add geocoding capability for address enrichment:
+  - Setup Nominatim (open-source) or Google Maps API
+  - Create service to geocode addresses to coordinates
+  - Add reverse geocoding for address correction
+  - Cache geocoding results to reduce API calls
+  - Handle API rate limiting and timeouts
+  - Add fallback for manual coordinate input
+- **Files to Create:**
+  - backend/services/geocoding.js - Geocoding logic
+  - backend/routes/api/geocode endpoint
+  - backend/utils/coordinateValidator.js
+- **Acceptance Criteria:**
+  - Nominatim/Google Maps API integrated
+  - Converts addresses to coordinates
+  - Caches results in database
+  - Handles rate limits gracefully
+  - Provides confidence score for matches
+  - Manual override available in admin UI
+- **Dependencies:** axios, node-cache
+- **Estimate:** 2-3 hours
+
+---
+
+## 13) Create Data Processing & Storage Layer
+- **Status:** Not Started
+- **Priority:** HIGH
+- **Description:** Setup database for pharmacy data persistence and versioning:
+  - Setup MongoDB or PostgreSQL
+  - Create Pharmacy schema with all fields (name, address, coordinates, hours, etc.)
+  - Add audit trail (created_at, updated_at, updated_by)
+  - Version control for data changes
+  - Transaction support for atomic imports
+  - Data backup strategy
+- **Files to Create:**
+  - backend/models/Pharmacy.js - Schema/model
+  - backend/models/ImportLog.js - Track import history
+  - backend/database/migrate.js - Database migrations
+  - backend/config/database.js - Connection pooling
+- **Acceptance Criteria:**
+  - Database schema created and tested
+  - Can persist full pharmacy details
+  - Audit trail functional (track all changes)
+  - Import history logged
+  - Supports rollback to previous versions
+  - Connection pooling configured
+- **Database Setup:**
+  - Option 1: MongoDB Atlas (free tier)
+  - Option 2: PostgreSQL local/remote
+  - Option 3: SQLite for development
+- **Estimate:** 2-3 hours
+
+---
+
+## 14) Build Admin Data Review & Publication Interface
+- **Status:** Not Started
+- **Priority:** MEDIUM
+- **Description:** Create admin panel for reviewing validated data before publishing:
+  - Display validated pharmacy data in table format
+  - Show validation report with warnings/errors
+  - Allow inline editing of corrections
+  - Preview of data before publishing (map view)
+  - Versioning: show previous versions
+  - Publish to live database with confirmation
+  - Track publish history and timestamps
+- **Files to Create:**
+  - admin/src/components/ReviewTable.jsx
+  - admin/src/components/PreviewMap.jsx
+  - admin/src/pages/PublishPage.jsx
+  - backend/routes/api/publish endpoint
+  - backend/services/publishService.js
+- **Acceptance Criteria:**
+  - Reviews validated data in table
+  - Shows map preview of pharmacy locations
+  - Can edit data inline
+  - Version history visible
+  - Publish action creates database backup first
+  - Success/error messages clear
+- **Estimate:** 4-5 hours
+
+---
+
+## 15) Setup API Sync Endpoint for Mobile App
+- **Status:** Not Started
+- **Priority:** HIGH
+- **Description:** Create REST API endpoints for mobile app to sync pharmacy data:
+  - GET /api/pharmacies - Fetch all pharmacies with timestamps
+  - GET /api/pharmacies/:id - Single pharmacy data
+  - Support incremental sync (fetch changes since last sync timestamp)
+  - Add caching headers for performance
+  - Implement data pagination
+  - Add search/filter capabilities (by name, city, emergency status)
+  - Version API endpoints (v1)
+- **Files to Create:**
+  - backend/routes/api/v1/pharmacies.js
+  - backend/services/syncService.js
+  - backend/middleware/caching.js
+- **Acceptance Criteria:**
+  - GET /api/v1/pharmacies returns all pharmacies as JSON
+  - Supports query params: ?limit=50&offset=0
+  - Supports filtering: ?emergency=true&city=Tunis
+  - Timestamps included for sync tracking
+  - Caching headers set (max-age, ETag)
+  - Supports gzip compression
+- **Estimate:** 2-3 hours
+
+---
+
+## 16) Update Mobile App to Sync from Backend
+- **Status:** Not Started
+- **Priority:** MEDIUM
+- **Description:** Modify mobile app to fetch pharmacy data from backend API:
+  - Update pharmacyDataLoader.js to fetch from API endpoint
+  - Implement local caching with AsyncStorage
+  - Add background sync on app launch
+  - Handle offline mode (use cached data)
+  - Show sync status to user
+  - Add pull-to-refresh functionality
+  - Handle network errors gracefully
+- **Files to Update:**
+  - utils/pharmacyDataLoader.js - Use API instead of JSON
+  - screens/HomeScreen.js - Add sync status
+  - screens/SettingsScreen.js - Add manual sync button
+  - Create: services/syncService.js (mobile)
+  - Create: hooks/useSyncData.js
+- **Acceptance Criteria:**
+  - Mobile app fetches pharmacies from backend API
+  - Data cached locally with timestamps
+  - Offline mode works with cached data
+  - Pull-to-refresh triggers sync
+  - Sync errors shown to user
+  - First load shows loading indicator
+  - Background sync on app launch
+- **Dependencies:** axios (or fetch API)
+- **Estimate:** 2-3 hours
+
+---
+
+## 17) Add Admin Authentication & Authorization
+- **Status:** Not Started
+- **Priority:** MEDIUM
+- **Description:** Implement secure admin panel access control:
+  - Create admin user system (email/password)
+  - Implement JWT token authentication
+  - Setup role-based access (admin, validator, viewer)
+  - Create login/logout pages
+  - Protect admin routes with middleware
+  - Add session management
+  - Activity logging (who did what and when)
+- **Files to Create:**
+  - admin/src/pages/LoginPage.jsx
+  - admin/src/utils/authService.js
+  - backend/routes/api/auth.js (login, register, logout)
+  - backend/models/AdminUser.js
+  - backend/middleware/auth.js - JWT verification
+- **Acceptance Criteria:**
+  - Admin login required to access panel
+  - JWT tokens generated and validated
+  - Different roles have different permissions
+  - Session persists across page reloads
+  - Logout clears session
+  - Activity trail logged in database
+- **Dependencies:** jsonwebtoken, bcryptjs
+- **Estimate:** 3-4 hours
+
+---
+
+## 18) Create Admin Notification System
+- **Status:** Not Started
+- **Priority:** LOW
+- **Description:** Add notifications for import status and data changes:
+  - Email notifications when data is published
+  - In-app notifications for import status
+  - Alerts for validation errors
+  - Notifications to mobile app about data updates
+  - Batch report emails to admins
+- **Files to Create:**
+  - backend/services/notificationService.js
+  - backend/utils/emailService.js
+  - backend/models/Notification.js
+- **Acceptance Criteria:**
+  - Email sent on successful import
+  - In-app toast notifications
+  - Mobile app receives push notification on data update
+  - Email templates configurable
+- **Dependencies:** nodemailer, expo-notifications (mobile)
+- **Estimate:** 2-3 hours
+
+---
+
+## 19) Document Import Process & API Specification
+- **Status:** Not Started
+- **Priority:** MEDIUM
+- **Description:** Create comprehensive documentation:
+  - API documentation (Swagger/OpenAPI spec)
+  - File format specifications (CSV template)
+  - Admin user guide with screenshots
+  - Backend setup instructions
+  - Troubleshooting guide
+  - Data fields mapping documentation
+- **Files to Create:**
+  - IMPORT_SYSTEM_SPECIFICATION.md
+  - ADMIN_USER_GUIDE.md
+  - API_DOCUMENTATION.md (or swagger.json)
+  - CSV_TEMPLATE.md (with example file)
+  - backend/README.md
+- **Acceptance Criteria:**
+  - All APIs documented with request/response examples
+  - CSV template provided with sample data
+  - Admin steps documented with screenshots
+  - Troubleshooting covers common errors
+  - Deployment instructions included
+- **Estimate:** 2-3 hours
+
+---
+
+## 20) Setup CI/CD for Backend & Admin Panel
+- **Status:** Not Started
+- **Priority:** LOW
+- **Description:** Add GitHub Actions workflow for backend/admin:
+  - Run tests on PR
+  - Lint checking for backend (ESLint/Prettier)
+  - Build admin React app
+  - Deploy to staging on merge
+- **Files to Create:**
+  - .github/workflows/backend-ci.yml
+  - .github/workflows/deploy-staging.yml
+- **Acceptance Criteria:**
+  - Tests run on every PR
+  - Lint errors fail the build
+  - Admin app builds successfully
+  - Auto-deploy to staging on main merge
+- **Estimate:** 1-2 hours
+
+---
+
+## Summary (Updated - Import System Added)
+- **Total Items:** 20
+- **Completed:** 1 (testing & linting ✅)
+- **Mobile App Tasks:** 5 items (from original 8)
+- **Import System Tasks:** 12 items (tasks 9-20)
+- **High Priority:** 8 items (dependencies, logger, error handling, backend, file upload, validation, storage, sync)
+- **Medium Priority:** 7 items (geocoding, review UI, mobile update, auth, docs)
+- **Low Priority:** 2 items (notifications, CI/CD)
+- **Estimated Total Time for Import System:** 25-35 hours
+- **Estimated Total Project Time:** 31-43 hours
