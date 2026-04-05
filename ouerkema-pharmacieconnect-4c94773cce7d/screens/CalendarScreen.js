@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   FlatList,
   TouchableOpacity,
   Platform,
   Linking,
+  RefreshControl,
 } from 'react-native';
 import * as Location from 'expo-location';
 import { MaterialIcons, Entypo, Feather } from '@expo/vector-icons';
@@ -17,16 +17,37 @@ import { useTheme } from './ThemeContext';
 import { useLanguage } from './LanguageContext';
 import RTLUtils from '../utils/RTLUtils';
 import { useForceUpdate } from '../hooks/useForceUpdate';
+import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
 import { loadPharmacies } from '../utils/pharmacyDataLoader';
 import logger from '../utils/logger';
+import { Button, Card, Badge, Input } from '../components/design-system';
+import PharmacyDetailsModal from '../components/PharmacyDetailsModal';
+import { useRating } from './RatingContext';
+import { getColors } from '../utils/colors';
+import { SPACING, LAYOUT } from '../utils/spacing';
+import { getContextualShadow } from '../utils/shadows';
+import { TEXT_STYLES } from '../utils/typography';
 
 export default function CalendarScreen({ navigation }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
   const [pharmacies, setPharmacies] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
+  const [selectedPharmacy, setSelectedPharmacy] = useState(null);
+  const [detailsModalVisible, setDetailsModalVisible] = useState(false);
   const { isDarkMode } = useTheme();
   const { t } = useTranslation();
   const { getCurrentLanguageKey, isRTL } = useLanguage();
+  const { getRating, setRating } = useRating();
+  const { copyToClipboard } = useCopyToClipboard(
+    () => {
+      // Feedback shown inline
+    },
+    (error) => {
+      logger.error('CalendarScreen', 'Copy error', error);
+    }
+  );
   const forceUpdate = useForceUpdate();
 
   const endOfYear = new Date(new Date().getFullYear(), 11, 31);
@@ -51,21 +72,30 @@ export default function CalendarScreen({ navigation }) {
     }
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      fetchPharmacies(selectedDate);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   const callPhone = (phoneNumber) => {
     const url = `tel:${phoneNumber}`;
     Linking.openURL(url).catch((err) =>
-      logger.error('CalendarScreen', 'Erreur lors de l\'appel', err)
+      logger.error('CalendarScreen', "Erreur lors de l'appel", err)
     );
   };
 
   const openMap = (address) => {
     const url = Platform.select({
       ios: `http://maps.apple.com/?q=${encodeURIComponent(address)}`,
-      android: `geo:0,0?q=${encodeURIComponent(address)}`
+      android: `geo:0,0?q=${encodeURIComponent(address)}`,
     });
 
-    Linking.openURL(url).catch(err =>
-      logger.error('CalendarScreen', 'Erreur lors de l\'ouverture de la carte', err)
+    Linking.openURL(url).catch((err) =>
+      logger.error('CalendarScreen', "Erreur lors de l'ouverture de la carte", err)
     );
   };
 
@@ -88,9 +118,9 @@ export default function CalendarScreen({ navigation }) {
 
     // Map language keys to locale strings
     const localeMap = {
-      'fr': 'fr-FR',
-      'en': 'en-US',
-      'ar': 'ar-SA' // Arabic (Saudi Arabia) - more universal Arabic locale
+      fr: 'fr-FR',
+      en: 'en-US',
+      ar: 'ar-SA', // Arabic (Saudi Arabia) - more universal Arabic locale
     };
 
     const locale = localeMap[currentLang] || 'fr-FR';
@@ -130,26 +160,28 @@ export default function CalendarScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Title Container */}
-      <View style={styles.titleContainer}>
-        <Feather name="calendar" size={20} color="#fff" />
-        <Text style={styles.titleText}>{t('calendar.title')} - {displayDate(selectedDate)}</Text>
+      {/* Header Section */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>{t('calendar.title')}</Text>
       </View>
 
-      <View style={styles.dateInputContainer}>
-        <Feather name="search" size={20} color={styles.icon.color} style={styles.icon} />
-        <TextInput
-          style={styles.dateInput}
-          value={formatDate(selectedDate)}
-          editable={false}
-          placeholderTextColor={styles.placeholder.color}
-        />
-        <TouchableOpacity
-          onPress={() => setShowPicker(true)}
-          style={styles.calendarButton}
-        >
-          <Feather name="calendar" size={24} color="#2196F3" />
-        </TouchableOpacity>
+      {/* Date Display Section - Clean, Single Display */}
+      <View style={styles.dateDisplaySection}>
+        <View style={styles.dateDisplayContainer}>
+          <Feather name="calendar" size={24} color={getColors(isDarkMode).primary} />
+          <View style={styles.dateDisplayContent}>
+            <Text style={styles.dateLabel}>{t('calendar.selectDate')}</Text>
+            <TouchableOpacity
+              onPress={() => setShowPicker(true)}
+              style={styles.dateDisplayTouchable}
+              accessibilityLabel={t('calendar.selectDate')}
+              accessibilityRole="button"
+            >
+              <Text style={styles.dateDisplayText}>{displayDate(selectedDate)}</Text>
+            </TouchableOpacity>
+          </View>
+          <Feather name="chevron-down" size={20} color={getColors(isDarkMode).textSecondary} />
+        </View>
       </View>
 
       {showPicker && (
@@ -162,258 +194,392 @@ export default function CalendarScreen({ navigation }) {
         />
       )}
 
+      {/* Pharmacy List */}
       <FlatList
         data={pharmacies}
         keyExtractor={(item) => item.id.toString()}
+        keyboardShouldPersistTaps="handled"
+        scrollEnabled={true}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={isDarkMode ? '#fff' : '#0066CC'}
+            colors={['#0066CC']}
+          />
+        }
         ListEmptyComponent={
-          <Text style={styles.noEventsText}>
-            {t('calendar.noEventsToday')}
-          </Text>
+          <View style={styles.emptyContainer}>
+            <Feather name="inbox" size={48} color={getColors(isDarkMode).textSecondary} />
+            <Text style={styles.noEventsText}>{t('calendar.noEventsToday')}</Text>
+          </View>
         }
         renderItem={({ item }) => (
-          <View
-            style={[
-              styles.card,
-              {
-                ...(isRTL
-                  ? { borderRightColor: item.isOpen ? '#4CAF50' : '#ccc' }
-                  : { borderLeftColor: item.isOpen ? '#4CAF50' : '#ccc' }
-                ),
-              },
-            ]}
-          >
-            <View style={styles.header}>
-              <Text style={styles.pharmacyName}>{item.name}</Text>
-              <View style={styles.badges}>
-                <Text style={[styles.badge, item.isOpen ? styles.open : styles.closed]}>
-                  {item.isOpen ? t('home.open') : t('home.closed')}
-                </Text>
+          <View style={styles.pharmacyCardContainer}>
+            <Card
+              isDarkMode={isDarkMode}
+              elevation={2}
+              margin={0}
+              borderAccent={false}
+              style={styles.pharmacyCard}
+            >
+              {/* Card Header - Pharmacy Name and Status */}
+              <View style={styles.cardHeader}>
+                <View style={styles.nameSection}>
+                  <Text style={styles.pharmacyName}>{item.name}</Text>
+                  <View
+                    style={[
+                      styles.statusBadge,
+                      { backgroundColor: item.isOpen ? '#10B981' : '#EF4444' },
+                    ]}
+                  >
+                    <Text style={styles.statusText}>
+                      {item.isOpen ? t('home.open') : t('home.closed')}
+                    </Text>
+                  </View>
+                </View>
                 {item.emergency && (
-                  <Text style={[styles.badge, styles.emergency]}>
-                    {t('home.emergency')}
-                  </Text>
+                  <View style={styles.emergencyBadge}>
+                    <MaterialIcons name="emergency" size={16} color="#FCD34D" />
+                    <Text style={styles.emergencyText}>{t('home.onDuty')}</Text>
+                  </View>
                 )}
               </View>
-            </View>
 
-            <View style={styles.infoRow}>
-              <Entypo name="location-pin" size={16} color={styles.infoIcon.color} />
-              <Text style={styles.infoText}>{item.address}</Text>
-            </View>
-
-            <View style={styles.infoRow}>
-              <Feather name="clock" size={16} color={styles.infoIcon.color} />
-              <Text style={styles.infoText}>{item.openHours}</Text>
-            </View>
-
-            <View style={styles.infoRow}>
-              <Feather name="phone" size={16} color={styles.infoIcon.color} />
-              <Text style={styles.infoText}>{item.phone}</Text>
-            </View>
-
-            <View style={styles.actions}>
-              <TouchableOpacity
-                style={styles.button}
-                onPress={() => callPhone(item.phone)}
-              >
-                <Feather name="phone" size={16} color="white" />
-                <Text style={styles.buttonText}>{t('home.call')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, styles.mapButton]}
-                onPress={async() => {
-                  try {
-                    const { status } = await Location.requestForegroundPermissionsAsync();
-                    if (status !== 'granted') {
-                      // Silent fallback: open in-app map without coords
-                      if (navigation?.jumpTo) {
-                        navigation.jumpTo('Carte', { pharmacies });
-                      } else {
-                        navigation.navigate('Carte', { pharmacies });
+              {/* Pharmacy Details Grid */}
+              <View style={styles.detailsGrid}>
+                {/* Address */}
+                <View style={[styles.detailItem, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                  <View style={styles.detailIconContainer}>
+                    <Entypo name="location-pin" size={18} color={getColors(isDarkMode).primary} />
+                  </View>
+                  <View style={[styles.detailContent, { flex: 1 }]}>
+                    <Text style={styles.detailLabel}>{t('calendar.address')}</Text>
+                    <Text style={styles.detailValue}>{item.address}</Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => {
+                      copyToClipboard(item.address);
+                      setCopiedId(`addr-${item.id}`);
+                      setTimeout(() => setCopiedId(null), 2000);
+                    }}
+                    accessibilityLabel={t('home.copyAddress')}
+                    accessibilityRole="button"
+                    style={{ padding: SPACING.xs }}
+                  >
+                    <Feather
+                      name={copiedId === `addr-${item.id}` ? 'check' : 'copy'}
+                      size={16}
+                      color={
+                        copiedId === `addr-${item.id}` ? '#10B981' : getColors(isDarkMode).primary
                       }
-                      return;
-                    }
+                    />
+                  </TouchableOpacity>
+                </View>
 
-                    const { coords } = await Location.getCurrentPositionAsync({
-                      accuracy: Location.Accuracy.Highest,
-                    });
+                {/* Hours - Conditional Display */}
+                {item.isOpen ? (
+                  <View style={styles.detailItem}>
+                    <View style={styles.detailIconContainer}>
+                      <Feather name="clock" size={18} color={getColors(isDarkMode).primary} />
+                    </View>
+                    <View style={styles.detailContent}>
+                      <Text style={styles.detailLabel}>{t('calendar.hours')}</Text>
+                      <Text style={styles.detailValue}>{item.openHours}</Text>
+                    </View>
+                  </View>
+                ) : null}
 
-                    const params = { pharmacies, initialLocation: coords };
-                    if (navigation?.jumpTo) {
-                      navigation.jumpTo('Carte', params);
-                    } else {
-                      navigation.navigate('Carte', params);
+                {/* Phone */}
+                <View style={[styles.detailItem, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                  <View style={styles.detailIconContainer}>
+                    <Feather name="phone" size={18} color={getColors(isDarkMode).primary} />
+                  </View>
+                  <View style={[styles.detailContent, { flex: 1 }]}>
+                    <Text style={styles.detailLabel}>{t('calendar.phone')}</Text>
+                    <Text style={styles.detailValue}>{item.phone}</Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => {
+                      copyToClipboard(item.phone);
+                      setCopiedId(`phone-${item.id}`);
+                      setTimeout(() => setCopiedId(null), 2000);
+                    }}
+                    accessibilityLabel={t('home.copyPhone')}
+                    accessibilityRole="button"
+                    style={{ padding: SPACING.xs }}
+                  >
+                    <Feather
+                      name={copiedId === `phone-${item.id}` ? 'check' : 'copy'}
+                      size={16}
+                      color={
+                        copiedId === `phone-${item.id}` ? '#10B981' : getColors(isDarkMode).primary
+                      }
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Action Buttons */}
+              <View style={styles.actionsContainer}>
+                <Button
+                  title={t('home.call')}
+                  onPress={() => callPhone(item.phone)}
+                  variant="contained"
+                  color="secondary"
+                  isDarkMode={isDarkMode}
+                  size="small"
+                  icon={<Feather name="phone" size={14} color="white" />}
+                  accessibilityLabel={`${t('home.call')} ${item.name}, ${item.phone}`}
+                />
+
+                <Button
+                  title={t('home.directions')}
+                  onPress={async () => {
+                    try {
+                      const { status } = await Location.requestForegroundPermissionsAsync();
+                      if (status !== 'granted') {
+                        if (navigation?.jumpTo) {
+                          navigation.jumpTo('Carte', { pharmacies, targetPharmacy: item });
+                        } else {
+                          navigation.navigate('Carte', { pharmacies, targetPharmacy: item });
+                        }
+                        return;
+                      }
+
+                      const { coords } = await Location.getCurrentPositionAsync({
+                        accuracy: Location.Accuracy.Highest,
+                      });
+
+                      const params = { pharmacies, initialLocation: coords, targetPharmacy: item };
+                      if (navigation?.jumpTo) {
+                        navigation.jumpTo('Carte', params);
+                      } else {
+                        navigation.navigate('Carte', params);
+                      }
+                    } catch (e) {
+                      if (navigation?.jumpTo) {
+                        navigation.jumpTo('Carte', { pharmacies, targetPharmacy: item });
+                      } else {
+                        navigation.navigate('Carte', { pharmacies, targetPharmacy: item });
+                      }
                     }
-                  } catch (e) {
-                    // Silent fallback: navigate without coords
-                    if (navigation?.jumpTo) {
-                      navigation.jumpTo('Carte', { pharmacies });
-                    } else {
-                      navigation.navigate('Carte', { pharmacies });
-                    }
-                  }
-                }}
-              >
-                <Entypo name="map" size={16} color="white" />
-                <Text style={styles.buttonText}>{t('home.directions')}</Text>
-              </TouchableOpacity>
-            </View>
+                  }}
+                  variant="contained"
+                  color="primary"
+                  isDarkMode={isDarkMode}
+                  size="small"
+                  icon={<Entypo name="map" size={14} color="white" />}
+                  accessibilityLabel={`${t('home.directions')} ${t('home.to')} ${item.name}, ${item.address}`}
+                />
+
+                <Button
+                  title={t('home.details', 'Details')}
+                  onPress={() => {
+                    setSelectedPharmacy(item);
+                    setDetailsModalVisible(true);
+                  }}
+                  variant="outlined"
+                  isDarkMode={isDarkMode}
+                  size="small"
+                  icon={<Feather name="info" size={14} color={getColors(isDarkMode).primary} />}
+                  accessibilityLabel={`${t('home.details', 'View details for')} ${item.name}`}
+                />
+              </View>
+            </Card>
           </View>
         )}
+        scrollEnabled={true}
+        contentContainerStyle={{ paddingBottom: SPACING.lg }}
+      />
+
+      {/* Pharmacy Details Modal with Rating */}
+      <PharmacyDetailsModal
+        visible={detailsModalVisible}
+        onClose={() => setDetailsModalVisible(false)}
+        pharmacy={selectedPharmacy}
+        isDarkMode={isDarkMode}
+        isRTL={isRTL}
       />
     </View>
   );
 }
 
-const getStyles = (isDarkMode, isRTL = false) =>
-  StyleSheet.create({
+const getStyles = (isDarkMode, isRTL = false) => {
+  const colors = getColors(isDarkMode);
+  const shadow = getContextualShadow(2, isDarkMode);
+
+  return StyleSheet.create({
     container: {
-      padding: 16,
-      backgroundColor: isDarkMode ? '#121212' : '#f4f4f4',
       flex: 1,
+      backgroundColor: colors.background || '#FFFFFF',
     },
-    titleContainer: {
+
+    /* Header Section */
+    header: {
+      paddingVertical: SPACING.lg,
+      paddingHorizontal: SPACING.lg,
+      backgroundColor: colors.primary || '#0066CC',
+      borderBottomLeftRadius: 12,
+      borderBottomRightRadius: 12,
+      marginBottom: SPACING.lg,
+      ...shadow,
+    },
+    headerTitle: {
+      ...TEXT_STYLES.headerMedium,
+      color: '#FFFFFF',
+    },
+
+    /* Date Display Section */
+    dateDisplaySection: {
+      paddingHorizontal: SPACING.lg,
+      marginBottom: SPACING.lg,
+    },
+    dateDisplayContainer: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
-      paddingVertical: 15,
-      paddingHorizontal: 20,
-      backgroundColor: '#007ACC',
-      borderRadius: 8,
-      marginHorizontal: 16,
-      marginTop: 16,
-      marginBottom: 16,
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 0,
-        height: 4,
-      },
-      shadowOpacity: 0.2,
-      shadowRadius: 12,
-      elevation: 8,
+      backgroundColor: colors.surface || '#FFFFFF',
+      borderRadius: 12,
+      paddingVertical: SPACING.md,
+      paddingHorizontal: SPACING.lg,
+      borderWidth: 1,
+      borderColor: colors.border || '#E0E0E0',
+      ...shadow,
     },
-    titleText: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: '#fff',
-      marginLeft: isRTL ? 0 : 10,
-      marginRight: isRTL ? 10 : 0,
-      textAlign: isRTL ? 'right' : 'left',
-      writingDirection: isRTL ? 'rtl' : 'ltr',
+    dateDisplayContent: {
+      flex: 1,
+      marginLeft: isRTL ? 0 : SPACING.md,
+      marginRight: isRTL ? SPACING.md : 0,
+    },
+    dateLabel: {
+      ...TEXT_STYLES.bodySmall,
+      color: colors.textSecondary,
+      marginBottom: SPACING.xs,
+    },
+    dateDisplayTouchable: {
+      // Additional styling if needed
+    },
+    dateDisplayText: {
+      ...TEXT_STYLES.headerSmall,
+      color: colors.text,
+      fontWeight: '600',
+    },
+
+    /* Pharmacy List */
+    emptyContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: SPACING.xxxl,
     },
     noEventsText: {
+      ...TEXT_STYLES.bodyMedium,
       textAlign: 'center',
-      fontSize: 16,
-      color: isDarkMode ? '#ccc' : '#666',
-      marginTop: 50,
+      color: colors.textSecondary,
+      marginTop: SPACING.md,
       fontStyle: 'italic',
     },
-    titleIcon: {
-      color: isDarkMode ? '#fff' : '#000',
+
+    /* Pharmacy Card Container */
+    pharmacyCardContainer: {
+      paddingHorizontal: SPACING.lg,
+      marginBottom: SPACING.md,
     },
-    dateInputContainer: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
-      alignItems: 'center',
-      marginBottom: 20,
-      backgroundColor: isDarkMode ? '#1E1E1E' : '#fff',
-      borderWidth: 1,
-      borderColor: isDarkMode ? '#333' : '#ccc',
-      borderRadius: 8,
-      paddingHorizontal: 10,
+    pharmacyCard: {
+      borderRadius: 12,
+      padding: SPACING.lg,
+      overflow: 'hidden',
     },
-    icon: {
-      ...(isRTL ? { marginLeft: 8 } : { marginRight: 8 }),
-      color: isDarkMode ? '#ccc' : '#555',
-    },
-    dateInput: {
-      flex: 1,
-      paddingVertical: 8,
-      fontSize: 16,
-      color: isDarkMode ? '#fff' : '#000',
-      textAlign: isRTL ? 'right' : 'left',
-      writingDirection: isRTL ? 'rtl' : 'ltr',
-    },
-    placeholder: {
-      color: isDarkMode ? '#ccc' : '#888',
-    },
-    calendarButton: {
-      ...(isRTL ? { marginRight: 10 } : { marginLeft: 10 }),
-      padding: 6,
-    },
-    card: {
-      backgroundColor: isDarkMode ? '#1E1E1E' : '#fff',
-      borderRadius: 10,
-      padding: 16,
-      marginBottom: 16,
-      ...(isRTL ? { borderRightWidth: 4 } : { borderLeftWidth: 4 }),
-    },
-    header: {
+
+    /* Card Header - Name and Status */
+    cardHeader: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
       justifyContent: 'space-between',
-      alignItems: 'center',
+      alignItems: 'flex-start',
+      marginBottom: SPACING.lg,
+      gap: SPACING.md,
+    },
+    nameSection: {
+      flex: 1,
     },
     pharmacyName: {
+      ...TEXT_STYLES.headerSmall,
+      color: colors.text,
+      marginBottom: SPACING.sm,
       fontSize: 18,
-      fontWeight: 'bold',
-      color: isDarkMode ? '#fff' : '#000',
-      textAlign: isRTL ? 'right' : 'left',
+      fontWeight: '600',
     },
-    badges: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
-      gap: 6,
-    },
-    badge: {
-      paddingHorizontal: 8,
-      paddingVertical: 2,
-      borderRadius: 10,
-      fontSize: 12,
-      marginLeft: 6,
-    },
-    open: {
-      backgroundColor: '#C8E6C9',
-      color: '#1B5E20',
-    },
-    closed: {
-      backgroundColor: isDarkMode ? '#424242' : '#E0E0E0',
-      color: isDarkMode ? '#BDBDBD' : '#424242',
-    },
-    emergency: {
-      backgroundColor: '#FFCDD2',
-      color: '#B71C1C',
-    },
-    infoRow: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
-      alignItems: 'center',
-      marginTop: 6,
-    },
-    infoIcon: {
-      color: isDarkMode ? '#ccc' : '#555',
-    },
-    infoText: {
-      ...(isRTL ? { marginRight: 6 } : { marginLeft: 6 }),
-      fontSize: 14,
-      color: isDarkMode ? '#ccc' : '#555',
-      textAlign: isRTL ? 'right' : 'left',
-    },
-    actions: {
-      flexDirection: 'row',
-      marginTop: 12,
-      justifyContent: 'flex-end',
-      gap: 10,
-    },
-    button: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
-      backgroundColor: '#4CAF50',
-      paddingHorizontal: 12,
-      paddingVertical: 8,
+    statusBadge: {
+      alignSelf: 'flex-start',
+      paddingVertical: SPACING.xs,
+      paddingHorizontal: SPACING.sm,
       borderRadius: 6,
+    },
+    statusText: {
+      ...TEXT_STYLES.bodySmall,
+      color: '#FFFFFF',
+      fontWeight: '600',
+      fontSize: 12,
+    },
+    emergencyBadge: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
-      gap: 6,
+      backgroundColor: '#FBBF24',
+      paddingVertical: SPACING.xs,
+      paddingHorizontal: SPACING.sm,
+      borderRadius: 6,
+      gap: SPACING.xs,
     },
-    mapButton: {
-      backgroundColor: '#2196F3',
+    emergencyText: {
+      ...TEXT_STYLES.bodySmall,
+      color: '#78350F',
+      fontWeight: '600',
+      fontSize: 12,
     },
-    buttonText: {
-      color: 'white',
+
+    /* Details Grid */
+    detailsGrid: {
+      marginVertical: SPACING.md,
+      gap: SPACING.md,
+    },
+    detailItem: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+      alignItems: 'flex-start',
+      gap: SPACING.md,
+    },
+    detailIconContainer: {
+      width: 32,
+      height: 32,
+      borderRadius: 8,
+      backgroundColor: colors.primary + '20' || '#0066CC20',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 2,
+    },
+    detailContent: {
+      flex: 1,
+    },
+    detailLabel: {
+      ...TEXT_STYLES.bodySmall,
+      color: colors.textSecondary,
+      marginBottom: SPACING.xs,
+      fontSize: 12,
+      fontWeight: '500',
+    },
+    detailValue: {
+      ...TEXT_STYLES.bodyMedium,
+      color: colors.text,
       fontSize: 14,
+      fontWeight: '500',
+    },
+
+    /* Action Buttons */
+    actionsContainer: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+      gap: SPACING.md,
+      marginTop: SPACING.lg,
+      paddingTop: SPACING.md,
+      borderTopWidth: 1,
+      borderTopColor: colors.border || '#E0E0E0',
     },
   });
+};

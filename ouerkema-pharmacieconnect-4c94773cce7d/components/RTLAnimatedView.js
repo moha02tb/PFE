@@ -43,10 +43,7 @@ export const RTLAnimatedView = ({ children, style = {}, animationDuration = 300 
       style={[
         style,
         {
-          transform: [
-            { translateX },
-            { scaleX },
-          ],
+          transform: [{ translateX }, { scaleX }],
         },
       ]}
     >

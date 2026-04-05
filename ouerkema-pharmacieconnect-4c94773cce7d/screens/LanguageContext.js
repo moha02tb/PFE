@@ -13,13 +13,13 @@ const LANGUAGE_STORAGE_KEY = '@PharmaciesDeGarde_Language';
 const LANGUAGE_DISPLAY_NAMES = {
   fr: 'Français',
   en: 'English',
-  ar: 'العربية'
+  ar: 'العربية',
 };
 
 const LANGUAGE_KEYS = {
-  'Français': 'fr',
-  'English': 'en',
-  'العربية': 'ar'
+  Français: 'fr',
+  English: 'en',
+  العربية: 'ar',
 };
 
 export const LanguageProvider = ({ children }) => {
@@ -34,7 +34,7 @@ export const LanguageProvider = ({ children }) => {
     loadSavedLanguage();
   }, []);
 
-  const loadSavedLanguage = async() => {
+  const loadSavedLanguage = async () => {
     try {
       const savedLanguage = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
       if (savedLanguage) {
@@ -56,7 +56,7 @@ export const LanguageProvider = ({ children }) => {
     }
   };
 
-  const setLanguage = async(displayName) => {
+  const setLanguage = async (displayName) => {
     try {
       setIsChangingLanguage(true);
       const languageKey = LANGUAGE_KEYS[displayName];
@@ -86,15 +86,17 @@ export const LanguageProvider = ({ children }) => {
   };
 
   return (
-    <LanguageContext.Provider value={{
-      language,
-      setLanguage,
-      isLoading,
-      isChangingLanguage,
-      getCurrentLanguageKey,
-      availableLanguages: Object.keys(LANGUAGE_KEYS),
-      isRTL
-    }}>
+    <LanguageContext.Provider
+      value={{
+        language,
+        setLanguage,
+        isLoading,
+        isChangingLanguage,
+        getCurrentLanguageKey,
+        availableLanguages: Object.keys(LANGUAGE_KEYS),
+        isRTL,
+      }}
+    >
       {children}
     </LanguageContext.Provider>
   );

@@ -1,42 +1,120 @@
-from pydantic import BaseModel, EmailStr, Field, field_validator
-from typing import List, Optional
+"""Pydantic schemas for request/response validation.
+
+Defines input and output models for API endpoints.
+Handles validation, serialization, and documentation.
+
+Schemas:
+    LoginRequest: Credentials for authentication
+    TokenResponse: JWT token pair response
+    UserResponse: Public user data
+    AdminResponse: Admin data
+    AdminCreate: Admin creation input
+"""
+
 from datetime import datetime
 from enum import Enum
+from typing import List, Optional
+
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 # ---- INPUT VALIDATION SCHEMAS ----
 
+
 class LoginRequest(BaseModel):
-    """Validated login input"""
-    email: EmailStr  # Validates email format
-    password: str = Field(..., min_length=6, max_length=128)
+    """User authentication credentials.
     
+    Validates email format and password requirements.
+    Works for both admin and regular users.
+    """
+
+    email: EmailStr = Field(..., description="Email address of admin or user")
+    password: str = Field(
+        ...,
+        min_length=6,
+        max_length=128,
+        description="Account password (6-128 characters)"
+    )
+
     class Config:
         json_schema_extra = {
-            "example": {
-                "email": "admin@pharmacie.com",
-                "password": "SecurePassword123"
-            }
+            "example": {"email": "admin@pharmacie.com", "password": "SecurePassword123"}
         }
 
 
 class TokenResponse(BaseModel):
-    """Token pair response"""
-    access_token: str
-    refresh_token: str
-    token_type: str = "bearer"
-    expires_in: int  # seconds
+    """JWT token pair response.
+    
+    Contains both access and refresh tokens for stateless authentication.
+    - access_token: Short-lived (15 min), included in requests
+    - refresh_token: Long-lived (7 days), used to get new access tokens
+    """
+
+    access_token: str = Field(
+        ...,
+        description="JWT access token (valid 15 minutes). Include in Authorization: Bearer header"
+    )
+    refresh_token: str = Field(
+        ...,
+        description="JWT refresh token (valid 7 days). Use to refresh access token when expired"
+    )
+    token_type: str = Field(
+        default="bearer",
+        description="Token authentication scheme (always 'bearer')"
+    )
+    expires_in: int = Field(
+        ...,
+        description="Access token expiration time in seconds"
+    )
 
 
 class TokenRefreshRequest(BaseModel):
     """Refresh token request"""
+
     refresh_token: str
+
+
+class RegisterRequest(BaseModel):
+    """Public user registration request.
+    
+    Creates a new regular user account (not admin).
+    Applies basic validation (less strict than admin creation).
+    Auto-logs in after successful registration.
+    """
+
+    email: EmailStr = Field(
+        ...,
+        description="Unique email address for the new account"
+    )
+    password: str = Field(
+        ...,
+        min_length=6,
+        max_length=128,
+        description="Account password (6-128 characters)"
+    )
+    username: str = Field(
+        ...,
+        min_length=3,
+        max_length=100,
+        description="Unique username for login (3-100 characters)"
+    )
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "email": "user@example.com",
+                "password": "Password123",
+                "username": "john_doe",
+            }
+        }
 
 
 class AdminResponse(BaseModel):
     """Admin user response (no password)"""
+
     id: int
     nomUtilisateur: str
     email: str
+    phone: Optional[str] = None
     role: str
     is_active: bool
 
@@ -44,45 +122,125 @@ class AdminResponse(BaseModel):
         from_attributes = True
 
 
-class AdminCreate(BaseModel):
-    """Admin creation with validation"""
-    nomUtilisateur: str = Field(..., min_length=3, max_length=100)
-    email: EmailStr
-    password: str = Field(..., min_length=8)
-    role: str = Field(default="user")
+class UserResponse(BaseModel):
+    """Regular user response (no password)"""
 
-    @field_validator('password')
+    id: int
+    nomUtilisateur: str
+    email: str
+    phone: Optional[str] = None
+    is_active: bool
+    source: str
+
+    class Config:
+        from_attributes = True
+
+
+class AdminCreate(BaseModel):
+    """Admin user creation request.
+    
+    Creates a new admin account with stringent validation.
+    Password must contain uppercase, lowercase, and digit.
+    Requires admin role to create (admin_required dependency).
+    """
+
+    nomUtilisateur: str = Field(
+        ...,
+        min_length=3,
+        max_length=100,
+        description="Unique username for admin (3-100 characters)"
+    )
+    email: EmailStr = Field(
+        ...,
+        description="Unique email address for the admin account"
+    )
+    password: str = Field(
+        ...,
+        min_length=8,
+        description="Admin password (min 8 chars, must have uppercase, lowercase, digit)"
+    )
+    role: str = Field(
+        default="admin",
+        description="Admin role: 'admin' or 'super_admin'"
+    )
+
+    @field_validator("password")
     @classmethod
     def validate_password(cls, v):
         """Validate password has uppercase, lowercase, and digit"""
         if not any(c.isupper() for c in v):
-            raise ValueError('Password must contain at least one uppercase letter')
+            raise ValueError("Password must contain at least one uppercase letter")
         if not any(c.islower() for c in v):
-            raise ValueError('Password must contain at least one lowercase letter')
+            raise ValueError("Password must contain at least one lowercase letter")
         if not any(c.isdigit() for c in v):
-            raise ValueError('Password must contain at least one digit')
+            raise ValueError("Password must contain at least one digit")
         return v
 
     class Config:
         json_schema_extra = {
             "example": {
-                "nomUtilisateur": "johnadmin",
-                "email": "john@pharmacie.com",
-                "password": "SecurePass123"
+                "nomUtilisateur": "adminuser",
+                "email": "admin@pharmacie.com",
+                "password": "SecurePass123",
+                "role": "admin",
             }
         }
 
 
+class ProfileUpdateRequest(BaseModel):
+    """Update current authenticated account profile."""
+
+    nomUtilisateur: Optional[str] = Field(None, min_length=3, max_length=100)
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = Field(None, max_length=30)
+
+
+class AdminCreateByAdmin(BaseModel):
+    """Admin creating a regular user (different rules)"""
+
+    nomUtilisateur: str = Field(..., min_length=3, max_length=100)
+    email: EmailStr
+    password: str = Field(..., min_length=6, max_length=128)
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "nomUtilisateur": "newuser",
+                "email": "user@pharmacie.com",
+                "password": "Password123",
+            }
+        }
+
+
+class AuditLogResponse(BaseModel):
+    """Audit log entry response"""
+
+    id: int
+    action: str
+    entity_type: str
+    entity_id: int
+    actor_id: Optional[int]
+    actor_type: Optional[str]
+    ip_address: Optional[str]
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 # ---- EXISTING SCHEMAS ----
+
 
 class GardeBase(BaseModel):
     dateDebut: datetime
     dateFin: datetime
     # typeGarde: TypeGardeEnum
 
+
 class GardeOut(GardeBase):
     id: int
-    
+
     class Config:
         from_attributes = True
 
@@ -91,7 +249,7 @@ class VilleOut(BaseModel):
     id: int
     nom: str
     codePostal: str
-    
+
     class Config:
         from_attributes = True
 
@@ -108,3 +266,87 @@ class PharmacieOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ---- NEW PHARMACY SCHEMAS FOR OSM DATA ----
+
+
+class PharmacieCreate(BaseModel):
+    """Pharmacy creation input (for CSV row validation)"""
+
+    osm_type: str = Field(default="node", description="OSM object type")
+    osm_id: Optional[int] = Field(None, description="OpenStreetMap ID")
+    name: str = Field(..., min_length=1, description="Pharmacy name")
+    address: Optional[str] = Field(None, description="Street address")
+    phone: Optional[str] = Field(None, description="Phone number")
+    governorate: Optional[str] = Field(None, description="Governorate/Region")
+    latitude: float = Field(..., ge=-90, le=90, description="Latitude coordinate")
+    longitude: float = Field(..., ge=-180, le=180, description="Longitude coordinate")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "osm_type": "node",
+                "osm_id": 283583078,
+                "name": "الصيدلية المركزية",
+                "address": "تونس",
+                "phone": "+21674266380",
+                "governorate": "Tunis",
+                "latitude": 36.8334563,
+                "longitude": 10.1809179,
+            }
+        }
+
+
+class PharmacieResponse(BaseModel):
+    """Pharmacy response (full data)"""
+
+    id: int
+    osm_type: str
+    osm_id: Optional[int]
+    name: str
+    address: Optional[str]
+    phone: Optional[str]
+    governorate: Optional[str]
+    latitude: float
+    longitude: float
+    created_by: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class PharmacieUploadErrorDetail(BaseModel):
+    """Detail of a single row error during upload"""
+
+    row_number: int = Field(..., description="CSV row number (1-indexed)")
+    error_message: str = Field(..., description="Error reason")
+
+
+class PharmacieUploadResponse(BaseModel):
+    """Response for pharmacy bulk upload endpoint"""
+
+    total_rows: int = Field(..., description="Total rows processed")
+    successful: int = Field(..., description="Successfully imported rows")
+    failed: int = Field(..., description="Failed rows")
+    errors: List[PharmacieUploadErrorDetail] = Field(
+        default_factory=list, description="List of errors with row numbers"
+    )
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "total_rows": 10,
+                "successful": 8,
+                "failed": 2,
+                "errors": [
+                    {
+                        "row_number": 3,
+                        "error_message": "Invalid latitude: 95.5 (must be between -90 and 90)",
+                    },
+                    {"row_number": 7, "error_message": "Required field 'name' is empty"},
+                ],
+            }
+        }
+

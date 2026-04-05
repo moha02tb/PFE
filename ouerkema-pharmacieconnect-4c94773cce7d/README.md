@@ -1,6 +1,6 @@
-"# pharmacie-garde" 
+"# pharmacie-garde"
 install tools :
-node js 
-install expo go 
+node js
+install expo go
 run project :
-run npx expo start 
+run npx expo start

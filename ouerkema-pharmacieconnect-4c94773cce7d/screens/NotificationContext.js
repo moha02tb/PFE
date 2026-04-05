@@ -16,7 +16,7 @@ const NOTIFICATION_STORAGE_KEY = '@PharmaciesDeGarde_Notifications';
 
 // Configure notification handling
 Notifications.setNotificationHandler({
-  handleNotification: async() => ({
+  handleNotification: async () => ({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
@@ -33,7 +33,7 @@ export const NotificationProvider = ({ children }) => {
     loadNotificationSettings();
   }, []);
 
-  const loadNotificationSettings = async() => {
+  const loadNotificationSettings = async () => {
     try {
       const saved = await AsyncStorage.getItem(NOTIFICATION_STORAGE_KEY);
       if (saved !== null) {
@@ -57,7 +57,7 @@ export const NotificationProvider = ({ children }) => {
     }
   };
 
-  const registerForPushNotificationsAsync = async() => {
+  const registerForPushNotificationsAsync = async () => {
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {
         name: 'default',
@@ -77,7 +77,9 @@ export const NotificationProvider = ({ children }) => {
       }
 
       if (finalStatus !== 'granted') {
-        logger.warn('NotificationContext', 'Failed to get notification permissions', { status: finalStatus });
+        logger.warn('NotificationContext', 'Failed to get notification permissions', {
+          status: finalStatus,
+        });
         setPermissionStatus(finalStatus);
         return;
       }
@@ -94,7 +96,7 @@ export const NotificationProvider = ({ children }) => {
     }
   };
 
-  const toggleNotifications = async(enabled) => {
+  const toggleNotifications = async (enabled) => {
     try {
       setNotificationsEnabled(enabled);
       await AsyncStorage.setItem(NOTIFICATION_STORAGE_KEY, JSON.stringify(enabled));
@@ -112,7 +114,7 @@ export const NotificationProvider = ({ children }) => {
     }
   };
 
-  const scheduleNotification = async(title, body, trigger = null) => {
+  const scheduleNotification = async (title, body, trigger = null) => {
     if (!notificationsEnabled) {
       logger.debug('NotificationContext', 'Notifications are disabled');
       return;
@@ -135,7 +137,7 @@ export const NotificationProvider = ({ children }) => {
     }
   };
 
-  const sendPharmacyReminder = async(pharmacyName, address) => {
+  const sendPharmacyReminder = async (pharmacyName, address) => {
     if (!notificationsEnabled) return;
 
     return await scheduleNotification(
@@ -147,12 +149,12 @@ export const NotificationProvider = ({ children }) => {
     );
   };
 
-  const sendDailyReminder = async() => {
+  const sendDailyReminder = async () => {
     if (!notificationsEnabled) return;
 
     return await scheduleNotification(
       'Rappel Pharmacies de Garde',
-      'Consultez les pharmacies de garde pour aujourd\'hui',
+      "Consultez les pharmacies de garde pour aujourd'hui",
       {
         hour: 9,
         minute: 0,
@@ -161,7 +163,7 @@ export const NotificationProvider = ({ children }) => {
     );
   };
 
-  const cancelNotification = async(notificationId) => {
+  const cancelNotification = async (notificationId) => {
     try {
       await Notifications.cancelScheduledNotificationAsync(notificationId);
       logger.debug('NotificationContext', 'Notification cancelled', { notificationId });
@@ -170,7 +172,7 @@ export const NotificationProvider = ({ children }) => {
     }
   };
 
-  const getAllScheduledNotifications = async() => {
+  const getAllScheduledNotifications = async () => {
     try {
       const notifications = await Notifications.getAllScheduledNotificationsAsync();
       return notifications;
@@ -180,7 +182,7 @@ export const NotificationProvider = ({ children }) => {
     }
   };
 
-  const clearAllNotifications = async() => {
+  const clearAllNotifications = async () => {
     try {
       await Notifications.cancelAllScheduledNotificationsAsync();
       logger.debug('NotificationContext', 'All notifications cleared');
@@ -203,11 +205,7 @@ export const NotificationProvider = ({ children }) => {
     clearAllNotifications,
   };
 
-  return (
-    <NotificationContext.Provider value={value}>
-      {children}
-    </NotificationContext.Provider>
-  );
+  return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;
 };
 
 /**
@@ -233,27 +231,36 @@ export const useNotifications = () => {
 
     return {
       notificationsEnabled: false,
-      toggleNotifications: async() => {
+      toggleNotifications: async () => {
         logger.warn('NotificationContext', 'toggleNotifications called but provider not available');
       },
       isLoading: false,
       expoPushToken: null,
       permissionStatus: 'undetermined',
-      scheduleNotification: async() => {
-        logger.warn('NotificationContext', 'scheduleNotification called but provider not available');
+      scheduleNotification: async () => {
+        logger.warn(
+          'NotificationContext',
+          'scheduleNotification called but provider not available'
+        );
       },
-      sendPharmacyReminder: async() => {
-        logger.warn('NotificationContext', 'sendPharmacyReminder called but provider not available');
+      sendPharmacyReminder: async () => {
+        logger.warn(
+          'NotificationContext',
+          'sendPharmacyReminder called but provider not available'
+        );
       },
-      sendDailyReminder: async() => {
+      sendDailyReminder: async () => {
         logger.warn('NotificationContext', 'sendDailyReminder called but provider not available');
       },
-      cancelNotification: async() => {
+      cancelNotification: async () => {
         logger.warn('NotificationContext', 'cancelNotification called but provider not available');
       },
-      getAllScheduledNotifications: async() => [],
-      clearAllNotifications: async() => {
-        logger.warn('NotificationContext', 'clearAllNotifications called but provider not available');
+      getAllScheduledNotifications: async () => [],
+      clearAllNotifications: async () => {
+        logger.warn(
+          'NotificationContext',
+          'clearAllNotifications called but provider not available'
+        );
       },
     };
   }

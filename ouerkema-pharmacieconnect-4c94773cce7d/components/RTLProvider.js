@@ -15,11 +15,7 @@ export const RTLProvider = ({ children, style = {} }) => {
     writingDirection: isRTL ? 'rtl' : 'ltr',
   };
 
-  return (
-    <View style={rtlStyle}>
-      {children}
-    </View>
-  );
+  return <View style={rtlStyle}>{children}</View>;
 };
 
 export default RTLProvider;

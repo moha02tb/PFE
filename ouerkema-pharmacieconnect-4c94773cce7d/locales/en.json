@@ -1,5 +1,3 @@
-
-
 {
   "home": {
     "nearbyPharmacies": "Nearby Pharmacies",
@@ -9,8 +7,36 @@
     "open": "Open",
     "closed": "Closed",
     "emergency": "Emergency",
+    "onDuty": "On Duty",
     "call": "Call",
     "directions": "Directions",
+    "addFavorite": "Add to favorites",
+    "removeFavorite": "Remove from favorites",
+    "noPharmacies": "No pharmacies found",
+    "noPharmaciesMessage": "No pharmacies match your search. Try adjusting the filters.",
+    "to": "to",
+    "searchAccessibility": "Search for pharmacies",
+    "copy": "Copy",
+    "copyPhone": "Copy number",
+    "copyAddress": "Copy address",
+    "phoneCopied": "Number copied",
+    "addressCopied": "Address copied",
+    "details": "Details",
+    "contact": "Contact",
+    "location": "Location",
+    "hours": "Hours",
+    "rating": "Rating",
+    "share": "Share",
+    "filters": "Filters",
+    "openNow": "Open now",
+    "showOnlyOpen": "Show only currently open pharmacies",
+    "emergencyOnly": "Emergency pharmacies",
+    "showOnlyEmergency": "Show only emergency pharmacies",
+    "maxDistance": "Maximum distance",
+    "reset": "Reset",
+    "apply": "Apply",
+    "youRated": "You rated",
+    "stars": "stars",
     "locationPermissionDenied": "Permission denied to access location",
     "locationError": "Error retrieving location",
     "enableLocationFirst": "Please enable location first."
@@ -20,11 +46,13 @@
     "language": "Language",
     "darkMode": "Dark Mode",
     "notifications": "Notifications",
+    "email": "Email",
+    "phone": "Phone",
     "notificationSettings": "Notification Settings",
     "setupDailyReminder": "Setup Daily Reminder",
     "clearAllNotifications": "Clear All Notifications",
     "notificationPermissionWarning": "Notification permissions are required to receive alerts",
-    
+
     "contactSupport": "Contact Support",
     "chooseLanguage": "Choose Language",
     "cancel": "Cancel",
@@ -33,7 +61,11 @@
     "developerInfo": "This app is developed by XYZ Solutions.",
     "testNotification": "Test Notifications",
     "notificationInfo": "Notification Information",
-    "notificationDescription": "You will receive notifications for duty pharmacies and daily reminders."
+    "notificationDescription": "You will receive notifications for duty pharmacies and daily reminders.",
+    "currentLanguage": "Current language",
+    "darkModeOn": "Dark mode is on",
+    "darkModeOff": "Dark mode is off",
+    "contactSupportHint": "Open contact support options"
   },
   "navigation": {
     "home": "Pharmacies on Duty",
@@ -45,7 +77,10 @@
     "title": "Pharmacy Duty Calendar",
     "noEventsToday": "No events today",
     "selectDate": "Select a date",
-    "pharmaciesOnDuty": "Pharmacies on duty this day"
+    "pharmaciesOnDuty": "Pharmacies on duty this day",
+    "hours": "Hours",
+    "phone": "Phone",
+    "address": "Address"
   },
   "map": {
     "title": "Pharmacy Map",
@@ -57,7 +92,9 @@
     "nowUsing": "Now using:",
     "mapboxTokenRequired": "Mapbox API Token Required",
     "mapboxInstructions": "Please get your free API token from mapbox.com and replace YOUR_MAPBOX_API_TOKEN_HERE in MapboxMapScreen.js",
-    "searchPlacePlaceholder": "Search a place..."
+    "searchPlacePlaceholder": "Search for a location...",
+    "closeRoute": "Close route",
+    "changeMapStyle": "Change map style"
   },
   "pharmacies": {
     "central": "Central Pharmacy",

@@ -1,28 +1,24 @@
 {
   "expo": {
-    "name": "",
+    "name": "Pharmacies de Garde",
     "slug": "PharmaciesDeGarde",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/image.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.pharmaciesdesgarde.mobile"
     },
-    
-
-
     "android": {
-      "permissions": [
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
-      ],
+      "package": "com.pharmaciesdesgarde.mobile",
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -44,6 +40,12 @@
     ],
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "e7a0555c-d90d-47b8-91d5-49ce6d1a8ae1"
+      }
+    },
+    "owner": "jinx02"
   }
 }

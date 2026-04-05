@@ -30,12 +30,14 @@ jest.mock('expo-device', () => ({
 
 jest.mock('expo-location', () => ({
   requestForegroundPermissionsAsync: jest.fn(() => Promise.resolve({ status: 'granted' })),
-  getCurrentPositionAsync: jest.fn(() => Promise.resolve({
-    coords: {
-      latitude: 36.8065,
-      longitude: 10.1631,
-    },
-  })),
+  getCurrentPositionAsync: jest.fn(() =>
+    Promise.resolve({
+      coords: {
+        latitude: 36.8065,
+        longitude: 10.1631,
+      },
+    })
+  ),
 }));
 
 jest.mock('@react-native-async-storage/async-storage', () => ({

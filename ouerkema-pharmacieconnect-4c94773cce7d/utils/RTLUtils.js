@@ -39,17 +39,15 @@ export const RTLUtils = {
   },
 
   // Position helpers
-  left: (value, isRTL = I18nManager.isRTL) =>
-    isRTL ? { right: value } : { left: value },
+  left: (value, isRTL = I18nManager.isRTL) => (isRTL ? { right: value } : { left: value }),
 
-  right: (value, isRTL = I18nManager.isRTL) =>
-    isRTL ? { left: value } : { right: value },
+  right: (value, isRTL = I18nManager.isRTL) => (isRTL ? { left: value } : { right: value }),
 
   // Transform helper for absolute positioning
   transform: (transforms, isRTL = I18nManager.isRTL) => {
     if (!isRTL) return transforms;
 
-    return transforms.map(transform => {
+    return transforms.map((transform) => {
       if (transform.scaleX !== undefined) {
         return { scaleX: -transform.scaleX };
       }
@@ -118,7 +116,7 @@ export const RTLUtils = {
   createRTLAnimation: (isRTL) => {
     const scaleX = isRTL ? -1 : 1;
     return {
-      transform: [{ scaleX }]
+      transform: [{ scaleX }],
     };
   },
 

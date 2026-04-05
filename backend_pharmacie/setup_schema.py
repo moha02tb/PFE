@@ -5,6 +5,7 @@ Update database schema with new columns
 
 import os
 import sys
+
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 
@@ -44,7 +45,7 @@ sql_commands = [
         success BOOLEAN DEFAULT FALSE,
         attempted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     );
-    """
+    """,
 ]
 
 try:

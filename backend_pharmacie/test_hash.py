@@ -3,7 +3,7 @@
 Test password hashing
 """
 
-import os
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -19,4 +19,5 @@ try:
 except Exception as e:
     print(f"✗ Error: {e}")
     import traceback
+
     traceback.print_exc()

@@ -5,7 +5,7 @@ export const useForceUpdate = () => {
   const [, setUpdateCount] = useState(0);
 
   const forceUpdate = useCallback(() => {
-    setUpdateCount(count => count + 1);
+    setUpdateCount((count) => count + 1);
   }, []);
 
   return forceUpdate;

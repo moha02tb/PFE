@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Google Sign-In Test</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+      .container {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      }
+      h1 {
+        color: #333;
+        text-align: center;
+      }
+      .section {
+        margin: 20px 0;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+      #g_id_onload {
+        text-align: center;
+        margin: 20px 0;
+      }
+      .response {
+        background: #f5f5f5;
+        padding: 15px;
+        border-radius: 5px;
+        margin-top: 10px;
+        font-family: monospace;
+        white-space: pre-wrap;
+        word-break: break-all;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      .success {
+        background: #d4edda;
+        color: #155724;
+        padding: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+      }
+      .error {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+      }
+      button {
+        background: #667eea;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        margin: 5px;
+      }
+      button:hover {
+        background: #764ba2;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🔐 Google Sign-In Tester</h1>
+
+      <div class="section">
+        <h2>Step 1: Sign in with Google</h2>
+        <div
+          id="g_id_onload"
+          data-client_id="820574617002-0fmgj8g3eme1f8rcdagespcfpdo3v8i0.apps.googleusercontent.com"
+          data-callback="handleCredentialResponse"
+        ></div>
+        <div id="g_id_signin" data-type="standard"></div>
+      </div>
+
+      <div class="section">
+        <h2>Step 2: Backend Response</h2>
+        <button onclick="testBackend()">Test Backend with Token</button>
+        <div id="backendResponse"></div>
+      </div>
+
+      <div class="section">
+        <h2>Token Info</h2>
+        <div id="tokenInfo" style="font-family: monospace; word-break: break-all"></div>
+      </div>
+    </div>
+
+    <script>
+      let currentIdToken = null;
+
+      function handleCredentialResponse(response) {
+        currentIdToken = response.credential;
+
+        // Decode JWT to show user info
+        try {
+          const base64Url = response.credential.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(
+            atob(base64)
+              .split('')
+              .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+              .join('')
+          );
+          const decodedToken = JSON.parse(jsonPayload);
+
+          document.getElementById('tokenInfo').innerHTML = `
+                    <div class="success">✓ Sign-in successful!</div>
+                    <strong>User Info:</strong>
+                    Name: ${decodedToken.name}
+                    Email: ${decodedToken.email}
+                    Picture: <img src="${decodedToken.picture}" style="width: 50px; border-radius: 50%;" />
+                    <br><br>
+                    <strong>ID Token (first 100 chars):</strong>
+                    ${currentIdToken.substring(0, 100)}...
+                `;
+        } catch (e) {
+          document.getElementById('tokenInfo').innerHTML =
+            `<div class="error">Error decoding token: ${e}</div>`;
+        }
+      }
+
+      function testBackend() {
+        if (!currentIdToken) {
+          document.getElementById('backendResponse').innerHTML =
+            '<div class="error">⚠️ Please sign in with Google first</div>';
+          return;
+        }
+
+        document.getElementById('backendResponse').innerHTML = '<div>Testing backend...</div>';
+
+        fetch('http://localhost:8000/api/auth/google-login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id_token: currentIdToken,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.access_token) {
+              document.getElementById('backendResponse').innerHTML = `
+                        <div class="success">✓ Backend authentication successful!</div>
+                        <strong>Response:</strong>
+                        <div class="response">${JSON.stringify(data, null, 2)}</div>
+                        <p><strong>Access Token (first 50 chars):</strong> ${data.access_token.substring(0, 50)}...</p>
+                        <p><strong>Token Type:</strong> ${data.token_type}</p>
+                        <p><strong>Expires in:</strong> ${data.expires_in} seconds</p>
+                    `;
+            } else {
+              document.getElementById('backendResponse').innerHTML =
+                `<div class="error">Backend Error</div><div class="response">${JSON.stringify(data, null, 2)}</div>`;
+            }
+          })
+          .catch((error) => {
+            document.getElementById('backendResponse').innerHTML =
+              `<div class="error">🌐 Backend Error: ${error.message}</div>
+                     <div class="error">Make sure backend is running on http://localhost:8000</div>`;
+          });
+      }
+    </script>
+  </body>
+</html>

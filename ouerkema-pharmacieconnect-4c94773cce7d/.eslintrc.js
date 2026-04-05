@@ -39,9 +39,9 @@ module.exports = {
     // Code quality
     'prefer-const': 'warn',
     'no-var': 'warn',
-    'semi': ['warn', 'always'],
-    'quotes': ['warn', 'single', { avoidEscape: true }],
-    'indent': ['warn', 2],
+    semi: ['warn', 'always'],
+    quotes: ['warn', 'single', { avoidEscape: true }],
+    indent: ['warn', 2],
     'eol-last': ['warn', 'always'],
     'no-trailing-spaces': 'warn',
     'object-curly-spacing': ['warn', 'always'],
