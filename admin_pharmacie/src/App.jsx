@@ -9,6 +9,8 @@ import TopBarNew from './components/layout/TopBarNew';
 import DashboardPage from './pages/DashboardPage';
 import PharmaciesPage from './pages/PharmaciesPage';
 import CalendarPage from './pages/CalendarPage';
+import UploadPharmaciesPage from './pages/UploadPharmaciesPage';
+import UploadGardePage from './pages/UploadGardePage';
 import MapPage from './pages/MapPage';
 import EmergencyPage from './pages/EmergencyPage';
 import NotificationsPage from './pages/NotificationsPage';
@@ -66,6 +68,8 @@ const App = () => {
           >
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/pharmacies" element={<PharmaciesPage />} />
+            <Route path="/upload-pharmacies" element={<UploadPharmaciesPage />} />
+            <Route path="/upload-garde" element={<UploadGardePage />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/map" element={<MapPage />} />
             <Route path="/emergency" element={<EmergencyPage />} />

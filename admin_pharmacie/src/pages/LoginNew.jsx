@@ -51,12 +51,21 @@ const LoginNew = ({ onLoginSuccess }) => {
         console.error('Login error:', result.error);
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.detail || error.message || 'An unexpected error occurred. Please try again.';
+      const baseURL = error?.config?.baseURL;
+      const isNetworkError = !error.response;
+      const errorMessage =
+        error.response?.data?.detail ||
+        error.message ||
+        (isNetworkError
+          ? `Unable to reach backend API${baseURL ? ` (${baseURL})` : ''}. Check that the server is running and VITE_API_URL is correct.`
+          : null) ||
+        'An unexpected error occurred. Please try again.';
       setErrorMessage(errorMessage);
       console.error('Login error details:', {
         status: error.response?.status,
         data: error.response?.data,
-        message: error.message
+        message: error.message,
+        baseURL,
       });
     } finally {
       setIsLoading(false);

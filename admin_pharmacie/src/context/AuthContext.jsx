@@ -47,8 +47,15 @@ export const AuthProvider = ({ children }) => {
 
             return { success: true };
         } catch (err) {
+            const baseURL = api?.defaults?.baseURL;
+            const isNetworkError = !err.response;
             const message =
-                err.response?.data?.detail || err.response?.data?.message || 'Login failed. Please try again.';
+                err.response?.data?.detail ||
+                err.response?.data?.message ||
+                (isNetworkError
+                    ? `Unable to reach backend API${baseURL ? ` (${baseURL})` : ''}. Check that the server is running and VITE_API_URL is correct.`
+                    : err.message) ||
+                'Login failed. Please try again.';
             setError(message);
             
             // Log full error details for debugging
@@ -58,6 +65,7 @@ export const AuthProvider = ({ children }) => {
                 data: err.response?.data,
                 message: err.message,
                 url: err.config?.url,
+                baseURL,
             });
             
             return { success: false, error: message };

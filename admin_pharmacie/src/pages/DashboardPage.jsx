@@ -1,258 +1,246 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Icon } from '../components/common/IconHelper';
+import api from '../lib/api';
 
 const DashboardPage = () => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [total, setTotal] = useState(0);
+  const [pharmacies, setPharmacies] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadDashboard = async () => {
+      setLoading(true);
+      setError('');
+
+      try {
+        const [countResponse, pharmaciesResponse] = await Promise.all([
+          api.get('/api/admin/pharmacies/count'),
+          api.get('/api/admin/pharmacies', {
+            params: { skip: 0, limit: 8 },
+          }),
+        ]);
+
+        if (!active) {
+          return;
+        }
+
+        setTotal(countResponse.data?.total || 0);
+        setPharmacies(Array.isArray(pharmaciesResponse.data) ? pharmaciesResponse.data : []);
+      } catch (err) {
+        if (!active) {
+          return;
+        }
+
+        setError(
+          err.response?.data?.detail ||
+            err.message ||
+            'Failed to load dashboard data from the backend.'
+        );
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadDashboard();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const pharmaciesWithPhone = pharmacies.filter((item) => item.phone).length;
+  const pharmaciesWithAddress = pharmacies.filter((item) => item.address).length;
+  const governorates = new Set(pharmacies.map((item) => item.governorate).filter(Boolean)).size;
+
   const stats = [
-    { label: 'Total Pharmacies', value: '254', trend: '+12% MoM', icon: 'pharmacies', color: 'primary', highlight: true },
-    { label: 'Open Now', value: '142', subtitle: '56% of active network', icon: 'open', color: 'secondary' },
-    { label: 'Emergency Duty', value: '14', subtitle: 'Critical service active', icon: 'emergency', color: 'error' },
-    { label: 'Closed', value: '98', subtitle: 'Scheduled down-time', icon: 'closed', color: 'slate' },
-    { label: 'Incomplete Data', value: '12', subtitle: 'Pending verification', icon: 'incomplete', color: 'slate' },
+    {
+      label: 'Total Pharmacies',
+      value: total,
+      description: 'Current records in the backend registry',
+      tone: 'blue',
+      icon: 'pharmacies',
+    },
+    {
+      label: 'Visible Recent Rows',
+      value: pharmacies.length,
+      description: 'Newest rows loaded into this dashboard',
+      tone: 'emerald',
+      icon: 'activity',
+    },
+    {
+      label: 'With Phone',
+      value: pharmaciesWithPhone,
+      description: 'Recent records that include phone data',
+      tone: 'amber',
+      icon: 'phone',
+    },
+    {
+      label: 'Governorates',
+      value: governorates,
+      description: 'Recent records grouped by governorate',
+      tone: 'slate',
+      icon: 'location',
+    },
   ];
 
-  const recentUpdates = [
-    {
-      id: 1,
-      name: 'Pharma-Core Central',
-      action: 'Updated operational hours for Eid holiday',
-      time: '14:20 PM',
-      tag: 'Inventory',
-      icon: 'building',
-    },
-    {
-      id: 2,
-      name: 'HealthWay Boutique',
-      action: 'Verified as Emergency-ready (24/7)',
-      time: '12:05 PM',
-      tag: 'Status',
-      icon: 'verified',
-    },
-    {
-      id: 3,
-      name: 'Medi-Life Square',
-      action: 'New license document uploaded',
-      time: 'Yesterday',
-      tag: 'Admin',
-      icon: 'stethoscope',
-    },
-    {
-      id: 4,
-      name: 'Downtown Wellness',
-      action: 'Pharmacist credentials renewed',
-      time: 'Yesterday',
-      tag: 'Staff',
-      icon: 'health',
-    },
-    {
-      id: 5,
-      name: 'CureAll Dispensary',
-      action: 'Stock update for essential vaccines',
-      time: '2 days ago',
-      tag: 'Inventory',
-      icon: 'health',
-    },
-  ];
+  const toneClasses = {
+    blue: 'bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-300',
+    emerald: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-300',
+    amber: 'bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-300',
+    slate: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+  };
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 lg:p-8 space-y-8 bg-slate-50 dark:bg-slate-950">
-      {/* Dashboard Header */}
-      <section className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">Operations Overview</h2>
-          <p className="text-slate-600 dark:text-slate-400 mt-2 text-base">Real-time pharmacy network status and health monitoring.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-2 px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-xs font-bold uppercase tracking-wider">
-            <span className="w-2 h-2 rounded-full bg-green-600 dark:bg-green-400 animate-pulse"></span>
-            Live Network
-          </span>
-          <span className="text-slate-500 dark:text-slate-400 text-sm">Last Sync: 2m ago</span>
-        </div>
-      </section>
-
-      {/* Bento Grid Summary Cards */}
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Main Card - Total Pharmacies */}
-        <div className="col-span-1 lg:col-span-2 bg-white dark:bg-slate-900 p-6 lg:p-8 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+    <div className="flex-1 overflow-y-auto bg-slate-50 p-6 lg:p-8 dark:bg-slate-950">
+      <div className="mx-auto flex max-w-7xl flex-col gap-8">
+        <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <span className="text-slate-600 dark:text-slate-400 text-xs uppercase tracking-widest font-bold">Total Pharmacies</span>
-            <div className="mt-4 flex items-baseline gap-4">
-              <span className="text-5xl lg:text-6xl font-bold text-blue-600 dark:text-blue-400">254</span>
-              <span className="font-bold flex items-center text-sm text-green-600 dark:text-green-400 gap-1">
-                <Icon name="trending_up" size={16} /> +12% MoM
-              </span>
-            </div>
+            <span className="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700 dark:border-cyan-900/40 dark:bg-cyan-950/20 dark:text-cyan-300">
+              <Icon name="dashboard" size={14} />
+              Live Admin
+            </span>
+            <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 dark:text-white lg:text-4xl">
+              Dashboard
+            </h1>
+            <p className="mt-2 max-w-3xl text-sm text-slate-600 dark:text-slate-400">
+              The old mock dashboard has been replaced with a backend-driven overview using the admin
+              pharmacy endpoints already present in the API.
+            </p>
           </div>
-          <div className="mt-6 flex gap-2">
-            <div className="h-1 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-              <div className="h-full bg-blue-600 w-[75%] rounded-full"></div>
-            </div>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              to="/upload-pharmacies"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-700"
+            >
+              <Icon name="upload" size={16} />
+              Upload Pharmacies
+            </Link>
+            <Link
+              to="/upload-garde"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:border-slate-400 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:hover:bg-slate-800"
+            >
+              <Icon name="calendar" size={16} />
+              Upload Garde
+            </Link>
           </div>
-        </div>
+        </section>
 
-        {/* Open Now Card */}
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 border-l-4 border-l-green-600">
-          <div className="flex justify-between items-start">
-            <span className="text-slate-600 dark:text-slate-400 text-xs uppercase tracking-widest font-bold">Open Now</span>
-            <div className="p-2 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg">
-              <Icon name="open" size={20} />
-            </div>
-          </div>
-          <div className="mt-6">
-            <span className="text-4xl font-bold text-slate-900 dark:text-white">142</span>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">56% of active network</p>
-          </div>
-        </div>
+        {error && (
+          <section className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
+            {error}
+          </section>
+        )}
 
-        {/* Emergency Duty Card */}
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 border-l-4 border-l-red-600">
-          <div className="flex justify-between items-start">
-            <span className="text-slate-600 dark:text-slate-400 text-xs uppercase tracking-widest font-bold">Emergency Duty</span>
-            <div className="p-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg">
-              <Icon name="emergency" size={20} />
-            </div>
-          </div>
-          <div className="mt-6">
-            <span className="text-4xl font-bold text-slate-900 dark:text-white">14</span>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Critical service active</p>
-          </div>
-        </div>
-
-        {/* Closed Card */}
-        <div className="bg-slate-100 dark:bg-slate-800 p-6 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
-          <div className="flex justify-between items-start">
-            <span className="text-slate-600 dark:text-slate-400 text-xs uppercase tracking-widest font-bold">Closed</span>
-            <Icon name="closed" size={20} />
-          </div>
-          <div className="mt-6">
-            <span className="text-3xl font-bold text-slate-700 dark:text-slate-300">98</span>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Scheduled down-time</p>
-          </div>
-        </div>
-
-        {/* Incomplete Data Card */}
-        <div className="bg-slate-100 dark:bg-slate-800 p-6 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
-          <div className="flex justify-between items-start">
-            <span className="text-slate-600 dark:text-slate-400 text-xs uppercase tracking-widest font-bold">Incomplete Data</span>
-            <Icon name="incomplete" size={20} />
-          </div>
-          <div className="mt-6">
-            <span className="text-3xl font-bold text-slate-700 dark:text-slate-300">12</span>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Pending verification</p>
-          </div>
-        </div>
-
-        {/* Notification Bento */}
-        <div className="col-span-1 lg:col-span-2 bg-gradient-to-br from-blue-600 to-blue-500 p-6 lg:p-8 rounded-lg text-white shadow-lg flex items-center gap-6">
-          <div className="flex-1">
-            <h3 className="text-2xl font-bold">Notification Center</h3>
-            <p className="text-blue-100 mt-1">Weekly broadcast summary.</p>
-            <div className="mt-6 grid grid-cols-2 gap-4">
-              <div className="bg-white/10 backdrop-blur-md p-4 rounded-lg">
-                <div className="text-2xl font-bold">1,204</div>
-                <div className="text-xs uppercase tracking-wide opacity-80 mt-1">Sent Today</div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-md p-4 rounded-lg">
-                <div className="text-2xl font-bold">45</div>
-                <div className="text-xs uppercase tracking-wide opacity-80 mt-1">Scheduled</div>
-              </div>
-            </div>
-          </div>
-          <div className="hidden sm:flex text-5xl opacity-20">
-            <Icon name="notifications" size={48} />
-          </div>
-        </div>
-      </section>
-
-      {/* Detailed Section */}
-      <section className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* Recent Updates */}
-        <div className="xl:col-span-2">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-2xl font-bold">Recent Updates</h3>
-            <button className="text-blue-600 dark:text-blue-400 font-semibold text-sm hover:underline">View All Registry</button>
-          </div>
-          <div className="space-y-4">
-            {recentUpdates.map((update) => (
-              <div key={update.id} className="bg-white dark:bg-slate-900 p-4 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center gap-4 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all group">
-                <div className="w-12 h-12 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all">
-                  <Icon name={update.icon} size={20} />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-bold text-slate-900 dark:text-white">{update.name}</h4>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">{update.action}</p>
-                </div>
-                <div className="text-right">
-                  <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">{update.time}</div>
-                  <div className="mt-1">
-                    <span className="inline-block px-2 py-1 rounded text-[10px] bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-bold uppercase">
-                      {update.tag}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Network Distribution & Broadcast */}
-        <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-2xl font-bold">Network Distribution</h3>
-            <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
-              <Icon name="filter" size={20} />
-            </button>
-          </div>
-
-          {/* Map Section */}
-          <div className="flex-1 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-slate-800 dark:to-slate-900 rounded-lg overflow-hidden relative min-h-[300px] mb-6 border border-slate-200 dark:border-slate-700">
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-3 h-3 bg-blue-600 dark:bg-blue-400 rounded-full animate-pulse"></div>
-              <div className="absolute w-4 h-4 bg-blue-600 dark:bg-blue-400 rounded-full opacity-30"></div>
-            </div>
-            <div className="absolute bottom-4 left-4 right-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md p-4 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
-                  <Icon name="location" size={18} />
-                </div>
+        <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          {stats.map((stat) => (
+            <article
+              key={stat.label}
+              className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+            >
+              <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 font-bold uppercase tracking-widest">Active Region</p>
-                  <h5 className="font-bold text-slate-900 dark:text-white">Metropolitan Zone 4</h5>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                    {stat.label}
+                  </p>
+                  <p className="mt-3 text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    {loading ? '...' : stat.value}
+                  </p>
+                </div>
+                <div className={`rounded-2xl p-3 ${toneClasses[stat.tone]}`}>
+                  <Icon name={stat.icon} size={20} />
                 </div>
               </div>
-              <div className="mt-3 grid grid-cols-2 gap-3 text-xs font-bold uppercase tracking-tight">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-green-600"></span>
-                  <span className="text-slate-700 dark:text-slate-300">42 Active</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-red-600"></span>
-                  <span className="text-slate-700 dark:text-slate-300">2 Alerts</span>
-                </div>
+              <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">{stat.description}</p>
+            </article>
+          ))}
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-800">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Latest Pharmacies</h2>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                  Newest entries returned by <code>/api/admin/pharmacies</code>.
+                </p>
               </div>
+              <Link to="/pharmacies" className="text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400">
+                View all
+              </Link>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left text-sm">
+                <thead className="bg-slate-50 dark:bg-slate-950/50">
+                  <tr>
+                    <th className="px-6 py-3 font-semibold text-slate-600 dark:text-slate-400">Name</th>
+                    <th className="px-6 py-3 font-semibold text-slate-600 dark:text-slate-400">Governorate</th>
+                    <th className="px-6 py-3 font-semibold text-slate-600 dark:text-slate-400">Phone</th>
+                    <th className="px-6 py-3 font-semibold text-slate-600 dark:text-slate-400">Coordinates</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pharmacies.length ? (
+                    pharmacies.map((item) => (
+                      <tr key={item.id} className="border-t border-slate-200 dark:border-slate-800">
+                        <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{item.name || 'Unnamed pharmacy'}</td>
+                        <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{item.governorate || '-'}</td>
+                        <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{item.phone || '-'}</td>
+                        <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
+                          {item.latitude}, {item.longitude}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td className="px-6 py-6 text-slate-600 dark:text-slate-400" colSpan={4}>
+                        {loading ? 'Loading recent records...' : 'No pharmacy records found.'}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
 
-          {/* Quick Broadcast */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
-            <h4 className="font-bold text-slate-900 dark:text-white">Quick Broadcast</h4>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Notify all open pharmacies immediately.</p>
-            <div className="mt-4 flex items-center gap-2">
-              <div className="flex -space-x-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-800 bg-slate-300 dark:bg-slate-600"></div>
-                ))}
-                <div className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-800 bg-blue-600 flex items-center justify-center text-[9px] text-white font-bold">+142</div>
+          <div className="space-y-6">
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Upload readiness</h2>
+              <div className="mt-5 space-y-4">
+                <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-950/50">
+                  <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Address coverage</p>
+                  <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
+                    {loading ? '...' : `${pharmaciesWithAddress}/${pharmacies.length || 0}`}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                    Recent rows with an address value available.
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-950/50">
+                  <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Next action</p>
+                  <p className="mt-2 text-base font-semibold text-slate-900 dark:text-white">
+                    Use Upload Pharmacies for real imports and Upload Garde for CSV validation.
+                  </p>
+                </div>
               </div>
-              <span className="text-xs text-slate-600 dark:text-slate-400">Open recipients</span>
             </div>
-            <button className="w-full mt-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-all flex items-center justify-center gap-2">
-              <Icon name="mail" size={16} />
-              Draft System Message
-            </button>
+
+            <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 text-white shadow-sm dark:border-slate-800">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">Current scope</p>
+              <h2 className="mt-3 text-2xl font-bold">Admin flows restored</h2>
+              <p className="mt-3 text-sm text-slate-300">
+                Pharmacy upload is fully connected to the backend. Garde upload is restored as a UI
+                validation flow pending a backend endpoint.
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   );
 };

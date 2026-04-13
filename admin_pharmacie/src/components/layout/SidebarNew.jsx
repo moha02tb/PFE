@@ -11,6 +11,8 @@ const SidebarNew = () => {
   const navItems = [
     { icon: 'dashboard', label: 'Dashboard', path: '/dashboard', id: 'dashboard' },
     { icon: 'pharmacies', label: 'Pharmacies', path: '/pharmacies', id: 'pharmacies' },
+    { icon: 'upload', label: 'Upload Pharmacies', path: '/upload-pharmacies', id: 'upload-pharmacies' },
+    { icon: 'calendar', label: 'Upload Garde', path: '/upload-garde', id: 'upload-garde' },
     { icon: 'calendar', label: 'Calendar', path: '/calendar', id: 'calendar' },
     { icon: 'map', label: 'Map', path: '/map', id: 'map' },
     { icon: 'emergency', label: 'Emergency', path: '/emergency', id: 'emergency' },

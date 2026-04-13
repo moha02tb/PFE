@@ -14,6 +14,7 @@ Endpoints:
 
 from typing import Union
 
+import os
 import models
 from database import get_db
 from dependencies import admin_required, get_current_account
@@ -27,7 +28,7 @@ from schemas import (
     TokenRefreshRequest,
     TokenResponse,
 )
-from services import AuthService, AdminService
+from services import AuthService
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
@@ -36,6 +37,17 @@ router = APIRouter(prefix="/api/auth", tags=["authentication"])
 
 # Rate limiter
 limiter = Limiter(key_func=get_remote_address)
+
+def _cookie_secure_default(request: Request) -> bool:
+    """Decide whether auth cookies should be marked Secure.
+
+    In local development the API is commonly served over HTTP, where a Secure cookie
+    would be silently dropped by browsers. Allow overriding via COOKIE_SECURE.
+    """
+    raw = os.getenv("COOKIE_SECURE")
+    if raw is not None:
+        return raw.strip().lower() in {"1", "true", "yes", "on"}
+    return request.url.scheme == "https"
 
 
 # ---- UNIFIED LOGIN ENDPOINT ----
@@ -74,7 +86,7 @@ async def login(
         key="access_token",
         value=token_response["access_token"],
         httponly=True,
-        secure=True,
+        secure=_cookie_secure_default(request),
         samesite="lax",
         max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
@@ -117,7 +129,7 @@ async def register(
         key="access_token",
         value=token_response["access_token"],
         httponly=True,
-        secure=True,
+        secure=_cookie_secure_default(request),
         samesite="lax",
         max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
@@ -156,7 +168,7 @@ async def refresh(request: TokenRefreshRequest, response: Response, db: Session 
         key="access_token",
         value=token_response["access_token"],
         httponly=True,
-        secure=True,
+        secure=_cookie_secure_default(request),
         samesite="lax",
         max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
