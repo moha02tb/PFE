@@ -45,3 +45,8 @@ Thumbs.db
 # Build outputs
 *.apk
 *.aab
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
