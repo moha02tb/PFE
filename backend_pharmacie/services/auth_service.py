@@ -4,6 +4,7 @@ Extracted from routers/auth.py to enable testing, reuse, and cleaner separation 
 Handles: login (admin/user), registration, token refresh, profile updates, logout.
 """
 
+import random
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple, Union
 
@@ -21,6 +22,7 @@ from schemas import (
     TokenResponse,
     UserResponse,
 )
+from services.email_service import EmailService
 from security import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     REFRESH_TOKEN_EXPIRE_DAYS,
@@ -38,6 +40,36 @@ class AuthService:
     def __init__(self, db: Session):
         self.db = db
         self.event_bus = get_event_bus()
+        self.email_service = EmailService()
+
+    def _generate_verification_code(self) -> str:
+        """Generate a short numeric verification code."""
+        return f"{random.randint(0, 999999):06d}"
+
+    def send_verification_email_for_user(self, email: str) -> Optional[str]:
+        """Send a verification email for an existing unverified user."""
+        user = (
+            self.db.query(models.Utilisateur)
+            .filter(models.Utilisateur.email == email)
+            .first()
+        )
+
+        if not user:
+            return "Account not found"
+
+        if user.email_verified:
+            return None
+
+        try:
+            self.email_service.send_verification_email(
+                recipient_email=user.email,
+                username=user.nomUtilisateur,
+                code=user.email_verification_code,
+            )
+        except Exception as exc:
+            return f"Unable to send verification email: {exc}"
+
+        return None
 
     def login(
         self, credentials: LoginRequest, ip_address: str
@@ -84,6 +116,9 @@ class AuthService:
         )
 
         if user and user.is_active and verify_password(credentials.password, user.motDePasse):
+            if not user.email_verified:
+                return None, "Please verify your email before signing in"
+
             # Update last login
             user.last_login = datetime.now(timezone.utc)
             self.db.add(user)
@@ -201,30 +236,30 @@ class AuthService:
         if admin_username or user_username:
             return None, "Username already taken"
 
-        # Create user
+        verification_code = self._generate_verification_code()
+        verification_expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
+
         new_user = models.Utilisateur(
             nomUtilisateur=reg_data.username,
             email=reg_data.email,
             motDePasse=hash_password(reg_data.password),
             source="self_registered",
             is_active=True,
+            email_verified=False,
+            email_verification_code=verification_code,
+            email_verification_sent_at=datetime.now(timezone.utc),
+            email_verification_expires_at=verification_expires_at,
         )
 
         self.db.add(new_user)
-        self.db.commit()
+        try:
+            self.db.flush()
+            self.db.commit()
+        except Exception as exc:
+            self.db.rollback()
+            return None, f"Unable to create pending account: {exc}"
+
         self.db.refresh(new_user)
-
-        # Create token pair and auto-login
-        access_token = create_access_token(new_user.id, "user")
-        refresh_token, jti = create_refresh_token(new_user.id)
-
-        expires_at = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-        self.db.add(
-            models.RefreshToken(
-                entity_type="utilisateur", entity_id=new_user.id, token_jti=jti, expires_at=expires_at
-            )
-        )
-        self.db.commit()
 
         self.event_bus.publish(
             EventTypes.AUTH_REGISTERED,
@@ -237,11 +272,72 @@ class AuthService:
         )
 
         return {
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-            "token_type": "bearer",
-            "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            "message": "Registration successful. Please verify your email before signing in.",
+            "email": new_user.email,
+            "requires_verification": True,
         }, None
+
+    def verify_email_code(
+        self, email: str, code: str
+    ) -> Tuple[Optional[models.Utilisateur], Optional[str]]:
+        """Verify a user's email address from a short code."""
+        user = (
+            self.db.query(models.Utilisateur)
+            .filter(models.Utilisateur.email == email)
+            .first()
+        )
+
+        if not user:
+            return None, "Account not found"
+
+        if user.email_verified:
+            return user, None
+
+        if not user.email_verification_code or user.email_verification_code != code.strip():
+            return None, "Invalid verification code"
+
+        expires_at = user.email_verification_expires_at
+        if expires_at and expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        if expires_at and expires_at < datetime.now(timezone.utc):
+            return None, "Verification code expired"
+
+        user.email_verified = True
+        user.email_verified_at = datetime.now(timezone.utc)
+        user.email_verification_code = None
+        user.email_verification_sent_at = None
+        user.email_verification_expires_at = None
+        self.db.add(user)
+        self.db.commit()
+        self.db.refresh(user)
+        return user, None
+
+    def resend_verification_email(self, email: str) -> Tuple[Optional[dict], Optional[str]]:
+        """Regenerate and resend a verification email for an existing unverified user."""
+        user = (
+            self.db.query(models.Utilisateur)
+            .filter(models.Utilisateur.email == email)
+            .first()
+        )
+
+        if not user:
+            return None, "Account not found"
+
+        if user.email_verified:
+            return {"message": "Email is already verified"}, None
+
+        user.email_verification_code = self._generate_verification_code()
+        user.email_verification_sent_at = datetime.now(timezone.utc)
+        user.email_verification_expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
+
+        try:
+            self.db.add(user)
+            self.db.commit()
+        except Exception as exc:
+            self.db.rollback()
+            return None, f"Unable to update verification code: {exc}"
+
+        return {"message": "Verification email sent"}, None
 
     def refresh_access_token(
         self, refresh_token: str
@@ -461,6 +557,8 @@ class AuthService:
             motDePasse=hash_password(user_data.password),
             source="admin_created",
             is_active=True,
+            email_verified=True,
+            email_verified_at=datetime.now(timezone.utc),
         )
 
         self.db.add(new_user)

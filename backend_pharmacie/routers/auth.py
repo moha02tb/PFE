@@ -18,17 +18,22 @@ import os
 import models
 from database import get_db
 from dependencies import admin_required, get_current_account
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response, status
 from schemas import (
     AdminCreate,
     AdminCreateByAdmin,
     LoginRequest,
     ProfileUpdateRequest,
     RegisterRequest,
+    RegisterResponse,
+    ResendVerificationRequest,
     TokenRefreshRequest,
     TokenResponse,
+    VerifyEmailCodeRequest,
+    VerifyEmailResponse,
 )
 from services import AuthService
+from services.admin_service import AdminService
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
@@ -80,38 +85,33 @@ async def login(
     
     if error:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=error)
-    
-    from security import ACCESS_TOKEN_EXPIRE_MINUTES
-    response.set_cookie(
-        key="access_token",
-        value=token_response["access_token"],
-        httponly=True,
-        secure=_cookie_secure_default(request),
-        samesite="lax",
-        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-    )
 
     return token_response
 
 
 # ---- PUBLIC REGISTRATION ENDPOINT ----
-@router.post("/register", response_model=TokenResponse, tags=["Authentication"])
+@router.post("/register", response_model=RegisterResponse, tags=["Authentication"])
 @limiter.limit("5/15 minutes")
 async def register(
-    request: Request, reg_data: RegisterRequest, response: Response, db: Session = Depends(get_db)
+    request: Request,
+    reg_data: RegisterRequest,
+    response: Response,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
 ):
     """Register new regular user (public endpoint).
     
     **Description:**
     Creates new user account in utilisateurs table.
     Email and username must be unique across all system.
-    Auto-logs in immediately after account creation.
+    Sends a verification email through SMTP before the account can sign in.
     
     **Rate Limiting:** 5 registrations per 15 minutes per IP
     
     **Returns:**
-    - Access token (auto-linked to new account)
-    - Refresh token for token renewal
+    - Confirmation message
+    - Registered email
+    - `requires_verification=true`
     
     **Error Codes:**
     - `400`: Email or username already registered
@@ -123,23 +123,47 @@ async def register(
     
     if error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
-    
-    from security import ACCESS_TOKEN_EXPIRE_MINUTES
-    response.set_cookie(
-        key="access_token",
-        value=token_response["access_token"],
-        httponly=True,
-        secure=_cookie_secure_default(request),
-        samesite="lax",
-        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-    )
 
+    background_tasks.add_task(auth_service.send_verification_email_for_user, token_response["email"])
+    
     return token_response
+
+
+@router.post("/verify-email", response_model=VerifyEmailResponse, tags=["Authentication"])
+async def verify_email(payload: VerifyEmailCodeRequest, db: Session = Depends(get_db)):
+    """Verify a pending account email from an email + code pair."""
+    auth_service = AuthService(db)
+    _, error = auth_service.verify_email_code(payload.email, payload.code)
+
+    if error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+
+    return {"message": "Email verified successfully. You can now sign in."}
+
+
+@router.post("/resend-verification", response_model=VerifyEmailResponse, tags=["Authentication"])
+@limiter.limit("5/15 minutes")
+async def resend_verification_email(
+    request: Request,
+    payload: ResendVerificationRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    """Resend an email verification link for an unverified account."""
+    auth_service = AuthService(db)
+    result, error = auth_service.resend_verification_email(payload.email)
+
+    if error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+
+    background_tasks.add_task(auth_service.send_verification_email_for_user, payload.email)
+
+    return result
 
 
 # ---- REFRESH TOKEN ENDPOINT ----
 @router.post("/refresh", response_model=TokenResponse, tags=["Authentication"])
-async def refresh(request: TokenRefreshRequest, response: Response, db: Session = Depends(get_db)):
+async def refresh(http_request: Request, request: TokenRefreshRequest, response: Response, db: Session = Depends(get_db)):
     """Refresh expired access token.
     
     **Description:**
@@ -162,16 +186,6 @@ async def refresh(request: TokenRefreshRequest, response: Response, db: Session 
     
     if error:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=error)
-    
-    from security import ACCESS_TOKEN_EXPIRE_MINUTES
-    response.set_cookie(
-        key="access_token",
-        value=token_response["access_token"],
-        httponly=True,
-        secure=_cookie_secure_default(request),
-        samesite="lax",
-        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-    )
 
     return token_response
 
@@ -265,7 +279,4 @@ async def admin_create_user(
     if error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
     
-    return new_user
-    db.refresh(new_user)
-
     return new_user

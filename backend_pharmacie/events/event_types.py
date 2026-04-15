@@ -15,3 +15,5 @@ class EventTypes:
 
     PHARMACY_BULK_UPLOAD_SUCCESS = "pharmacy.bulk_upload.success"
     PHARMACY_BULK_UPLOAD_FAILED = "pharmacy.bulk_upload.failed"
+    MEDICINE_BULK_UPLOAD_SUCCESS = "medicine.bulk_upload.success"
+    MEDICINE_BULK_UPLOAD_FAILED = "medicine.bulk_upload.failed"

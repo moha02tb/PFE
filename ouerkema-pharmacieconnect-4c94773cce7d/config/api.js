@@ -56,6 +56,11 @@ export const API_CONFIG = {
     pharmaciesNearby: '/api/pharmacies/nearby',
     pharmaciesCount: '/api/pharmacies/count',
     pharmacyById: (id) => `/api/pharmacies/${id}`,
+    gardes: '/api/gardes',
+    medicines: '/api/medicines',
+    medicinesCount: '/api/medicines/count',
+    medicineByCodePct: (codePct) => `/api/medicines/${codePct}`,
+    analyticsSearchEvents: '/api/analytics/search-events',
     
     // Admin endpoints (authentication required)
     adminPharmacies: '/api/admin/pharmacies',

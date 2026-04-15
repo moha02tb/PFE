@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
-import { Icon } from '../components/common/IconHelper';
+import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
+import { Badge, Button, Card, CardContent, Input } from '../components/ui';
 
 const LoginNew = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [language, setLanguage] = useState('English');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-
   const { login } = useAuth();
+  const { language, setLanguage, languages, t } = useLanguage();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -19,255 +20,162 @@ const LoginNew = ({ onLoginSuccess }) => {
     setIsLoading(true);
 
     try {
-      // Validate inputs
       if (!email || !password) {
-        setErrorMessage('Email and password are required');
+        setErrorMessage(t('login.emailRequired'));
         setIsLoading(false);
         return;
       }
-
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        setErrorMessage('Please enter a valid email');
+        setErrorMessage(t('login.emailInvalid'));
         setIsLoading(false);
         return;
       }
-
       if (password.length < 6) {
-        setErrorMessage('Password must be at least 6 characters');
+        setErrorMessage(t('login.passwordShort'));
         setIsLoading(false);
         return;
       }
 
-      // Call the login function from AuthContext
       const result = await login(email, password);
-
       if (result.success) {
         if (rememberMe) {
           localStorage.setItem('admin_user', JSON.stringify({ email, rememberMe }));
         }
         onLoginSuccess();
       } else {
-        setErrorMessage(result.error || 'Login failed. Please try again.');
-        console.error('Login error:', result.error);
+        setErrorMessage(result.error || t('login.loginFailed'));
       }
     } catch (error) {
       const baseURL = error?.config?.baseURL;
       const isNetworkError = !error.response;
-      const errorMessage =
+      const message =
         error.response?.data?.detail ||
         error.message ||
         (isNetworkError
           ? `Unable to reach backend API${baseURL ? ` (${baseURL})` : ''}. Check that the server is running and VITE_API_URL is correct.`
           : null) ||
-        'An unexpected error occurred. Please try again.';
-      setErrorMessage(errorMessage);
-      console.error('Login error details:', {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message,
-        baseURL,
-      });
+        t('login.unexpected');
+      setErrorMessage(message);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="bg-white dark:bg-slate-950 font-body text-slate-900 dark:text-white flex flex-col min-h-screen overflow-hidden">
-      {/* Subtle Background */}
-      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-[40rem] h-[40rem] rounded-full bg-blue-600/5 blur-[120px]"></div>
-        <div className="absolute bottom-0 left-0 w-[35rem] h-[35rem] rounded-full bg-green-600/5 blur-[100px]"></div>
-      </div>
-
-      {/* Main Content */}
-      <main className="flex-grow flex items-center justify-center px-6 py-12 relative z-10">
-        <div className="w-full max-w-[440px]">
-          {/* Branding Header */}
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-600 rounded-2xl shadow-lg mb-6">
-              <Icon name="pharmacies" size={32} color="white" />
+    <div className="relative min-h-screen overflow-hidden bg-background">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_22rem),radial-gradient(circle_at_bottom_left,rgba(34,197,94,0.08),transparent_24rem)]" />
+      <div className="relative mx-auto grid min-h-screen max-w-7xl items-center gap-10 px-6 py-12 lg:grid-cols-[0.95fr_0.75fr]">
+        <div className="hidden lg:block">
+          <Badge variant="primary">{t('login.badge')}</Badge>
+          <h1 className="mt-6 max-w-xl font-display text-5xl font-semibold tracking-tight text-foreground">
+            {t('login.heading')}
+          </h1>
+          <p className="mt-5 max-w-xl text-base leading-7 text-muted-foreground">
+            {t('login.description')}
+          </p>
+          <div className="mt-10 grid max-w-xl gap-4 sm:grid-cols-2">
+            <div className="rounded-3xl border border-border bg-surface-elevated p-5 shadow-soft">
+              <ShieldCheck className="h-6 w-6 text-success" />
+              <p className="mt-4 font-medium text-foreground">{t('login.roleProtected')}</p>
+              <p className="mt-2 text-sm text-muted-foreground">{t('login.roleProtectedDesc')}</p>
             </div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">PharmacieConnect</h1>
-            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-widest">Admin Portal v2.0</p>
+            <div className="rounded-3xl border border-border bg-surface-elevated p-5 shadow-soft">
+              <LockKeyhole className="h-6 w-6 text-primary" />
+              <p className="mt-4 font-medium text-foreground">{t('login.tokenSupport')}</p>
+              <p className="mt-2 text-sm text-muted-foreground">{t('login.tokenSupportDesc')}</p>
+            </div>
           </div>
+        </div>
 
-          {/* Login Card */}
-          <div className="bg-white dark:bg-slate-900 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-8 md:p-10">
-            <div className="flex justify-between items-start mb-8">
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white">Secure Sign In</h2>
-                <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">Administrator Access</p>
+        <Card className="mx-auto w-full max-w-md shadow-panel">
+          <CardContent className="p-8 sm:p-10">
+            <div className="mb-8">
+              <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-primary text-primary-foreground shadow-soft">
+                <ShieldCheck className="h-6 w-6" />
               </div>
-              <div className="flex items-center gap-1.5 px-3 py-1 bg-green-100 dark:bg-green-900/30 rounded-full border border-green-200 dark:border-green-700">
-                <Icon name="verified" size={14} color="rgb(22 163 74)" />
-                <span className="text-xs font-bold text-green-700 dark:text-green-400 uppercase tracking-tight">Secure</span>
-              </div>
+              <h2 className="mt-6 font-display text-3xl font-semibold text-foreground">{t('login.signIn')}</h2>
+              <p className="mt-2 text-sm text-muted-foreground">{t('login.accessWorkspace')}</p>
             </div>
 
-            {/* Form */}
             <form className="space-y-5" onSubmit={handleLogin}>
-              {/* Error Message */}
-              {errorMessage && (
-                <div className="bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg text-sm font-medium">
-                  {errorMessage}
-                </div>
-              )}
-              {/* Email */}
-              <div className="space-y-2">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400" htmlFor="email">
-                  Email Address
-                </label>
-                <div className="relative group">
-                  <Icon 
-                    name="search" 
-                    size={18} 
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors"
-                  />
-                  <input
-                    id="email"
+              {errorMessage ? (
+                <div className="rounded-2xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">{errorMessage}</div>
+              ) : null}
+
+              <label className="grid gap-2">
+                <span className="text-sm font-medium text-foreground">{t('login.email')}</span>
+                <div className="relative">
+                  <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-body text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="pl-9"
                     placeholder="admin@pharmacieconnect.com"
                   />
                 </div>
-              </div>
+              </label>
 
-              {/* Password */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400" htmlFor="password">
-                    Password
-                  </label>
-                  <a className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider hover:text-blue-700 dark:hover:text-blue-300" href="#forgot">
-                    Forgot?
-                  </a>
-                </div>
-                <div className="relative group">
-                  <Icon 
-                    name="closed" 
-                    size={18} 
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors"
-                  />
-                  <input
-                    id="password"
+              <label className="grid gap-2">
+                <span className="text-sm font-medium text-foreground">{t('login.password')}</span>
+                <div className="relative">
+                  <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-body text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="pl-9 pr-10"
                     placeholder="••••••••"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    aria-label="Toggle password visibility"
                   >
-                    <Icon name={showPassword ? "hide" : "view"} size={18} />
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-              </div>
+              </label>
 
-              {/* Remember Me */}
-              <div className="flex items-center gap-2">
+              <label className="flex items-center gap-3 text-sm text-muted-foreground">
                 <input
-                  id="remember"
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                  className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
                 />
-                <label className="text-xs text-slate-600 dark:text-slate-400 font-medium cursor-pointer" htmlFor="remember">
-                  Keep me signed in for 30 days
-                </label>
-              </div>
+                {t('login.remember')}
+              </label>
 
-              {/* Login Button */}
-              <button
-                type="submit"
-                disabled={!email || !password || isLoading}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white font-bold py-2.5 rounded-lg shadow-lg shadow-blue-600/30 transition-all hover:shadow-lg active:scale-95 flex items-center justify-center gap-2 mt-8"
-              >
-                {isLoading ? (
-                  <>
-                    <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                    <span>Signing in...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Sign In</span>
-                    <Icon name="next" size={16} />
-                  </>
-                )}
-              </button>
+              <Button type="submit" className="w-full" disabled={!email || !password || isLoading}>
+                {isLoading ? t('login.signingIn') : t('login.signIn')}
+                {!isLoading ? <ArrowRight className="h-4 w-4" /> : null}
+              </Button>
             </form>
 
-            {/* Language Switcher */}
-            <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700 flex flex-col items-center">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">Interface Language</p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setLanguage('English')}
-                  className={`text-xs font-bold px-4 py-1.5 rounded-lg transition-colors ${
-                    language === 'English'
-                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-700'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700'
-                  }`}
-                >
-                  English
-                </button>
-                <button
-                  onClick={() => setLanguage('Français')}
-                  className={`text-xs font-bold px-4 py-1.5 rounded-lg transition-colors ${
-                    language === 'Français'
-                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-700'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700'
-                  }`}
-                >
-                  Français
-                </button>
-                <button
-                  onClick={() => setLanguage('العربية')}
-                  className={`text-xs font-bold px-4 py-1.5 rounded-lg transition-colors ${
-                    language === 'العربية'
-                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-700'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700'
-                  }`}
-                >
-                  العربية
-                </button>
+            <div className="mt-8 border-t border-border pt-6">
+              <p className="mb-3 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">{t('login.interfaceLanguage')}</p>
+              <div className="flex flex-wrap gap-2">
+                {languages.map((item) => (
+                  <button
+                    key={item.code}
+                    type="button"
+                    onClick={() => setLanguage(item.code)}
+                    className={`rounded-xl px-3 py-2 text-sm transition ${
+                      language === item.code
+                        ? 'bg-primary-soft text-primary'
+                        : 'bg-surface text-muted-foreground hover:bg-surface-muted hover:text-foreground'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
               </div>
             </div>
-          </div>
-
-          {/* Security Footer */}
-          <div className="mt-8 flex flex-col items-center gap-3 text-slate-500 dark:text-slate-400">
-            <div className="flex items-center gap-2">
-              <Icon name="verified" size={14} />
-              <span className="text-xs font-bold uppercase tracking-wider">HIPAA Compliant • AES-256 Encrypted</span>
-            </div>
-            <div className="flex gap-4 text-xs font-medium uppercase tracking-tight">
-              <a className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href="#security">
-                Security
-              </a>
-              <span className="text-slate-300 dark:text-slate-600">•</span>
-              <a className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href="#privacy">
-                Privacy
-              </a>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      {/* Global Footer */}
-      <footer className="w-full py-4 mt-auto text-center relative z-10 border-t border-slate-200 dark:border-slate-800">
-        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">
-          © 2024 PharmacieConnect. All rights reserved.
-        </p>
-      </footer>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

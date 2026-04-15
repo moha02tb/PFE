@@ -1,69 +1,59 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getColors } from '../../utils/colors';
-import { SPACING, BORDER_RADIUS } from '../../utils/spacing';
-import { TEXT_STYLES } from '../../utils/typography';
-import Button from './Button';
+import { useAppTheme } from '../../utils/theme';
+import AppButton from './Button';
 
-/**
- * EmptyState Component - Display when no data is available
- */
-const EmptyState = ({
-  icon = 'search',
-  title = 'No Results',
-  message = 'No data available',
-  actionTitle = null,
-  onAction = null,
-  isDarkMode = false,
-  containerStyle = null,
-}) => {
-  const colors = getColors(isDarkMode);
+export default function EmptyState({
+  icon = 'search-outline',
+  title,
+  message,
+  actionTitle,
+  onAction,
+  containerStyle,
+}) {
+  const { colors, radius, textStyles, isRTL } = useAppTheme();
 
   const styles = StyleSheet.create({
     container: {
-      flex: 1,
-      justifyContent: 'center',
       alignItems: 'center',
-      paddingHorizontal: SPACING.xl,
+      justifyContent: 'center',
+      paddingHorizontal: 28,
+      paddingVertical: 32,
     },
-    iconContainer: {
-      width: 80,
-      height: 80,
-      borderRadius: BORDER_RADIUS.full,
-      backgroundColor: colors.surfaceVariant,
-      justifyContent: 'center',
+    iconWrap: {
+      width: 72,
+      height: 72,
+      borderRadius: 36,
       alignItems: 'center',
-      marginBottom: SPACING.xl,
+      justifyContent: 'center',
+      backgroundColor: colors.primaryMuted,
+      marginBottom: 18,
     },
     title: {
-      ...TEXT_STYLES.headerSmall,
+      ...textStyles.headerSmall,
       color: colors.text,
-      marginBottom: SPACING.sm,
       textAlign: 'center',
+      marginBottom: 8,
     },
     message: {
-      ...TEXT_STYLES.bodyMedium,
+      ...textStyles.bodyMedium,
       color: colors.textSecondary,
       textAlign: 'center',
-      marginBottom: SPACING.xl,
+      marginBottom: onAction ? 18 : 0,
     },
   });
 
   return (
     <View style={[styles.container, containerStyle]}>
-      <View style={styles.iconContainer}>
-        <Ionicons name={icon} size={40} color={colors.textTertiary} />
+      <View style={styles.iconWrap}>
+        <Ionicons name={icon} size={28} color={colors.primary} />
       </View>
-
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.message}>{message}</Text>
-
-      {actionTitle && onAction && (
-        <Button title={actionTitle} onPress={onAction} isDarkMode={isDarkMode} size="medium" />
-      )}
+      {actionTitle && onAction ? (
+        <AppButton title={actionTitle} onPress={onAction} variant="tonal" />
+      ) : null}
     </View>
   );
-};
-
-export default EmptyState;
+}

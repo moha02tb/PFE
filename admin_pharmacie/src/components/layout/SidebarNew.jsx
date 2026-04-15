@@ -1,107 +1,192 @@
-import React from 'react';
+/* eslint-disable react/prop-types */
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Icon } from '../common/IconHelper';
+import {
+  Bell,
+  CalendarDays,
+  Globe2,
+  LayoutDashboard,
+  LogOut,
+  MapPinned,
+  Pill,
+  Settings,
+  ShieldAlert,
+  Upload,
+  X,
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
+import { cn } from '../../lib/utils';
+import Badge from '../ui/Badge';
+import Button from '../ui/Button';
 
-const SidebarNew = () => {
+const groups = [
+  {
+    label: 'Operations',
+    items: [
+      { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+      { label: 'Pharmacies', path: '/pharmacies', icon: Pill },
+      { label: 'Calendar', path: '/calendar', icon: CalendarDays },
+      { label: 'Map', path: '/map', icon: MapPinned },
+      { label: 'Emergency', path: '/emergency', icon: ShieldAlert },
+    ],
+  },
+  {
+    label: 'Imports',
+    items: [
+      { label: 'Upload Pharmacies', path: '/upload-pharmacies', icon: Upload },
+      { label: 'Upload Garde', path: '/upload-garde', icon: Upload },
+      { label: 'Upload Medicines', path: '/upload-medicines', icon: Upload },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      { label: 'Notifications', path: '/notifications', icon: Bell },
+      { label: 'Languages', path: '/languages', icon: Globe2 },
+      { label: 'Settings', path: '/settings', icon: Settings },
+    ],
+  },
+];
+
+const SidebarNew = ({ open, onClose }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  
-  const navItems = [
-    { icon: 'dashboard', label: 'Dashboard', path: '/dashboard', id: 'dashboard' },
-    { icon: 'pharmacies', label: 'Pharmacies', path: '/pharmacies', id: 'pharmacies' },
-    { icon: 'upload', label: 'Upload Pharmacies', path: '/upload-pharmacies', id: 'upload-pharmacies' },
-    { icon: 'calendar', label: 'Upload Garde', path: '/upload-garde', id: 'upload-garde' },
-    { icon: 'calendar', label: 'Calendar', path: '/calendar', id: 'calendar' },
-    { icon: 'map', label: 'Map', path: '/map', id: 'map' },
-    { icon: 'emergency', label: 'Emergency', path: '/emergency', id: 'emergency' },
-  ];
-
-  const systemItems = [
-    { icon: 'notifications', label: 'Notifications', path: '/notifications', id: 'notifications' },
-    { icon: 'languages', label: 'Languages', path: '/languages', id: 'languages' },
-    { icon: 'settings', label: 'Settings', path: '/settings', id: 'settings' },
-  ];
-
-  const isActive = (path) => location.pathname === path;
+  const { t } = useLanguage();
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
   };
 
-  return (
-    <aside className="flex flex-col h-full sticky top-0 bg-slate-50 dark:bg-[#2c3134] h-screen w-64 border-r border-slate-200 dark:border-slate-700 font-['Manrope'] antialiased text-sm font-medium z-50 shrink-0">
-      {/* Header */}
-      <div className="px-6 py-8">
-        <h1 className="text-xl font-bold text-[#171c1f] dark:text-white tracking-tight">PharmacieConnect</h1>
-        <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-widest">Clinical Admin v2.0</p>
+  const sidebarBody = (
+    <div className="admin-sidebar flex h-full flex-col">
+      <div className="flex items-center justify-between border-b border-white/10 px-5 py-5">
+        <div>
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/12 text-white shadow-soft ring-1 ring-white/10">
+              <Pill className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-display text-lg font-semibold text-white">{t('common.appName')}</p>
+              <p className="text-xs text-slate-300">{t('nav.adminWorkspace')}</p>
+            </div>
+          </div>
+        </div>
+        <Button variant="ghost" size="icon" className="text-slate-300 hover:bg-white/10 hover:text-white lg:hidden" onClick={onClose} aria-label="Close sidebar">
+          <X className="h-4 w-4" />
+        </Button>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
-        {navItems.map((item) => (
-          <Link
-            key={item.id}
-            to={item.path}
-            className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200 gap-3 ${
-              isActive(item.path)
-                ? 'text-white bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg shadow-blue-500/20 font-semibold'
-                : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'
-            }`}
-          >
-            <Icon name={item.icon} size={20} />
-            <span className="text-sm">{item.label}</span>
-          </Link>
-        ))}
+      <div className="px-5 py-4">
+        <div className="rounded-3xl border border-white/10 bg-white/6 p-4 shadow-soft backdrop-blur-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-white">{t('nav.controlCenter')}</p>
+              <p className="mt-1 text-xs text-slate-300">{t('nav.controlCenterDesc')}</p>
+            </div>
+            <Badge variant="primary" className="shadow-soft">{t('common.live')}</Badge>
+          </div>
+        </div>
+      </div>
 
-        <div className="pt-6 pb-2 text-xs font-bold text-slate-400 uppercase tracking-widest px-4">System</div>
-        
-        {systemItems.map((item) => (
-          <Link
-            key={item.id}
-            to={item.path}
-            className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200 gap-3 ${
-              isActive(item.path)
-                ? 'text-white bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg shadow-blue-500/20 font-semibold'
-                : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'
-            }`}
-          >
-            <Icon name={item.icon} size={20} />
-            <span className="text-sm">{item.label}</span>
-          </Link>
+      <nav className="flex-1 space-y-6 overflow-y-auto px-4 pb-4">
+        {groups.map((group) => (
+          <div key={group.label}>
+            <p className="px-2 text-xs font-medium uppercase tracking-[0.18em] text-slate-400">
+              {group.label === 'Operations'
+                ? t('nav.operations')
+                : group.label === 'Imports'
+                  ? t('nav.imports')
+                  : t('nav.system')}
+            </p>
+            <div className="mt-3 space-y-1.5">
+              {group.items.map((item) => {
+                const active = location.pathname === item.path;
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={onClose}
+                    className={cn(
+                      'group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition',
+                      active
+                        ? 'bg-white text-slate-950 shadow-card'
+                        : 'text-slate-300 hover:bg-white/7 hover:text-white'
+                    )}
+                  >
+                    <Icon className={cn('h-4.5 w-4.5', !active && 'text-slate-400 group-hover:text-white')} />
+                    <span>
+                      {item.path === '/dashboard'
+                        ? t('nav.dashboard')
+                        : item.path === '/pharmacies'
+                          ? t('nav.pharmacies')
+                          : item.path === '/calendar'
+                            ? t('nav.calendar')
+                            : item.path === '/map'
+                              ? t('nav.map')
+                              : item.path === '/emergency'
+                                ? t('nav.emergency')
+                                : item.path === '/upload-pharmacies'
+                                  ? t('nav.uploadPharmacies')
+                                  : item.path === '/upload-garde'
+                                    ? t('nav.uploadGarde')
+                                    : item.path === '/upload-medicines'
+                                      ? t('nav.uploadMedicines')
+                                    : item.path === '/notifications'
+                                      ? t('nav.notifications')
+                                      : item.path === '/languages'
+                                        ? t('nav.languages')
+                                        : t('nav.settings')}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
         ))}
       </nav>
 
-      {/* Footer Button */}
-      <div className="p-6 border-t border-slate-200 dark:border-slate-700">
-        <button className="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-blue-500/30 transition-all group">
-          <Icon name="add" size={18} className="group-hover:rotate-90 transition-transform" />
-          New Prescription
-        </button>
-      </div>
-
-      {/* Profile Section */}
-      <div className="p-6 border-t border-slate-200 dark:border-slate-700">
-        <div className="flex items-center gap-3 p-3 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center text-white font-bold text-sm">
-            {user?.nomUtilisateur?.[0]?.toUpperCase() || 'A'}
+      <div className="border-t border-white/10 p-4">
+        <div className="rounded-3xl border border-white/10 bg-white/6 p-4 shadow-soft backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/12 font-semibold text-white ring-1 ring-white/10">
+              {user?.nomUtilisateur?.[0]?.toUpperCase() || 'A'}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-white">{user?.nomUtilisateur || 'Admin User'}</p>
+              <p className="truncate text-xs capitalize text-slate-300">{user?.role || 'admin'}</p>
+            </div>
+            <Button variant="ghost" size="icon" className="text-slate-300 hover:bg-white/10 hover:text-white" onClick={handleLogout} aria-label="Logout">
+              <LogOut className="h-4 w-4" />
+            </Button>
           </div>
-          <div className="overflow-hidden flex-1 min-w-0">
-            <p className="text-xs font-bold truncate text-slate-900 dark:text-white">{user?.nomUtilisateur || 'Admin'}</p>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 capitalize">{user?.role || 'User'}</p>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 rounded transition-colors"
-            title="Logout"
-          >
-            <Icon name="logout" size={16} />
-          </button>
         </div>
       </div>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={onClose}
+        className={cn(
+          'fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-sm transition lg:hidden',
+          open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
+        )}
+        aria-hidden={!open}
+      />
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 z-50 w-[288px] border-r border-white/10 shadow-panel transition-transform lg:static lg:z-auto lg:w-[280px] lg:translate-x-0 lg:bg-transparent lg:shadow-none',
+          open ? 'translate-x-0' : '-translate-x-full'
+        )}
+      >
+        {sidebarBody}
+      </aside>
+    </>
   );
 };
 

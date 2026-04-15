@@ -1,7 +1,8 @@
-import React from 'react';
+import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { LanguageProvider } from './context/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginNew from './pages/LoginNew';
 import SidebarNew from './components/layout/SidebarNew';
@@ -11,6 +12,7 @@ import PharmaciesPage from './pages/PharmaciesPage';
 import CalendarPage from './pages/CalendarPage';
 import UploadPharmaciesPage from './pages/UploadPharmaciesPage';
 import UploadGardePage from './pages/UploadGardePage';
+import UploadMedicinesPage from './pages/UploadMedicinesPage';
 import MapPage from './pages/MapPage';
 import EmergencyPage from './pages/EmergencyPage';
 import NotificationsPage from './pages/NotificationsPage';
@@ -19,18 +21,26 @@ import SettingsPage from './pages/SettingsPage';
 
 // Main layout component with sidebar and header
 const DashboardLayout = () => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [theme, setTheme] = useState(() => localStorage.getItem('admin-theme') || 'light');
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle('dark', theme === 'dark');
+    localStorage.setItem('admin-theme', theme);
+  }, [theme]);
+
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-surface text-on-surface">
-      {/* Sidebar */}
-      <SidebarNew />
-
-      {/* Main Content Wrapper */}
-      <div className="flex flex-col flex-1 w-full h-full overflow-hidden relative">
-        {/* Header */}
-        <TopBarNew />
-
-        {/* Page Content - render the current route's component */}
-        <div className="flex-1 overflow-auto">
+    <div className="app-shell admin-shell flex h-screen w-full overflow-hidden">
+      <div className="admin-shell__backdrop" aria-hidden="true" />
+      <SidebarNew open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <div className="relative z-[1] flex min-w-0 flex-1 flex-col overflow-hidden">
+        <TopBarNew
+          onMenuClick={() => setSidebarOpen(true)}
+          theme={theme}
+          onToggleTheme={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
+        />
+        <div className="admin-main min-h-0 flex-1 overflow-auto">
           <Outlet />
         </div>
       </div>
@@ -52,8 +62,9 @@ const LoginWrapper = () => {
 const App = () => {
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
+      <LanguageProvider>
+        <Router>
+          <Routes>
           {/* Login Route */}
           <Route path="/login" element={<LoginWrapper />} />
           
@@ -70,6 +81,7 @@ const App = () => {
             <Route path="/pharmacies" element={<PharmaciesPage />} />
             <Route path="/upload-pharmacies" element={<UploadPharmaciesPage />} />
             <Route path="/upload-garde" element={<UploadGardePage />} />
+            <Route path="/upload-medicines" element={<UploadMedicinesPage />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/map" element={<MapPage />} />
             <Route path="/emergency" element={<EmergencyPage />} />
@@ -83,8 +95,9 @@ const App = () => {
           
           {/* Catch all - redirect to login */}
           <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </Router>
+          </Routes>
+        </Router>
+      </LanguageProvider>
     </AuthProvider>
   );
 };

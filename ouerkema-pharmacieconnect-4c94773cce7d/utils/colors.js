@@ -1,108 +1,141 @@
-/**
- * Unified Design Tokens - Colors for Pharmacy Connect Mobile App
- * Aligned with web app (DESIGN_TOKENS.md)
- * Colors are organized by function: primary, secondary, semantic, and mode-specific
- */
-
 export const COLORS = {
-  // Primary Brand Colors (Clinical & Professional)
-  primary: '#004AB7', // Primary Blue - CTAs, headers, main actions
-  primaryLight: '#E6EAFF', // Lighter blue for backgrounds
-  primaryDark: '#0040A1', // Darker blue for pressed states
-
-  // Secondary Colors (Healing & Success)
-  secondary: '#006B5B', // Secondary/Healing - positive states, open pharmacies
-  secondaryLight: '#90F5DE', // Lighter green for backgrounds
-  secondaryDark: '#1A7D4D', // Darker green for pressed states
-
-  // Tertiary Colors (Professional & Neutral)
-  tertiary: '#415462', // Professional - secondary actions
-  tertiaryLight: '#BDBDBD', // Light gray for disabled/subtle elements
-  tertiaryDark: '#424242', // Dark gray for secondary text
-
-  // Semantic Colors
-  success: '#22AA66', // Success state
-  warning: '#F57C00', // Warning/Attention
-  error: '#BA1A1A', // Error/Alert (aligned with design tokens)
-  info: '#1976D2', // Information
-
-  // Neutrals
+  primary: '#004AB7',
+  primaryDark: '#003A8F',
+  primarySoft: '#E8F0FF',
+  secondary: '#006B5B',
+  secondaryDark: '#005346',
+  secondarySoft: '#DDF6F0',
+  tertiary: '#415462',
+  success: '#22AA66',
+  successSoft: '#E1F6EB',
+  warning: '#F57C00',
+  warningSoft: '#FFF0DF',
+  error: '#BA1A1A',
+  errorSoft: '#FDECEC',
+  info: '#2F6FED',
+  infoSoft: '#E7EEFF',
   white: '#FFFFFF',
   black: '#000000',
-  lightGray: '#F5F5F5',
-  mediumGray: '#E0E0E0',
-  darkGray: '#212121',
-
-  // Light Mode Colors (Aligned with DESIGN_TOKENS.md)
-  light: {
-    background: '#F6FAFE', // Light background
-    surface: '#F6FAFE', // Light surface
-    surfaceVariant: '#DFE3E7', // Light surface variant
-    border: '#737786', // Light border/outline
-    text: '#171C1F', // Light text
-    textSecondary: '#424654', // Light secondary text
-    textTertiary: '#BDBDBD', // Light tertiary text
-    divider: '#DFE3E7', // Light divider
-  },
-
-  // Dark Mode Colors (Aligned with DESIGN_TOKENS.md)
-  dark: {
-    background: '#0A0E27', // Deep blue-black background
-    surface: '#1A1F3A', // Elevated surface in dark mode
-    surfaceVariant: '#252E4A', // Secondary surface
-    border: '#8A8E9E', // Dark border/outline
-    text: '#E0E0E0', // Light text for dark background
-    textSecondary: '#A0A0B0', // Secondary text
-    textTertiary: '#707080', // Tertiary text
-    divider: '#2A2F45', // Divider color
-  },
-
-  // Transparent variants for overlays and focus states
-  transparent: {
-    black: 'rgba(0, 0, 0, 0.5)',
-    white: 'rgba(255, 255, 255, 0.1)',
-  },
+  lightBackground: '#F6FAFE',
+  darkBackground: '#0A0E27',
 };
 
-/**
- * Get colors based on theme mode
- * @param {boolean} isDarkMode - Whether dark mode is active
- * @returns {object} Color palette for the given theme
- */
-export const getColors = (isDarkMode = false) => {
-  return isDarkMode ? COLORS.dark : COLORS.light;
+const LIGHT_THEME = {
+  primary: COLORS.primary,
+  primaryForeground: COLORS.white,
+  primaryMuted: COLORS.primarySoft,
+  secondary: COLORS.secondary,
+  secondaryForeground: COLORS.white,
+  secondaryMuted: COLORS.secondarySoft,
+  tertiary: COLORS.tertiary,
+  success: COLORS.success,
+  successMuted: COLORS.successSoft,
+  warning: COLORS.warning,
+  warningMuted: COLORS.warningSoft,
+  error: COLORS.error,
+  errorMuted: COLORS.errorSoft,
+  info: COLORS.info,
+  infoMuted: COLORS.infoSoft,
+  background: COLORS.lightBackground,
+  backgroundAccent: '#EEF4FA',
+  surface: '#FFFFFF',
+  surfaceSecondary: '#F8FBFF',
+  surfaceTertiary: '#EEF4FA',
+  surfaceOverlay: 'rgba(9, 24, 49, 0.5)',
+  surfaceElevated: '#FFFFFF',
+  surfaceInverse: '#10233A',
+  border: '#D8E3EF',
+  borderStrong: '#B8C9DA',
+  divider: '#E3ECF5',
+  text: '#10233A',
+  textSecondary: '#5B6B7C',
+  textTertiary: '#8393A6',
+  textInverse: '#FFFFFF',
+  icon: '#415462',
+  iconMuted: '#7D8A99',
+  disabled: '#A9B8C7',
+  disabledSurface: '#E4ECF3',
+  shadow: '#0C1B2A',
+  skeletonBase: '#E7EEF5',
+  skeletonHighlight: '#F4F8FC',
+  chip: '#EDF4FB',
+  chipSelected: '#DCE9FF',
+  input: '#FFFFFF',
+  inputFocused: '#F8FBFF',
+  overlay: 'rgba(11, 23, 42, 0.46)',
+  tabBar: 'rgba(255,255,255,0.96)',
+  tabBarBorder: 'rgba(0,0,0,0.04)',
 };
 
-/**
- * Status-specific badge colors (Pharmacy status indicators)
- * Aligned with DESIGN_TOKENS.md pharmacy status colors
- */
+const DARK_THEME = {
+  primary: COLORS.primary,
+  primaryForeground: COLORS.white,
+  primaryMuted: 'rgba(0, 74, 183, 0.24)',
+  secondary: '#1B907D',
+  secondaryForeground: COLORS.white,
+  secondaryMuted: 'rgba(0, 107, 91, 0.24)',
+  tertiary: '#97A8B7',
+  success: '#36C47C',
+  successMuted: 'rgba(34, 170, 102, 0.22)',
+  warning: '#FFAA45',
+  warningMuted: 'rgba(245, 124, 0, 0.24)',
+  error: '#FF8F8F',
+  errorMuted: 'rgba(186, 26, 26, 0.22)',
+  info: '#7FA7FF',
+  infoMuted: 'rgba(47, 111, 237, 0.22)',
+  background: COLORS.darkBackground,
+  backgroundAccent: '#08111F',
+  surface: '#101A2C',
+  surfaceSecondary: '#132239',
+  surfaceTertiary: '#182943',
+  surfaceOverlay: 'rgba(0, 0, 0, 0.65)',
+  surfaceElevated: '#16243C',
+  surfaceInverse: '#F4F8FC',
+  border: 'rgba(255,255,255,0.08)',
+  borderStrong: 'rgba(255,255,255,0.16)',
+  divider: 'rgba(255,255,255,0.08)',
+  text: '#F5F7FA',
+  textSecondary: '#A9B6C5',
+  textTertiary: '#7E8CA0',
+  textInverse: '#0B1320',
+  icon: '#C8D2DF',
+  iconMuted: '#8C9BB0',
+  disabled: '#66758B',
+  disabledSurface: '#22314A',
+  shadow: '#000000',
+  skeletonBase: '#16243A',
+  skeletonHighlight: '#22314A',
+  chip: '#15263D',
+  chipSelected: 'rgba(0, 74, 183, 0.28)',
+  input: '#101B2D',
+  inputFocused: '#13233A',
+  overlay: 'rgba(3, 9, 18, 0.72)',
+  tabBar: 'rgba(15,27,45,0.96)',
+  tabBarBorder: 'rgba(255,255,255,0.04)',
+};
+
 export const BADGE_COLORS = {
   open: {
-    light: { background: '#C8E6C9', text: '#1B5E20' },
-    dark: { background: '#1B5E20', text: '#C8E6C9' },
+    light: { background: '#DDF6E8', text: '#0D7A47', border: '#B2E6CA' },
+    dark: { background: 'rgba(34,170,102,0.2)', text: '#8FE1B5', border: 'rgba(34,170,102,0.32)' },
   },
   closed: {
-    light: { background: '#FFCCCC', text: '#B71C1C' },
-    dark: { background: '#B71C1C', text: '#FFCCCC' },
+    light: { background: '#FDECEC', text: '#A32525', border: '#F5CACA' },
+    dark: { background: 'rgba(186,26,26,0.2)', text: '#FFB5B5', border: 'rgba(255,143,143,0.26)' },
   },
   emergency: {
-    light: { background: '#FFE0B2', text: '#E65100' },
-    dark: { background: '#E65100', text: '#FFE0B2' },
+    light: { background: '#FFF0DF', text: '#A75A00', border: '#FFD7AE' },
+    dark: { background: 'rgba(245,124,0,0.2)', text: '#FFC57F', border: 'rgba(255,170,69,0.26)' },
   },
   onDuty: {
-    light: { background: '#E1BEE7', text: '#6A1B9A' },
-    dark: { background: '#6A1B9A', text: '#E1BEE7' },
+    light: { background: '#E8F0FF', text: '#004AB7', border: '#C7D9FF' },
+    dark: { background: 'rgba(0,74,183,0.24)', text: '#AFC8FF', border: 'rgba(127,167,255,0.28)' },
   },
 };
 
-/**
- * Get badge colors based on status and theme
- * @param {string} status - Badge status (open, closed, emergency, onDuty)
- * @param {boolean} isDarkMode - Whether dark mode is active
- * @returns {object} { background, text } colors for the badge
- */
+export const getColors = (isDarkMode = false) => (isDarkMode ? DARK_THEME : LIGHT_THEME);
+
 export const getBadgeColors = (status, isDarkMode = false) => {
-  const statusColors = BADGE_COLORS[status] || BADGE_COLORS.closed;
-  return isDarkMode ? statusColors.dark : statusColors.light;
+  const palette = BADGE_COLORS[status] || BADGE_COLORS.closed;
+  return isDarkMode ? palette.dark : palette.light;
 };

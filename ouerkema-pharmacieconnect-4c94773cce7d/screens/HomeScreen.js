@@ -1,136 +1,110 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
   FlatList,
-  TouchableOpacity,
   Linking,
   RefreshControl,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { Feather, Entypo } from '@expo/vector-icons';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import * as Location from 'expo-location';
+import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from './ThemeContext';
 import { useNotifications } from './NotificationContext';
 import { useLanguage } from './LanguageContext';
-import { useForceUpdate } from '../hooks/useForceUpdate';
-import { useDebounce } from '../hooks/useDebounce';
 import { useFavorites } from './FavoritesContext';
 import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
+import { useDebounce } from '../hooks/useDebounce';
 import { loadPharmacies, loadPharmaciesAsync, filterPharmacies } from '../utils/pharmacyDataLoader';
 import logger from '../utils/logger';
-import { Button, Card, Badge, Input, EmptyState } from '../components/design-system';
+import {
+  AppButton,
+  AppCard,
+  AppText,
+  EmptyState,
+  LoadingSkeleton,
+  PharmacyListItem,
+  SearchBar,
+  SectionTitle,
+} from '../components/design-system';
 import PharmacyDetailsModal from '../components/PharmacyDetailsModal';
 import { useRating } from './RatingContext';
-import { getColors } from '../utils/colors';
-import { SPACING, LAYOUT } from '../utils/spacing';
-import { getContextualShadow } from '../utils/shadows';
-import { TEXT_STYLES } from '../utils/typography';
+import { useAppTheme } from '../utils/theme';
 
-const HomeScreen = ({ navigation }) => {
+export default function HomeScreen({ navigation }) {
+  const { isDarkMode } = useTheme();
+  const { isRTL } = useLanguage();
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+  const { colors, radius, shadows } = useAppTheme();
+  const { sendPharmacyReminder, notificationsEnabled } = useNotifications();
+  const { toggleFavorite, isFavorite } = useFavorites();
+  const { getRating } = useRating();
+  const { copyToClipboard } = useCopyToClipboard(() => {}, (error) => {
+    logger.error('HomeScreen', 'Copy error', error);
+  });
+
   const [searchTerm, setSearchTerm] = useState('');
   const [userLocation, setUserLocation] = useState(null);
   const [pharmacies, setPharmacies] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [copiedId, setCopiedId] = useState(null);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [selectedPharmacy, setSelectedPharmacy] = useState(null);
   const [detailsModalVisible, setDetailsModalVisible] = useState(false);
-  const { isDarkMode } = useTheme();
-  const { t } = useTranslation();
-  const { sendPharmacyReminder, notificationsEnabled } = useNotifications();
-  const { isRTL } = useLanguage();
-  const { toggleFavorite, isFavorite } = useFavorites();
-  const { copyToClipboard } = useCopyToClipboard(
-    () => {
-      // Feedback shown inline
-    },
-    (error) => {
-      logger.error('HomeScreen', 'Copy error', error);
-    }
-  );
-  const { getRating, setRating } = useRating();
-  const forceUpdate = useForceUpdate();
 
-  const onRefresh = async () => {
-    setRefreshing(true);
+  const debouncedSearchTerm = useDebounce(searchTerm, 250);
+  const filteredPharmacies = filterPharmacies(pharmacies, debouncedSearchTerm);
+  const openCount = pharmacies.filter((item) => item.isOpen).length;
+  const dutyCount = pharmacies.filter((item) => item.emergency).length;
+  const styles = useMemo(() => createStyles(colors, radius, shadows, isRTL, insets.top), [colors, radius, shadows, isRTL, insets.top]);
+
+  const loadData = async (coords = userLocation) => {
     try {
-      let coords = userLocation;
-      if (!coords) {
-        const perm = await Location.getForegroundPermissionsAsync();
-        if (perm.status === 'granted') {
-          const current = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Balanced,
-          });
-          coords = current.coords;
-          setUserLocation(current.coords);
-        }
-      }
-
-      // Try to load from API first, fallback to static data
-      const pharmaciesData = await loadPharmaciesAsync(t, true, coords);
-      setPharmacies(pharmaciesData);
+      const data = await loadPharmaciesAsync(t, true, coords);
+      setPharmacies(data);
     } catch (error) {
-      logger.error('HomeScreen', 'Error refreshing pharmacies data', error);
-      // Fallback to static data
-      try {
-        const staticPharmacies = loadPharmacies(t);
-        setPharmacies(staticPharmacies);
-      } catch (staticError) {
-        logger.error('HomeScreen', 'Error loading static data', staticError);
-      }
+      logger.error('HomeScreen', 'Error loading pharmacies data', error);
+      setPharmacies(loadPharmacies(t));
     } finally {
+      setInitialLoading(false);
       setRefreshing(false);
     }
   };
 
   useEffect(() => {
-    const loadData = async () => {
+    const bootstrap = async () => {
       try {
-        let coords = null;
         const perm = await Location.getForegroundPermissionsAsync();
         if (perm.status === 'granted') {
           const current = await Location.getCurrentPositionAsync({
             accuracy: Location.Accuracy.Balanced,
           });
-          coords = current.coords;
           setUserLocation(current.coords);
+          await loadData(current.coords);
+          return;
         }
-
-        // Try to load from API first, fallback to static data
-        const pharmaciesData = await loadPharmaciesAsync(t, true, coords);
-        setPharmacies(pharmaciesData);
       } catch (error) {
-        logger.error('HomeScreen', 'Error loading pharmacies data', error);
-        // Fallback to empty array if data loading fails
-        try {
-          const staticPharmacies = loadPharmacies(t);
-          setPharmacies(staticPharmacies);
-        } catch (staticError) {
-          logger.error('HomeScreen', 'Error loading static data', staticError);
-          setPharmacies([]);
-        }
+        logger.warn('HomeScreen', 'Location bootstrap failed', error);
       }
+      await loadData(null);
     };
-    
-    loadData();
+
+    bootstrap();
   }, [t]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+  };
 
   const goToUserLocation = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        // Show translated error message
-        if (typeof alert === 'function') {
-          alert(t('home.locationPermissionDenied'));
-        }
-        // Fallback: still navigate; MapScreen will handle lack of location
-        if (navigation?.jumpTo) {
-          navigation.jumpTo('Carte', { pharmacies });
-        } else {
-          navigation.navigate('Carte', { pharmacies });
-        }
+        if (navigation?.jumpTo) navigation.jumpTo('Carte', { pharmacies });
+        else navigation.navigate?.('Carte', { pharmacies });
         return;
       }
 
@@ -138,385 +112,305 @@ const HomeScreen = ({ navigation }) => {
         accuracy: Location.Accuracy.Highest,
       });
 
-      // Save locally for other buttons (e.g., directions)
       setUserLocation(coords);
-
-      // Refresh list with nearby pharmacies around current user location
-      const nearbyPharmacies = await loadPharmaciesAsync(t, true, coords);
-      setPharmacies(nearbyPharmacies);
-
-      // Navigate to MapScreen with initial user location
-      const params = {
-        pharmacies: nearbyPharmacies && nearbyPharmacies.length > 0 ? nearbyPharmacies : pharmacies,
-        initialLocation: coords,
-      };
-      if (navigation?.jumpTo) {
-        navigation.jumpTo('Carte', params);
-      } else {
-        navigation.navigate('Carte', params);
-      }
-    } catch (e) {
-      // Show generic translated error and navigate without coords
-      if (typeof alert === 'function') {
-        alert(t('home.locationError'));
-      }
-      if (navigation?.jumpTo) {
-        navigation.jumpTo('Carte', { pharmacies });
-      } else {
-        navigation.navigate('Carte', { pharmacies });
-      }
+      await loadData(coords);
+      const nextPharmacies = await loadPharmaciesAsync(t, true, coords).catch(() => pharmacies);
+      setPharmacies(nextPharmacies);
+      const params = { pharmacies: nextPharmacies, initialLocation: coords };
+      if (navigation?.jumpTo) navigation.jumpTo('Carte', params);
+      else navigation.navigate('Carte', params);
+    } catch (error) {
+      logger.error('HomeScreen', 'goToUserLocation failed', error);
+      if (navigation?.jumpTo) navigation.jumpTo('Carte', { pharmacies });
+      else navigation.navigate('Carte', { pharmacies });
     }
   };
 
-  const callPhone = (phoneNumber) => {
-    const url = `tel:${phoneNumber.replace(/\s+/g, '')}`;
-    Linking.openURL(url).catch((err) => logger.error('HomeScreen', "Erreur lors de l'appel", err));
+  const goToDirections = async (item) => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        if (navigation?.jumpTo) navigation.jumpTo('Carte', { pharmacies, targetPharmacy: item });
+        else navigation.navigate('Carte', { pharmacies, targetPharmacy: item });
+        return;
+      }
+      const { coords } = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Highest,
+      });
+      const params = { pharmacies, initialLocation: coords, targetPharmacy: item };
+      if (navigation?.jumpTo) navigation.jumpTo('Carte', params);
+      else navigation.navigate('Carte', params);
+    } catch (error) {
+      logger.warn('HomeScreen', 'Directions location failed', error);
+      if (navigation?.jumpTo) navigation.jumpTo('Carte', { pharmacies, targetPharmacy: item });
+      else navigation.navigate('Carte', { pharmacies, targetPharmacy: item });
+    }
   };
 
-  // Debounce search input for performance (300ms delay)
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
-  const filteredPharmacies = filterPharmacies(pharmacies, debouncedSearchTerm);
+  const callPhone = (phone) => {
+    if (!phone) return;
+    Linking.openURL(`tel:${phone.replace(/\s+/g, '')}`).catch((error) =>
+      logger.error('HomeScreen', 'Call failed', error)
+    );
+  };
 
-  useEffect(() => {
-    forceUpdate();
-  }, [isRTL, forceUpdate]);
+  const formatDistance = (item) => {
+    if (typeof item.distanceKm !== 'number') return t('home.distanceUnavailable', 'Location pending');
+    return item.distanceKm < 1 ? `${Math.round(item.distanceKm * 1000)} m` : `${item.distanceKm.toFixed(1)} km`;
+  };
 
-  const styles = getStyles(isDarkMode, isRTL);
+  const openPharmacyDetails = (pharmacy) => {
+    setSelectedPharmacy(pharmacy);
+    setDetailsModalVisible(true);
+  };
+
+  const renderHeader = () => (
+    <View>
+      <View style={styles.heroCard}>
+        <View style={styles.heroOrbOne} />
+        <View style={styles.heroOrbTwo} />
+        <View style={styles.heroTop}>
+          <View style={styles.heroBadge}>
+            <MaterialCommunityIcons name="shield-plus-outline" size={16} color="#D9F5FF" />
+            <AppText variant="labelMedium" color="#FFFFFF">
+              {t('home.trustedNetwork', 'Trusted pharmacy network')}
+            </AppText>
+          </View>
+          <TouchableOpacity
+            style={styles.heroAction}
+            onPress={() => navigation.navigate('Chatbot')}
+            accessibilityRole="button"
+            accessibilityLabel={t('chatbot.bubbleLabel', 'Open first aid assistant')}
+          >
+            <Ionicons name="sparkles-outline" size={18} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+
+        <AppText variant="headerLarge" color="#FFFFFF">
+          {t('home.nearbyPharmacies', 'Nearby pharmacies')}
+        </AppText>
+        <AppText variant="bodyMedium" color="rgba(255,255,255,0.84)" style={{ marginTop: 8 }}>
+          {t(
+            'home.heroSubtitle',
+            'Search, call, and navigate to nearby pharmacies from one calm and reliable dashboard.'
+          )}
+        </AppText>
+
+        <View style={styles.metricsRow}>
+          {[
+            { value: filteredPharmacies.length, label: t('home.results', 'Results') },
+            { value: openCount, label: t('home.openNow', 'Open now') },
+            { value: dutyCount, label: t('home.onDuty', 'On duty') },
+          ].map((metric) => (
+            <View key={metric.label} style={styles.metricCard}>
+              <AppText variant="headerMedium" color="#FFFFFF" align="center">
+                {metric.value}
+              </AppText>
+              <AppText variant="labelSmall" color="rgba(255,255,255,0.72)" align="center">
+                {metric.label}
+              </AppText>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      <AppCard style={{ marginBottom: 18 }}>
+        <SearchBar
+          placeholder={t('home.searchPlacePlaceholder', 'Search by pharmacy or area')}
+          value={searchTerm}
+          onChangeText={setSearchTerm}
+        />
+        <View style={styles.quickActions}>
+          <AppButton
+            title={t('home.refresh', 'Refresh')}
+            onPress={onRefresh}
+            variant="outlined"
+            style={{ flex: 1 }}
+            icon={<Feather name="refresh-cw" size={16} color={colors.primary} />}
+          />
+          <AppButton
+            title={t('home.myLocation', 'My location')}
+            onPress={goToUserLocation}
+            style={{ flex: 1.1 }}
+            icon={<Feather name="navigation" size={16} color="#FFFFFF" />}
+          />
+        </View>
+      </AppCard>
+
+      <SectionTitle
+        eyebrow={t('home.careDirectory', 'Care directory')}
+        title={t('home.availablePharmacies', 'Available pharmacies')}
+        subtitle={t('home.resultsSubtitle', 'Tap a pharmacy for actions, details, and directions')}
+        aside={
+          <View style={styles.countPill}>
+            <AppText variant="labelLarge" color={colors.primary}>
+              {filteredPharmacies.length}
+            </AppText>
+          </View>
+        }
+      />
+    </View>
+  );
+
+  if (initialLoading) {
+    return (
+      <View style={styles.container}>
+        <FlatList
+          data={[1, 2, 3]}
+          keyExtractor={(item) => item.toString()}
+          ListHeaderComponent={renderHeader()}
+          renderItem={() => <LoadingSkeleton height={188} borderRadius={24} style={{ marginBottom: 14 }} />}
+          contentContainerStyle={styles.content}
+        />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      {/* Header with title */}
-      <View style={styles.titleContainer}>
-        <Feather name="map-pin" size={20} color="#fff" />
-        <Text style={styles.titleText}>{t('home.nearbyPharmacies')}</Text>
-      </View>
-
-      {/* Search Input */}
-      <View style={styles.searchWrapper}>
-        <Input
-          placeholder={t('home.searchPlacePlaceholder', 'Search a place...')}
-          value={searchTerm}
-          onChangeText={setSearchTerm}
-          isDarkMode={isDarkMode}
-          isRTL={isRTL}
-          clearable={true}
-          onClear={() => setSearchTerm('')}
-          icon={<Feather name="search" size={20} color={getColors(isDarkMode).textSecondary} />}
-          accessibilityLabel={t('home.searchAccessibility', 'Search for pharmacies')}
-          editable={true}
-        />
-      </View>
-
-      {/* Location Button */}
-      <View style={styles.locationButtonWrapper}>
-        <Button
-          title={t('home.myLocation')}
-          onPress={goToUserLocation}
-          variant="contained"
-          color="primary"
-          isDarkMode={isDarkMode}
-          fullWidth={true}
-          icon={<Feather name="navigation" size={16} color="white" />}
-        />
-      </View>
-
-      {/* Pharmacy List */}
       <FlatList
         data={filteredPharmacies}
         keyExtractor={(item) => item.id.toString()}
-        keyboardShouldPersistTaps="always"
-        scrollEnabled={true}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={isDarkMode ? '#fff' : '#0066CC'}
-            colors={['#0066CC']}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
-        renderItem={({ item }) => (
-          <Card
-            isDarkMode={isDarkMode}
-            elevation={2}
-            marginBottom={LAYOUT.cardMarginBottom}
-            margin={LAYOUT.screenHorizontalPadding}
-            borderAccent={true}
-            style={[
-              isRTL && { borderLeftWidth: 4, borderLeftColor: '#0066CC', borderRightWidth: 0 },
-              !isRTL && { borderLeftWidth: 4, borderLeftColor: '#0066CC' },
-            ]}
-          >
-            {/* Card Header with Pharmacy Name and Badges */}
-            <View style={styles.cardHeader}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.pharmacyName}>{item.name}</Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => toggleFavorite(item.id)}
-                accessibilityLabel={
-                  isFavorite(item.id) ? t('home.removeFavorite') : t('home.addFavorite')
+        renderItem={({ item }) => {
+          const rating = getRating(item.id);
+          const favorite = isFavorite(item.id);
+          return (
+            <PharmacyListItem
+              item={item}
+              distanceLabel={`${item.governorate || t('home.localCare', 'Local care')} · ${formatDistance(item)}`}
+              rating={rating}
+              favorite={favorite}
+              onToggleFavorite={() => toggleFavorite(item.id)}
+              onOpenDetails={() => openPharmacyDetails(item)}
+              onCall={() => {
+                callPhone(item.phone);
+                if (notificationsEnabled) {
+                  sendPharmacyReminder(item.name, `${item.name} - ${item.address}`);
                 }
-                accessibilityRole="button"
-                style={styles.favoriteButton}
-              >
-                <Feather
-                  name={isFavorite(item.id) ? 'heart' : 'heart'}
-                  size={24}
-                  color={isFavorite(item.id) ? '#e74c3c' : '#cccccc'}
-                  fill={isFavorite(item.id) ? '#e74c3c' : 'none'}
-                />
-              </TouchableOpacity>
-            </View>
-
-            {/* Badges Row */}
-            <View style={styles.badgesContainer}>
-              <Badge
-                status={item.isOpen ? 'open' : 'closed'}
-                isDarkMode={isDarkMode}
-                size="medium"
-              />
-              {item.emergency && (
-                <Badge
-                  status="onDuty"
-                  isDarkMode={isDarkMode}
-                  size="medium"
-                  style={{ marginLeft: SPACING.sm }}
-                >
-                  {t('home.onDuty')}
-                </Badge>
-              )}
-            </View>
-
-            {/* Pharmacy Info Rows */}
-            <View style={styles.infoSection}>
-              <View style={styles.infoRow}>
-                <Entypo name="location-pin" size={16} color={getColors(isDarkMode).textSecondary} />
-                <Text style={[styles.infoText, { flex: 1 }]}>{item.address}</Text>
-                <TouchableOpacity
-                  onPress={() => {
-                    copyToClipboard(item.address);
-                    setCopiedId(`addr-${item.id}`);
-                    setTimeout(() => setCopiedId(null), 2000);
-                  }}
-                  accessibilityLabel={t('home.copyAddress')}
-                  accessibilityRole="button"
-                  style={{ padding: SPACING.xs }}
-                >
-                  <Feather
-                    name={copiedId === `addr-${item.id}` ? 'check' : 'copy'}
-                    size={16}
-                    color={
-                      copiedId === `addr-${item.id}` ? '#10B981' : getColors(isDarkMode).primary
-                    }
-                  />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.infoRow}>
-                <Feather name="clock" size={16} color={getColors(isDarkMode).textSecondary} />
-                <Text style={styles.infoText}>{item.openHours}</Text>
-              </View>
-
-              <View style={styles.infoRow}>
-                <Feather name="phone" size={16} color={getColors(isDarkMode).textSecondary} />
-                <Text style={[styles.infoText, { flex: 1 }]}>{item.phone}</Text>
-                <TouchableOpacity
-                  onPress={() => {
-                    copyToClipboard(item.phone);
-                    setCopiedId(`phone-${item.id}`);
-                    setTimeout(() => setCopiedId(null), 2000);
-                  }}
-                  accessibilityLabel={t('home.copyPhone')}
-                  accessibilityRole="button"
-                  style={{ padding: SPACING.xs }}
-                >
-                  <Feather
-                    name={copiedId === `phone-${item.id}` ? 'check' : 'copy'}
-                    size={16}
-                    color={
-                      copiedId === `phone-${item.id}` ? '#10B981' : getColors(isDarkMode).primary
-                    }
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Action Buttons */}
-            <View style={styles.actionsContainer}>
-              <Button
-                title={t('home.call')}
-                onPress={() => {
-                  callPhone(item.phone);
-                  if (notificationsEnabled) {
-                    sendPharmacyReminder(item.name, `Appel vers ${item.name} - ${item.address}`);
-                  }
-                }}
-                variant="contained"
-                color="secondary"
-                isDarkMode={isDarkMode}
-                size="small"
-                icon={<Feather name="phone" size={14} color="white" />}
-                accessibilityLabel={`${t('home.call')} ${item.name}, ${item.phone}`}
-                accessibilityRole="button"
-              />
-
-              <Button
-                title={t('home.directions')}
-                onPress={async () => {
-                  try {
-                    const { status } = await Location.requestForegroundPermissionsAsync();
-                    if (status !== 'granted') {
-                      if (navigation?.jumpTo) {
-                        navigation.jumpTo('Carte', { pharmacies, targetPharmacy: item });
-                      } else {
-                        navigation.navigate('Carte', { pharmacies, targetPharmacy: item });
-                      }
-                      return;
-                    }
-
-                    const { coords } = await Location.getCurrentPositionAsync({
-                      accuracy: Location.Accuracy.Highest,
-                    });
-
-                    setUserLocation(coords);
-
-                    const params = { pharmacies, initialLocation: coords, targetPharmacy: item };
-                    if (navigation?.jumpTo) {
-                      navigation.jumpTo('Carte', params);
-                    } else {
-                      navigation.navigate('Carte', params);
-                    }
-                  } catch (e) {
-                    if (navigation?.jumpTo) {
-                      navigation.jumpTo('Carte', { pharmacies, targetPharmacy: item });
-                    } else {
-                      navigation.navigate('Carte', { pharmacies, targetPharmacy: item });
-                    }
-                  }
-                }}
-                variant="contained"
-                color="primary"
-                isDarkMode={isDarkMode}
-                size="small"
-                icon={<Entypo name="map" size={14} color="white" />}
-                accessibilityLabel={`${t('home.directions')} ${t('home.to')} ${item.name}, ${item.address}`}
-                accessibilityRole="button"
-              />
-
-              <Button
-                title={t('home.details', 'Details')}
-                onPress={() => {
-                  setSelectedPharmacy(item);
-                  setDetailsModalVisible(true);
-                }}
-                variant="outlined"
-                isDarkMode={isDarkMode}
-                size="small"
-                icon={<Feather name="info" size={14} color={getColors(isDarkMode).primary} />}
-                accessibilityLabel={`${t('home.details', 'View details for')} ${item.name}`}
-                accessibilityRole="button"
-              />
-            </View>
-          </Card>
-        )}
-        scrollEnabled={true}
+              }}
+              onDirections={() => goToDirections(item)}
+            />
+          );
+        }}
+        ListHeaderComponent={renderHeader()}
         ListEmptyComponent={
           <EmptyState
-            icon="search"
-            title={t('home.noPharmacies')}
-            message={t('home.noPharmaciesMessage')}
-            isDarkMode={isDarkMode}
+            icon="search-outline"
+            title={t('home.noPharmacies', 'No pharmacies found')}
+            message={t('home.noPharmaciesMessage', 'Try another keyword or refresh your location.')}
+            actionTitle={t('home.refresh', 'Refresh')}
+            onAction={onRefresh}
           />
         }
-        contentContainerStyle={{ paddingBottom: SPACING.lg }}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
       />
 
-      {/* Pharmacy Details Modal with Rating */}
       <PharmacyDetailsModal
         visible={detailsModalVisible}
         onClose={() => setDetailsModalVisible(false)}
         pharmacy={selectedPharmacy}
         isDarkMode={isDarkMode}
         isRTL={isRTL}
+        onCopy={copyToClipboard}
       />
     </View>
   );
-};
+}
 
-export default HomeScreen;
-
-const getStyles = (isDarkMode, isRTL = false) => {
-  const colors = getColors(isDarkMode);
-  const shadow = getContextualShadow(2, isDarkMode);
-
-  return StyleSheet.create({
+const createStyles = (colors, radius, shadows, isRTL, topInset) =>
+  StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: colors.background || '#FFFFFF',
+      backgroundColor: colors.backgroundAccent,
     },
-    titleContainer: {
+    content: {
+      paddingHorizontal: 16,
+      paddingTop: Math.max(topInset + 24, 96),
+      paddingBottom: 140,
+    },
+    heroCard: {
+      backgroundColor: colors.primary,
+      borderRadius: radius.xxl,
+      padding: 24,
+      marginBottom: 18,
+      overflow: 'hidden',
+      ...shadows.floating,
+    },
+    heroOrbOne: {
+      position: 'absolute',
+      width: 170,
+      height: 170,
+      borderRadius: 85,
+      backgroundColor: 'rgba(255,255,255,0.08)',
+      top: -52,
+      right: isRTL ? undefined : -48,
+      left: isRTL ? -48 : undefined,
+    },
+    heroOrbTwo: {
+      position: 'absolute',
+      width: 116,
+      height: 116,
+      borderRadius: 58,
+      backgroundColor: 'rgba(106, 202, 255, 0.18)',
+      bottom: -24,
+      right: isRTL ? undefined : 34,
+      left: isRTL ? 34 : undefined,
+    },
+    heroTop: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
-      paddingVertical: SPACING.lg,
-      paddingHorizontal: SPACING.lg,
-      backgroundColor: '#0066CC',
-      borderRadius: 0,
-      marginHorizontal: 0,
-      marginTop: 0,
-      marginBottom: SPACING.lg,
-      ...shadow,
-    },
-    titleText: {
-      ...TEXT_STYLES.headerMedium,
-      color: '#FFFFFF',
-      marginLeft: isRTL ? 0 : SPACING.md,
-      marginRight: isRTL ? SPACING.md : 0,
-    },
-    searchWrapper: {
-      paddingHorizontal: LAYOUT.screenHorizontalPadding,
-      paddingBottom: SPACING.md,
-      zIndex: 20,
-      pointerEvents: 'auto',
-    },
-    locationButtonWrapper: {
-      paddingHorizontal: LAYOUT.screenHorizontalPadding,
-      paddingBottom: SPACING.lg,
-    },
-    cardHeader: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: SPACING.md,
+      marginBottom: 22,
     },
-    pharmacyName: {
-      ...TEXT_STYLES.headerSmall,
-      color: colors.text,
-      flex: 1,
-    },
-    badgesContainer: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
-      gap: SPACING.sm,
-    },
-    infoSection: {
-      marginVertical: SPACING.md,
-    },
-    infoRow: {
+    heroBadge: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
-      marginVertical: SPACING.sm,
+      gap: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: radius.full,
+      backgroundColor: 'rgba(255,255,255,0.16)',
     },
-    infoText: {
-      ...TEXT_STYLES.bodySmall,
-      color: colors.textSecondary,
-      marginLeft: isRTL ? 0 : SPACING.sm,
-      marginRight: isRTL ? SPACING.sm : 0,
-      flex: 1,
+    heroAction: {
+      width: 42,
+      height: 42,
+      borderRadius: 21,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: 'rgba(255,255,255,0.14)',
+      borderWidth: 1,
+      borderColor: 'rgba(255,255,255,0.18)',
     },
-    actionsContainer: {
+    metricsRow: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
-      gap: SPACING.sm,
-      marginTop: SPACING.md,
-      justifyContent: 'flex-end',
+      gap: 10,
+      marginTop: 20,
+    },
+    metricCard: {
+      flex: 1,
+      paddingVertical: 14,
+      borderRadius: radius.xl,
+      backgroundColor: 'rgba(5, 21, 46, 0.22)',
+    },
+    quickActions: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+      gap: 10,
+    },
+    countPill: {
+      minWidth: 40,
+      height: 40,
+      borderRadius: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.primaryMuted,
     },
   });
-};

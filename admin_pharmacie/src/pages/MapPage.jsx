@@ -1,223 +1,287 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { LocateFixed, MapPinned, Minus, Plus, Search } from 'lucide-react';
+import api from '../lib/api';
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, EmptyState, Input, SectionHeader } from '../components/ui';
+
+const TILE_SIZE = 256;
+const TUNISIA_CENTER = { lat: 36.8065, lon: 10.1815 };
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+const project = (lat, lon, zoom) => {
+  const scale = TILE_SIZE * 2 ** zoom;
+  const sinLat = Math.sin((lat * Math.PI) / 180);
+  return {
+    x: ((lon + 180) / 360) * scale,
+    y: (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) / (4 * Math.PI)) * scale,
+  };
+};
+
+const unproject = (x, y, zoom) => {
+  const scale = TILE_SIZE * 2 ** zoom;
+  const lon = (x / scale) * 360 - 180;
+  const n = Math.PI - (2 * Math.PI * y) / scale;
+  const lat = (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+  return { lat, lon };
+};
+
+const OSMMap = ({ center, zoom, markers, selectedId, onSelectMarker, onCenterChange, onZoomChange }) => {
+  const containerRef = useRef(null);
+  const dragStateRef = useRef(null);
+  const [size, setSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    if (!containerRef.current) return undefined;
+    const observer = new ResizeObserver(([entry]) => {
+      setSize({ width: entry.contentRect.width, height: entry.contentRect.height });
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const centerWorld = project(center.lat, center.lon, zoom);
+  const originX = centerWorld.x - size.width / 2;
+  const originY = centerWorld.y - size.height / 2;
+  const tileCount = 2 ** zoom;
+  const minTileX = Math.floor(originX / TILE_SIZE);
+  const maxTileX = Math.floor((originX + size.width) / TILE_SIZE);
+  const minTileY = Math.max(0, Math.floor(originY / TILE_SIZE));
+  const maxTileY = Math.min(tileCount - 1, Math.floor((originY + size.height) / TILE_SIZE));
+
+  const tiles = [];
+  for (let tileY = minTileY; tileY <= maxTileY; tileY += 1) {
+    for (let tileX = minTileX; tileX <= maxTileX; tileX += 1) {
+      const wrappedX = ((tileX % tileCount) + tileCount) % tileCount;
+      tiles.push({
+        key: `${zoom}-${wrappedX}-${tileY}-${tileX}`,
+        src: `https://tile.openstreetmap.org/${zoom}/${wrappedX}/${tileY}.png`,
+        left: tileX * TILE_SIZE - originX,
+        top: tileY * TILE_SIZE - originY,
+      });
+    }
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative h-full w-full overflow-hidden rounded-[28px] bg-surface-muted"
+      onPointerDown={(event) => {
+        event.currentTarget.setPointerCapture(event.pointerId);
+        dragStateRef.current = {
+          pointerId: event.pointerId,
+          startX: event.clientX,
+          startY: event.clientY,
+          startCenter: project(center.lat, center.lon, zoom),
+        };
+      }}
+      onPointerMove={(event) => {
+        const dragState = dragStateRef.current;
+        if (!dragState || dragState.pointerId !== event.pointerId) return;
+        const deltaX = event.clientX - dragState.startX;
+        const deltaY = event.clientY - dragState.startY;
+        const nextCenter = unproject(dragState.startCenter.x - deltaX, dragState.startCenter.y - deltaY, zoom);
+        onCenterChange({ lat: clamp(nextCenter.lat, -85, 85), lon: nextCenter.lon });
+      }}
+      onPointerUp={(event) => {
+        if (dragStateRef.current?.pointerId === event.pointerId) dragStateRef.current = null;
+      }}
+      onPointerLeave={(event) => {
+        if (dragStateRef.current?.pointerId === event.pointerId) dragStateRef.current = null;
+      }}
+      onWheel={(event) => {
+        event.preventDefault();
+        onZoomChange(clamp(zoom + (event.deltaY < 0 ? 1 : -1), 5, 18));
+      }}
+    >
+      {tiles.map((tile) => (
+        <img
+          key={tile.key}
+          src={tile.src}
+          alt=""
+          draggable="false"
+          className="pointer-events-none absolute h-64 w-64 max-w-none select-none"
+          style={{ left: tile.left, top: tile.top }}
+        />
+      ))}
+
+      {markers.map((marker) => {
+        const point = project(marker.latitude, marker.longitude, zoom);
+        const left = point.x - originX;
+        const top = point.y - originY;
+        if (left < -40 || top < -40 || left > size.width + 40 || top > size.height + 40) return null;
+        const selected = marker.id === selectedId;
+        return (
+          <button
+            key={marker.id}
+            type="button"
+            onClick={() => onSelectMarker(marker)}
+            className="absolute -translate-x-1/2 -translate-y-full"
+            style={{ left, top }}
+          >
+            <div className={`flex h-10 w-10 items-center justify-center rounded-full border-4 border-white shadow-card ${selected ? 'bg-warning text-warning-foreground' : 'bg-primary text-primary-foreground'}`}>
+              <MapPinned className="h-4 w-4" />
+            </div>
+            <div className={`mx-auto h-3 w-3 -translate-y-1 rotate-45 ${selected ? 'bg-warning' : 'bg-primary'}`} />
+          </button>
+        );
+      })}
+    </div>
+  );
+};
 
 const MapPage = () => {
+  const [pharmacies, setPharmacies] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPharmacy, setSelectedPharmacy] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [center, setCenter] = useState(TUNISIA_CENTER);
+  const [zoom, setZoom] = useState(11);
 
-  const pharmacies = [
-    {
-      id: 1,
-      name: 'Central Hub Pharmacy',
-      address: '742 Evergreen Terrace, Downtown',
-      status: 'active',
-      lat: '34.0522',
-      lng: '-118.2437',
-      inventory: 'High',
-    },
-    {
-      id: 2,
-      name: 'Northside Wellness',
-      address: '210 Baker St, North District',
-      status: 'active',
-      lat: '34.1204',
-      lng: '-118.3001',
-      inventory: 'Medium',
-    },
-    {
-      id: 3,
-      name: 'Harbor Clinic Rx',
-      address: '55 Dockside Blvd, Marina',
-      status: 'offline',
-      lat: '33.7542',
-      lng: '-118.2120',
-      inventory: 'Low',
-    },
-    {
-      id: 4,
-      name: 'Sunset Medical',
-      address: '8900 Sunset Blvd',
-      status: 'active',
-      lat: '34.0901',
-      lng: '-118.3842',
-      inventory: 'High',
-    },
-  ];
+  useEffect(() => {
+    let active = true;
+    const loadPharmacies = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const response = await api.get('/api/admin/pharmacies', { params: { skip: 0, limit: 300 } });
+        if (!active) return;
+        const rows = Array.isArray(response.data)
+          ? response.data.filter((item) => typeof item.latitude === 'number' && typeof item.longitude === 'number')
+          : [];
+        setPharmacies(rows);
+        if (rows[0]) {
+          setSelectedPharmacy(rows[0]);
+          setCenter({ lat: rows[0].latitude, lon: rows[0].longitude });
+        }
+      } catch (err) {
+        if (!active) return;
+        setError(err.response?.data?.detail || err.message || 'Failed to load pharmacies for the map.');
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    loadPharmacies();
+    return () => {
+      active = false;
+    };
+  }, []);
 
-  const handlePlaceSearch = () => {
-    console.log('Searching for:', searchTerm);
+  const filteredPharmacies = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) return pharmacies;
+    return pharmacies.filter((item) =>
+      [item.name, item.address, item.governorate].filter(Boolean).some((value) => value.toLowerCase().includes(query))
+    );
+  }, [pharmacies, searchTerm]);
+
+  const focusPharmacy = (pharmacy) => {
+    setSelectedPharmacy(pharmacy);
+    setCenter({ lat: pharmacy.latitude, lon: pharmacy.longitude });
+    setZoom(14);
   };
 
   return (
-    <div className="flex-1 flex overflow-hidden">
-      {/* Sidebar: Pharmacy List & Coordinator Entry */}
-      <section className="w-96 bg-surface-container-low flex flex-col z-10 shadow-xl overflow-hidden">
-        <div className="p-6 pb-4">
-          <h2 className="text-xl font-extrabold text-on-surface tracking-tight mb-2">Network Topology</h2>
-          <p className="text-xs text-on-surface-variant font-medium uppercase tracking-widest">
-            Active Pharmacie Nodes ({pharmacies.length})
-          </p>
-        </div>
+    <div className="page-shell">
+      <div className="page-content">
+        <SectionHeader
+          eyebrow="Mapping"
+          title="Pharmacy map"
+          description="Live pharmacy coordinates rendered on OpenStreetMap with a cleaner operator surface and better scanability."
+        />
 
-        {/* Coordinate Quick Entry Bento Card */}
-        <div className="mx-6 mb-6 p-5 bg-surface-container-lowest rounded-3xl shadow-sm border border-outline-variant/10">
-          <div className="flex items-center gap-2 mb-4 text-primary">
-            <span>📍</span>
-            <span className="text-sm font-bold">New Node Coordinate</span>
-          </div>
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <div>
-              <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Latitude</label>
-              <input
-                type="text"
-                defaultValue="34.0522"
-                className="w-full bg-surface-container-highest border-none rounded-lg text-sm font-mono focus:ring-1 focus:ring-primary/40 py-2 px-3"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Longitude</label>
-              <input
-                type="text"
-                defaultValue="-118.2437"
-                className="w-full bg-surface-container-highest border-none rounded-lg text-sm font-mono focus:ring-1 focus:ring-primary/40 py-2 px-3"
-              />
-            </div>
-          </div>
-          <button className="w-full bg-primary text-white py-2.5 rounded-full text-xs font-bold hover:bg-primary-container transition-all flex items-center justify-center gap-2">
-            <span>🎯</span>
-            Register Location
-          </button>
-        </div>
-
-        {/* Scrollable Pharmacy List */}
-        <div className="flex-1 overflow-y-auto px-6 space-y-3 pb-8">
-          {pharmacies.map((pharmacy) => (
-            <div
-              key={pharmacy.id}
-              onClick={() => setSelectedPharmacy(pharmacy)}
-              className={`group bg-surface-container-lowest p-4 rounded-3xl border-l-4 transition-all hover:translate-x-1 cursor-pointer shadow-sm ${
-                pharmacy.status === 'active'
-                  ? 'border-primary'
-                  : 'border-transparent hover:border-primary-fixed'
-              }`}
-            >
-              <div className="flex justify-between items-start mb-1">
-                <h3 className="font-bold text-sm">{pharmacy.name}</h3>
-                <span
-                  className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                    pharmacy.status === 'active'
-                      ? 'bg-secondary-container/30 text-on-secondary-container'
-                      : 'text-error'
-                  }`}
-                >
-                  {pharmacy.status === 'active' ? 'ACTIVE' : 'OFFLINE'}
-                </span>
-              </div>
-              <p className="text-xs text-on-surface-variant mb-3">{pharmacy.address}</p>
-              <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 bg-surface-container-low px-2 py-1.5 rounded-lg group-hover:bg-primary/5 transition-colors">
-                <span>LAT: {pharmacy.lat}</span>
-                <span>LNG: {pharmacy.lng}</span>
-                <button className="text-primary font-bold hover:underline flex items-center gap-1">
-                  <span>✏️</span>
-                  Update
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Map View Area */}
-      <div className="flex-1 relative bg-slate-200 overflow-hidden">
-        {/* Background Map Decoration */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-200 to-slate-300 opacity-50"></div>
-
-        {/* Map UI Overlays */}
-        <div className="absolute inset-0 pointer-events-none map-gradient-overlay"></div>
-
-        {/* Floating Map Controls */}
-        <div className="absolute top-6 right-6 flex flex-col gap-2">
-          <div className="bg-white rounded-3xl shadow-lg p-1.5 flex flex-col pointer-events-auto">
-            <button className="p-2.5 text-slate-600 hover:text-primary hover:bg-slate-50 rounded-lg transition-colors">
-              ➕
-            </button>
-            <div className="h-px bg-slate-100 mx-2"></div>
-            <button className="p-2.5 text-slate-600 hover:text-primary hover:bg-slate-50 rounded-lg transition-colors">
-              ➖
-            </button>
-          </div>
-          <button className="bg-white p-2.5 rounded-3xl shadow-lg text-slate-600 hover:text-primary pointer-events-auto transition-colors">
-            📚
-          </button>
-          <button className="bg-white p-2.5 rounded-3xl shadow-lg text-slate-600 hover:text-primary pointer-events-auto transition-colors">
-            📍
-          </button>
-        </div>
-
-        {/* Custom Map Markers (Pins) */}
-        <div className="absolute top-1/3 left-1/4 pointer-events-auto group">
-          <div className="relative flex flex-col items-center">
-            {/* Tooltip Popup */}
-            <div className="absolute bottom-full mb-3 hidden group-hover:block w-48 bg-white p-3 rounded-3xl shadow-2xl ring-1 ring-slate-100 z-50">
-              <p className="text-[10px] font-bold text-primary uppercase mb-1">Central Hub</p>
-              <p className="text-xs font-medium text-slate-700 leading-tight">742 Evergreen Terrace</p>
-              <div className="mt-2 flex items-center justify-between">
-                <span className="text-[10px] text-slate-400">Inventory: High</span>
-                <span className="w-2 h-2 rounded-full bg-secondary"></span>
-              </div>
-            </div>
-            {/* Custom Pin Marker */}
-            <div className="w-10 h-10 bg-primary rounded-full rounded-bl-none rotate-45 flex items-center justify-center border-2 border-white shadow-lg transition-transform hover:scale-110 cursor-pointer text-white text-sm">
-              💊
-            </div>
-            <div className="w-2 h-2 bg-primary/30 rounded-full blur-[2px] mt-1"></div>
-          </div>
-        </div>
-
-        <div className="absolute top-1/2 left-2/3 pointer-events-auto group">
-          <div className="relative flex flex-col items-center">
-            <div className="w-8 h-8 bg-tertiary rounded-full rounded-bl-none rotate-45 flex items-center justify-center border-2 border-white shadow-lg transition-transform hover:scale-110 cursor-pointer text-white text-xs">
-              🏥
-            </div>
-          </div>
-        </div>
-
-        <div className="absolute top-2/3 left-1/2 pointer-events-auto group">
-          <div className="relative flex flex-col items-center">
-            <div className="w-8 h-8 bg-secondary rounded-full rounded-bl-none rotate-45 flex items-center justify-center border-2 border-white shadow-lg transition-transform hover:scale-110 cursor-pointer text-white text-xs">
-              💊
-            </div>
-          </div>
-        </div>
-
-        {/* Map Stats Footer (Glassmorphism) */}
-        <div className="absolute bottom-8 left-8 right-8 bg-white/70 backdrop-blur-md p-4 rounded-3xl shadow-xl flex items-center justify-between border border-white/40">
-          <div className="flex gap-8">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                📍
-              </div>
+        <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
+          <Card className="overflow-hidden">
+            <CardHeader>
               <div>
-                <p className="text-[10px] font-bold text-slate-500 uppercase">Avg Response Distance</p>
-                <p className="text-lg font-bold">4.2 km</p>
+                <CardTitle>Directory</CardTitle>
+                <CardDescription>Search visible mapped pharmacies.</CardDescription>
               </div>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="pl-9" placeholder="Search pharmacy or governorate" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Button variant="secondary" onClick={() => { setCenter(TUNISIA_CENTER); setZoom(7); }}>Tunisia view</Button>
+                <Button variant="secondary" onClick={() => navigator.geolocation?.getCurrentPosition(({ coords }) => { setCenter({ lat: coords.latitude, lon: coords.longitude }); setZoom(13); })}>
+                  <LocateFixed className="h-4 w-4" />
+                  Locate
+                </Button>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-2xl bg-surface-muted p-4 text-center">
+                  <p className="text-xs text-muted-foreground">Visible</p>
+                  <p className="mt-2 font-display text-2xl font-semibold text-foreground">{filteredPharmacies.length}</p>
+                </div>
+                <div className="rounded-2xl bg-surface-muted p-4 text-center">
+                  <p className="text-xs text-muted-foreground">Zoom</p>
+                  <p className="mt-2 font-display text-2xl font-semibold text-foreground">{zoom}</p>
+                </div>
+                <div className="rounded-2xl bg-surface-muted p-4 text-center">
+                  <p className="text-xs text-muted-foreground">Tiles</p>
+                  <p className="mt-2 text-sm font-medium text-foreground">OSM</p>
+                </div>
+              </div>
+              <div className="max-h-[520px] space-y-3 overflow-auto">
+                {loading ? (
+                  <EmptyState icon={MapPinned} title="Loading pharmacies" description="Fetching mapped pharmacies from the admin API." />
+                ) : error ? (
+                  <div className="rounded-2xl border border-danger/30 bg-danger-soft p-4 text-sm text-danger">{error}</div>
+                ) : filteredPharmacies.length ? (
+                  filteredPharmacies.map((pharmacy) => (
+                    <button
+                      key={pharmacy.id}
+                      type="button"
+                      onClick={() => focusPharmacy(pharmacy)}
+                      className={`w-full rounded-2xl border p-4 text-left transition ${selectedPharmacy?.id === pharmacy.id ? 'border-primary bg-primary-soft' : 'border-border bg-surface hover:bg-surface-muted'}`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-medium text-foreground">{pharmacy.name}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">{pharmacy.address || pharmacy.governorate || 'No address'}</p>
+                        </div>
+                        <Badge variant="primary">{pharmacy.governorate || 'N/A'}</Badge>
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <EmptyState icon={MapPinned} title="No matches" description="No pharmacies match the current map search." />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="relative min-h-[720px]">
+            <OSMMap
+              center={center}
+              zoom={zoom}
+              markers={filteredPharmacies}
+              selectedId={selectedPharmacy?.id}
+              onSelectMarker={focusPharmacy}
+              onCenterChange={setCenter}
+              onZoomChange={setZoom}
+            />
+            <div className="absolute right-5 top-5 flex flex-col gap-2">
+              <Button variant="secondary" size="icon" onClick={() => setZoom((current) => clamp(current + 1, 5, 18))}>
+                <Plus className="h-4 w-4" />
+              </Button>
+              <Button variant="secondary" size="icon" onClick={() => setZoom((current) => clamp(current - 1, 5, 18))}>
+                <Minus className="h-4 w-4" />
+              </Button>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
-                🔗
+            {selectedPharmacy ? (
+              <div className="absolute inset-x-5 bottom-5 max-w-2xl rounded-[28px] border border-border bg-background/90 p-5 shadow-panel backdrop-blur">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-primary">Selected pharmacy</p>
+                    <h2 className="mt-2 font-display text-2xl font-semibold text-foreground">{selectedPharmacy.name}</h2>
+                    <p className="mt-2 text-sm text-muted-foreground">{selectedPharmacy.address || 'No address available'}</p>
+                  </div>
+                  <Badge variant="success">Mapped</Badge>
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] font-bold text-slate-500 uppercase">Network Density</p>
-                <p className="text-lg font-bold">Optimal</p>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 bg-slate-900/5 px-4 py-2 rounded-3xl">
-            <span className="text-xs font-mono text-slate-600">CURSOR: 34.05° N, 118.24° W</span>
-            <div className="h-4 w-px bg-slate-300"></div>
-            <button className="text-xs font-bold text-primary flex items-center gap-1 hover:underline">
-              <span>📤</span>
-              Export GIS Data
-            </button>
+            ) : null}
           </div>
         </div>
       </div>

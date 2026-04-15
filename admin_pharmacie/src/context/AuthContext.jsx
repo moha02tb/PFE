@@ -6,7 +6,7 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(() => {
         // Check if user was previously authenticated
-        return !!localStorage.getItem('refresh_token');
+        return !!localStorage.getItem('access_token') && !!localStorage.getItem('refresh_token');
     });
     const [user, setUser] = useState(() => {
         // Restore user from localStorage if it exists
@@ -30,15 +30,14 @@ export const AuthProvider = ({ children }) => {
                 password,
             });
 
-            // Store refresh token in localStorage
+            // Store both tokens in localStorage
+            localStorage.setItem('access_token', response.data.access_token);
             localStorage.setItem('refresh_token', response.data.refresh_token);
 
-            // Create user object from login response
-            const userData = {
-                id: response.data.user_id || 1,
-                email: email,
-                role: response.data.role || 'ADMIN',
-            };
+            // Fetch user data from /me endpoint with new token
+            // Temporarily set the header for this request
+            const meResponse = await api.get('/api/auth/me');
+            const userData = meResponse.data;
 
             // Store user data
             localStorage.setItem('user', JSON.stringify(userData));
@@ -91,6 +90,7 @@ export const AuthProvider = ({ children }) => {
             // Clear client state and storage
             setIsAuthenticated(false);
             setUser(null);
+            localStorage.removeItem('access_token');
             localStorage.removeItem('refresh_token');
             localStorage.removeItem('user');
         }

@@ -1,239 +1,41 @@
-# Backend Architecture Documentation
+# Backend Architecture
 
-## Overview
+This file is now a backend-specific companion to the central documentation in `docs/`.
 
-The pharmacy management backend uses a layered architecture designed for scalability, testability, and maintainability.
+## Main Components
 
-```
-┌─────────────────────────────────────┐
-│     FastAPI Application (main.py)   │  (HTTP Server, Routing)
-├─────────────────────────────────────┤
-│         API Routers                 │  (HTTP Handlers)
-│  - routers/auth.py                  │  - Validation, error handling
-│  - routers/admin.py                 │  - Response serialization
-│  - routers/pharmacy.py (public)     │
-├─────────────────────────────────────┤
-│      Services Layer                 │  (Business Logic)
-│  - AuthService                      │  - Core operations
-│  - AdminService                     │  - Rules enforcement
-│  - PharmacyService                  │  - Data consistency
-│  - AuditService                     │
-├─────────────────────────────────────┤
-│  Data Access & Validation           │  (ORM & Schema)
-│  - models.py (SQLAlchemy)           │  - Database models
-│  - schemas.py (Pydantic)            │  - Request/response validation
-│  - security.py                      │  - Auth utilities
-├─────────────────────────────────────┤
-│        PostgreSQL Database          │  (Persistent Storage)
-└─────────────────────────────────────┘
+- `main.py` - FastAPI bootstrap, middleware, startup migrations, and public endpoints
+- `routers/` - grouped route handlers for auth, admin, and analytics
+- `services/` - business logic for auth, pharmacies, medicines, garde, analytics, cache, and email
+- `models.py` - SQLAlchemy models
+- `schemas.py` - Pydantic request and response schemas
+- `database.py` - engine and session configuration
+- `migrations/` - SQL migration files
+- `events/` - event bus and listeners
+
+## Runtime Flow
+
+```text
+HTTP request
+  -> FastAPI route
+  -> service layer
+  -> SQLAlchemy session
+  -> database
 ```
 
-## Layer Descriptions
+## Key Behavior
 
-### 1. API Routers (routers/)
-**Purpose:** HTTP request handling and response serialization
+- Environment variables are loaded during startup.
+- Schema migrations are run on startup through `run_schema_migrations(engine)`.
+- Public read endpoints live in `main.py`.
+- Authenticated and admin-specific endpoints are defined in router modules.
+- Security helpers are centralized in `security.py`.
 
-**Responsibilities:**
-- Parse incoming HTTP requests
-- Call appropriate service methods
-- Handle HTTP-specific concerns (status codes, headers, cookies)
-- Serialize responses using Pydantic schemas
-- Document endpoints with OpenAPI specs (docstrings)
+## Related Docs
 
-**Key Pattern:** Routers delegate all business logic to services
-```python
-@router.post("/login")
-async def login(credentials: LoginRequest, db: Session):
-    auth_service = AuthService(db)
-    tokens, error = auth_service.login(credentials, ip_address)
-    if error:
-        raise HTTPException(status=401, detail=error)
-    return tokens
-```
-
-### 2. Services Layer (services/)
-**Purpose:** Encapsulate business logic independent of HTTP
-
-**Key Classes:**
-
-#### AuthService
-- User authentication (admin & regular)
-- Token generation and refresh
-- Registration and profile updates
-- User creation by admins
-- Methods return `(result, error)` tuples for clean error handling
-
-#### AdminService
-- Admin user management
-- Role and active status changes
-- Admin-specific business rules
-
-#### PharmacyService
-- CSV upload and validation
-- Pharmacy CRUD operations
-- Nearby pharmacy search (Haversine distance)
-- Bulk operations with transaction safety
-
-#### AuditService
-- Action logging
-- Audit trail queries
-- Activity tracking
-
-**Benefits:**
-- Testable without HTTP context
-- Reusable across multiple routers
-- Clear separation of concerns
-- Easy to add new features (e.g., background jobs)
-
-### 3. Data Layer (models.py, schemas.py)
-
-#### Models (SQLAlchemy ORM)
-```python
-class Administrateur(Base):
-    id: int (primary key)
-    email: str (unique)
-    nomUtilisateur: str (unique)
-    motDePasse: str (hashed)
-    role: str (admin | super_admin)
-    is_active: bool
-    created_by: int (foreign key to self)
-    created_at: datetime
-```
-
-6 Core tables:
-1. **administrateurs** - Admin users
-2. **utilisateurs** - Regular users
-3. **pharmacies** - Pharmacy data (OSM-based)
-4. **refresh_tokens** - Token revocation tracking
-5. **audit_logs** - Activity audit trail
-6. **login_attempts** - Failed login tracking
-
-#### Schemas (Pydantic Validation)
-- **Request Schemas** - Validate incoming data
-  - `LoginRequest` - email, password
-  - `RegisterRequest` - email, password, username
-  - `AdminCreate` - admin creation (strict validation)
-  
-- **Response Schemas** - Serialize outgoing data
-  - `TokenResponse` - access/refresh tokens
-  - `AdminResponse`, `UserResponse` - User data (no passwords)
-  - `PharmacieUploadResponse` - Upload results with errors
-
-### 4. Security Layer (security.py)
-
-**Functions:**
-- `hash_password()` - Bcrypt password hashing
-- `verify_password()` - Password comparison
-- `create_access_token()` - JWT generation (15 min)
-- `create_refresh_token()` - Long-lived JWT (7 days)
-- `verify_token()` - JWT validation and decoding
-
-**Key Constants:**
-```python
-ACCESS_TOKEN_EXPIRE_MINUTES = 15
-REFRESH_TOKEN_EXPIRE_DAYS = 7
-SECRET_KEY = os.getenv("SECRET_KEY")  # Must be set in .env
-```
-
-### 5. Dependency Injection (dependencies.py)
-
-**Key Dependencies:**
-```python
-async def get_current_account(token: str) -> Union[Administrateur, Utilisateur]:
-    """Authenticates and returns current user (admin or regular)"""
-
-def admin_required(user: Union[Administrateur, Utilisateur]):
-    """Raises 403 if user is not admin"""
-```
-
-**Usage in Routes:**
-```python
-@router.delete("/pharmacies/{id}")
-async def delete(id: int, current_admin = Depends(admin_required)):
-    # current_admin is guaranteed to be Administrateur
-```
-
-## Request Flow Example: User Login
-
-```
-1. HTTP POST /api/auth/login
-   ↓
-2. FastAPI validates with LoginRequest schema
-   ↓
-3. Router calls AuthService.login()
-   ↓
-4. Service performs:
-   - Query DB for admin/user by email
-   - Verify password
-   - Create tokens if valid
-   - Log login attempt
-   ↓
-5. Router handles response:
-   - If error: raise HTTPException
-   - If token: set HttpOnly cookie, return tokens
-   ↓
-6. Client receives TokenResponse with tokens
-```
-
-## Data Consistency & Transaction Safety
-
-### Transactions
-All database operations are lazy-committed:
-```python
-# All modifications are grouped and committed once
-db.add(model1)
-db.add(model2)
-db.commit()  # Single atomic transaction
-
-# On error: rollback all
-try:
-    db.add(model)
-    db.commit()
-except:
-    db.rollback()  # Reverts all changes
-```
-
-### Audit Logging
-Every significant action is logged:
-```python
-audit_service.log_action(
-    action=AuditActionEnum.LOGIN_SUCCESS,
-    actor_id=user.id,
-    actor_type="utilisateur",
-    entity_type="user",
-    entity_id=user.id,
-    details={"ip": "192.168.1.1", "device": "web"}
-)
-```
-
-## Testing Strategy
-
-### Test Pyramid
-```
-     △ (Integration Tests - Few)
-    ╱ ╲
-   ╱ E2E╲
-  ╱───────╲
- △ (Service Tests - Medium)
-╱ ╲
-╱   ╲ - AuthService, AdminService, etc.
-╱─────╲
-△ (Unit Tests - Many)
-╱ ╲
-╱   ╲ - security.py, models.py, etc.
-╱─────╲
-```
-
-### Test Files
-- `test_services.py` - Service layer logic (80+ test cases)
-- `test_endpoints.py` - API integration tests
-- `test_auth.py` - Authentication workflows
-- `test_models.py` - ORM validation
-- `test_security.py` - Password hashing, JWT
-- `conftest.py` - Shared fixtures
-
-### Running Tests
-```bash
+- `../docs/backend-api.md`
+- `../docs/api-reference.md`
+- `../docs/architecture.md`
 # Run all tests
 pytest
 
@@ -337,7 +139,7 @@ def test_update_pharmacy(client: TestClient, admin_headers):
 
 ### Environment Variables (.env)
 ```
-DATABASE_URL=postgresql://user:password@localhost/pharmacy_db
+DATABASE_URL=postgresql://postgres:password@localhost/pharmacie_db
 SECRET_KEY=your-secret-key-here-min-32-chars
 ALGORITHM=HS256
 CORS_ORIGINS=http://localhost:3000,http://localhost:5173
@@ -346,15 +148,16 @@ DEBUG=False
 
 ### Database Migrations
 ```bash
-# Create new migration
-alembic revision --autogenerate -m "Add new table"
-
-# Apply migrations
+# Apply application migrations
 python migrate.py
 
-# Rollback
-alembic downgrade -1
+# Optional: run the reviewed PostgreSQL cleanup scripts manually
+psql "$DATABASE_URL" -f migrations/007_postgres_auth_architecture_cleanup.sql
+psql "$DATABASE_URL" -f migrations/008_drop_confirmed_legacy_tables.sql
 ```
+
+`pharmacy_garde` is currently outside the FastAPI ORM and should be kept until
+you either integrate it into the backend domain model or archive it explicitly.
 
 ## Monitoring & Debugging
 

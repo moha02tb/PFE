@@ -22,6 +22,7 @@ import { SPACING, LAYOUT } from '../utils/spacing';
 import { getContextualShadow } from '../utils/shadows';
 import { TEXT_STYLES } from '../utils/typography';
 import { API_CONFIG } from '../config/api';
+import { trackSearchEvent } from '../utils/pharmacyDataLoader';
 
 // Tile provider configurations - Choose the one that works best for Tunisia
 const TILE_PROVIDERS = {
@@ -231,7 +232,7 @@ export default function MapScreen({ route, navigation }) {
       );
       const data = await resp.json();
       if (Array.isArray(data) && data.length > 0) {
-        const { lat, lon } = data[0];
+        const { lat, lon, display_name: displayName } = data[0];
         setLocation((prev) => ({
           latitude: parseFloat(lat),
           longitude: parseFloat(lon),
@@ -239,6 +240,14 @@ export default function MapScreen({ route, navigation }) {
           latitudeDelta: prev?.latitudeDelta ?? 0.05,
           longitudeDelta: prev?.longitudeDelta ?? 0.05,
         }));
+        await trackSearchEvent({
+          eventType: 'place_search',
+          queryText: query,
+          locationLabel: displayName || query,
+          latitude: parseFloat(lat),
+          longitude: parseFloat(lon),
+          resultCount: data.length,
+        });
       }
     } catch (e) {
       logger.warn('MapScreen', 'Place search failed', e);

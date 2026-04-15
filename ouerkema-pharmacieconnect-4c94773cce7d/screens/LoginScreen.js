@@ -1,274 +1,186 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-  Alert,
-  StyleSheet,
-  SafeAreaView,
-} from 'react-native';
-import { useAuth } from './AuthContext';
-import { useTheme } from './ThemeContext';
-import { useLanguage } from './LanguageContext';
+import React, { useMemo, useState } from 'react';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import AuthShell from '../components/AuthShell';
+import { AppButton, AppInput, AppText, FormErrorText } from '../components/design-system';
+import { useAuth } from './AuthContext';
+import { useAppTheme } from '../utils/theme';
 
-const LoginScreen = ({ navigation }) => {
-  const { isDarkMode } = useTheme();
-  const { isRTL } = useLanguage();
+export default function LoginScreen({ navigation }) {
   const { t } = useTranslation();
-  const { login, loading, error } = useAuth();
+  const { colors, radius, isRTL } = useAppTheme();
+  const { login, beginEmailVerification, loading, error } = useAuth();
+  const styles = useMemo(() => createStyles(colors, radius, isRTL), [colors, radius, isRTL]);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
 
-  // Email validation
-  const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  // Form validation
   const validateForm = () => {
     let valid = true;
     setEmailError('');
     setPasswordError('');
 
     if (!email.trim()) {
-      setEmailError(t('Email is required'));
+      setEmailError(t('Email is required', 'Email is required'));
       valid = false;
-    } else if (!validateEmail(email)) {
-      setEmailError(t('Invalid email address'));
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setEmailError(t('Invalid email address', 'Invalid email address'));
       valid = false;
     }
 
     if (!password) {
-      setPasswordError(t('Password is required'));
+      setPasswordError(t('Password is required', 'Password is required'));
       valid = false;
     } else if (password.length < 6) {
-      setPasswordError(t('Password must be at least 6 characters'));
+      setPasswordError(t('Password must be at least 6 characters', 'Password must be at least 6 characters'));
       valid = false;
     }
 
     return valid;
   };
 
-  // Handle login
-  const handleLogin = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    const result = await login(email, password);
+  const handleLogin = async() => {
+    if (!validateForm()) return;
+    const result = await login(email.trim(), password);
     if (!result.success) {
-      Alert.alert(t('Login Failed'), result.error);
+      if (typeof result.error === 'string' && result.error.toLowerCase().includes('verify your email')) {
+        beginEmailVerification(email.trim());
+        return;
+      }
+      Alert.alert(t('Login Failed', 'Login Failed'), result.error);
     }
   };
-
-  // Navigate to register
-  const handleNavigateToRegister = () => {
-    navigation.replace('Register');
-  };
-
-  const styles = createStyles(isDarkMode, isRTL);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? '#1E1E1E' : '#fff' }]}>
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: isDarkMode ? '#fff' : '#333' }]}>
-            {t('Pharmacies de Garde')}
-          </Text>
-          <Text style={[styles.subtitle, { color: isDarkMode ? '#aaa' : '#666' }]}>
-            {t('Sign in to your account')}
-          </Text>
+    <AuthShell
+      badge={
+        <>
+          <MaterialCommunityIcons name="shield-check-outline" size={18} color="#FFFFFF" />
+          <AppText variant="labelMedium" color="#FFFFFF">PharmacieConnect</AppText>
+        </>
+      }
+      title={t('Welcome back', 'Welcome back')}
+      subtitle={t(
+        'Sign in to your account',
+        'Access pharmacies, directions, saved favorites, and reminders from one secure place.'
+      )}
+      highlights={[
+        t('Nearby pharmacies', 'Nearby pharmacies'),
+        t('Trusted information', 'Trusted information'),
+      ]}
+      footerNote={t(
+        'By continuing, you access your saved pharmacies and personalized reminders securely.',
+        'By continuing, you access your saved pharmacies and personalized reminders securely.'
+      )}
+    >
+      <View style={styles.formHeader}>
+        <AppText variant="headerMedium">{t('Sign in', 'Sign in')}</AppText>
+        <AppText variant="bodyMedium" color={colors.textSecondary} style={{ marginTop: 6 }}>
+          {t('Continue to your account', 'Continue to your account')}
+        </AppText>
+      </View>
+
+      <FormErrorText message={error} style={{ marginBottom: error ? 16 : 0 }} />
+
+      <AppInput
+        label={t('Email', 'Email')}
+        placeholder={t('Enter your email', 'Enter your email')}
+        value={email}
+        onChangeText={(text) => {
+          setEmail(text);
+          setEmailError('');
+        }}
+        keyboardType="email-address"
+        error={emailError}
+        icon={<Feather name="mail" size={18} color={colors.iconMuted} />}
+      />
+
+      <AppInput
+        label={t('Password', 'Password')}
+        placeholder={t('Enter your password', 'Enter your password')}
+        value={password}
+        onChangeText={(text) => {
+          setPassword(text);
+          setPasswordError('');
+        }}
+        secureTextEntry
+        error={passwordError}
+        icon={<Feather name="lock" size={18} color={colors.iconMuted} />}
+      />
+
+      <AppButton
+        title={t('Sign In', 'Sign In')}
+        onPress={handleLogin}
+        loading={loading}
+        size="large"
+        fullWidth
+        icon={<Feather name={isRTL ? 'arrow-left' : 'arrow-right'} size={16} color="#FFFFFF" />}
+        iconPosition="trailing"
+        style={{ marginTop: 6 }}
+      />
+
+      <View style={styles.assuranceRow}>
+        <View style={styles.assuranceItem}>
+          <Feather name="shield" size={16} color={colors.primary} />
+          <AppText variant="bodySmall" color={colors.textSecondary}>
+            {t('Protected login', 'Protected login')}
+          </AppText>
         </View>
-
-        {/* Error Message */}
-        {error && (
-          <View
-            style={[styles.errorContainer, { backgroundColor: isDarkMode ? '#4a2a2a' : '#ffe6e6' }]}
-          >
-            <Text style={[styles.errorText, { color: isDarkMode ? '#ff6b6b' : '#d32f2f' }]}>
-              {error}
-            </Text>
-          </View>
-        )}
-
-        {/* Email Input */}
-        <View style={styles.inputGroup}>
-          <Text style={[styles.label, { color: isDarkMode ? '#ccc' : '#333' }]}>
-            {t('Email')} *
-          </Text>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: isDarkMode ? '#2a2a2a' : '#f5f5f5',
-                color: isDarkMode ? '#fff' : '#333',
-                borderColor: emailError ? '#d32f2f' : isDarkMode ? '#444' : '#ddd',
-              },
-            ]}
-            placeholder={t('Enter your email')}
-            placeholderTextColor={isDarkMode ? '#666' : '#999'}
-            value={email}
-            onChangeText={(text) => {
-              setEmail(text);
-              setEmailError('');
-            }}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            editable={!loading}
-          />
-          {emailError ? <Text style={styles.fieldError}>{emailError}</Text> : null}
+        <View style={styles.assuranceItem}>
+          <Feather name="clock" size={16} color={colors.primary} />
+          <AppText variant="bodySmall" color={colors.textSecondary}>
+            {t('Fast access', 'Fast access')}
+          </AppText>
         </View>
+      </View>
 
-        {/* Password Input */}
-        <View style={styles.inputGroup}>
-          <Text style={[styles.label, { color: isDarkMode ? '#ccc' : '#333' }]}>
-            {t('Password')} *
-          </Text>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: isDarkMode ? '#2a2a2a' : '#f5f5f5',
-                color: isDarkMode ? '#fff' : '#333',
-                borderColor: passwordError ? '#d32f2f' : isDarkMode ? '#444' : '#ddd',
-              },
-            ]}
-            placeholder={t('Enter your password')}
-            placeholderTextColor={isDarkMode ? '#666' : '#999'}
-            value={password}
-            onChangeText={(text) => {
-              setPassword(text);
-              setPasswordError('');
-            }}
-            secureTextEntry={true}
-            editable={!loading}
-          />
-          {passwordError ? <Text style={styles.fieldError}>{passwordError}</Text> : null}
-        </View>
-
-        {/* Login Button */}
-        <TouchableOpacity
-          style={[
-            styles.loginButton,
-            { backgroundColor: loading ? '#1976d2' : '#2196f3', opacity: loading ? 0.7 : 1 },
-          ]}
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Text style={styles.loginButtonText}>{t('Sign In')}</Text>
-          )}
-        </TouchableOpacity>
-
-        {/* Register Link */}
-        <View style={styles.registerContainer}>
-          <Text style={[styles.registerText, { color: isDarkMode ? '#aaa' : '#666' }]}>
-            {t("Don't have an account?")}{' '}
-          </Text>
-          <TouchableOpacity onPress={handleNavigateToRegister} disabled={loading}>
-            <Text style={[styles.registerLink, { color: '#2196f3', opacity: loading ? 0.7 : 1 }]}>
-              {t('Sign Up')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      <View style={styles.footer}>
+        <AppText variant="bodySmall" color={colors.textSecondary}>
+          {t('New here?', 'New here?')}
+        </AppText>
+        <Pressable onPress={() => navigation.replace('Register')}>
+          <AppText variant="labelLarge" color={colors.primary}>
+            {t('Create your account', 'Create your account')}
+          </AppText>
+        </Pressable>
+      </View>
+    </AuthShell>
   );
-};
+}
 
-const createStyles = (isDarkMode, isRTL) =>
+const createStyles = (colors, radius, isRTL) =>
   StyleSheet.create({
-    container: {
-      flex: 1,
+    formHeader: {
+      marginBottom: 18,
     },
-    scrollContent: {
-      padding: 20,
-      paddingVertical: 40,
-    },
-    header: {
-      marginBottom: 30,
-      alignItems: 'center',
-    },
-    title: {
-      fontSize: 28,
-      fontWeight: 'bold',
-      marginBottom: 8,
-    },
-    subtitle: {
-      fontSize: 16,
-      marginBottom: 20,
-    },
-    errorContainer: {
-      borderRadius: 8,
-      padding: 12,
-      marginBottom: 20,
-      borderLeftWidth: 4,
-      borderLeftColor: '#d32f2f',
-    },
-    errorText: {
-      fontSize: 14,
-      fontWeight: '500',
-    },
-    inputGroup: {
-      marginBottom: 20,
-    },
-    label: {
-      fontSize: 14,
-      fontWeight: '600',
-      marginBottom: 8,
-    },
-    input: {
-      borderWidth: 1,
-      borderRadius: 8,
-      paddingHorizontal: 14,
-      paddingVertical: 12,
-      fontSize: 14,
-      textAlign: isRTL ? 'right' : 'left',
-    },
-    fieldError: {
-      color: '#d32f2f',
-      fontSize: 12,
-      marginTop: 4,
-      fontStyle: 'italic',
-    },
-    loginButton: {
-      borderRadius: 8,
-      paddingVertical: 14,
-      marginTop: 10,
-      marginBottom: 20,
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: 48,
-    },
-    loginButtonText: {
-      color: '#fff',
-      fontSize: 16,
-      fontWeight: '600',
-    },
-    registerContainer: {
+    assuranceRow: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
-      justifyContent: 'center',
+      gap: 10,
+      marginTop: 14,
+      marginBottom: 6,
+    },
+    assuranceItem: {
+      flex: 1,
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
-      marginTop: 10,
+      justifyContent: 'center',
+      gap: 8,
+      minHeight: 44,
+      borderRadius: radius.xl,
+      backgroundColor: colors.surfaceSecondary,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: 12,
     },
-    registerText: {
-      fontSize: 14,
-    },
-    registerLink: {
-      fontSize: 14,
-      fontWeight: '600',
+    footer: {
+      marginTop: 8,
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      paddingTop: 8,
     },
   });
-
-export default LoginScreen;

@@ -1,214 +1,280 @@
-import React, { useRef, useState } from 'react';
-import { Icon } from '../components/common/IconHelper';
+import React, { useEffect, useRef, useState } from 'react';
+import { CalendarDays, CheckCircle2, FileSpreadsheet, UploadCloud } from 'lucide-react';
+import api from '../lib/api';
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  EmptyState,
+  SectionHeader,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+} from '../components/ui';
 
 const REQUIRED_COLUMNS = ['date', 'pharmacy_name', 'start_time', 'end_time'];
+const PLANNER_COLUMNS = ['Category', 'Month/Holiday', 'Date', 'Pharmacist_1', 'Pharmacist_2'];
 
 const parseCsv = (content) => {
-  const lines = content
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-  if (!lines.length) {
-    return { headers: [], rows: [] };
-  }
-
+  const lines = content.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  if (!lines.length) return { headers: [], rows: [] };
   const headers = lines[0].split(',').map((item) => item.trim());
   const rows = lines.slice(1).map((line, rowIndex) => {
     const values = line.split(',').map((item) => item.trim());
     const row = {};
-
     headers.forEach((header, index) => {
       row[header] = values[index] || '';
     });
-
     row.__row = rowIndex + 2;
     return row;
   });
-
   return { headers, rows };
 };
 
+const hasCanonicalFormat = (headers) => REQUIRED_COLUMNS.every((column) => headers.includes(column));
+const hasPlannerFormat = (headers) =>
+  PLANNER_COLUMNS.every((column) => headers.some((header) => header.toLowerCase() === column.toLowerCase()));
+
 const UploadGardePage = () => {
   const inputRef = useRef(null);
-  const [fileName, setFileName] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
   const [headers, setHeaders] = useState([]);
   const [rows, setRows] = useState([]);
   const [error, setError] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [recentGardes, setRecentGardes] = useState([]);
+  const [loadingRecent, setLoadingRecent] = useState(true);
+
+  const loadRecentGardes = async () => {
+    setLoadingRecent(true);
+    try {
+      const response = await api.get('/api/admin/gardes', { params: { skip: 0, limit: 12 } });
+      setRecentGardes(Array.isArray(response.data) ? response.data : []);
+    } catch (_err) {
+      setRecentGardes([]);
+    } finally {
+      setLoadingRecent(false);
+    }
+  };
+
+  useEffect(() => {
+    loadRecentGardes();
+  }, []);
 
   const handleFile = async (file) => {
     setError('');
+    setResult(null);
     setHeaders([]);
     setRows([]);
 
     if (!file) {
-      setFileName('');
+      setSelectedFile(null);
       return;
     }
 
     if (!file.name.toLowerCase().endsWith('.csv')) {
-      setFileName('');
-      setError('Use CSV for garde import preview. There is no backend garde upload endpoint yet.');
+      setSelectedFile(null);
+      setError('Use a CSV file for garde uploads.');
       return;
     }
 
     const text = await file.text();
     const parsed = parseCsv(text);
-
-    setFileName(file.name);
+    setSelectedFile(file);
     setHeaders(parsed.headers);
     setRows(parsed.rows);
   };
 
-  const missingColumns = REQUIRED_COLUMNS.filter((column) => !headers.includes(column));
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      setError('Choose a garde CSV before uploading.');
+      return;
+    }
+
+    setIsUploading(true);
+    setError('');
+    setResult(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('fichier', selectedFile);
+      const response = await api.post('/api/admin/gardes/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setResult(response.data);
+      await loadRecentGardes();
+    } catch (err) {
+      setError(
+        err.response?.data?.detail ||
+          err.message ||
+          'Garde upload failed. Check the CSV columns and admin session.'
+      );
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const canonicalReady = hasCanonicalFormat(headers);
+  const plannerReady = hasPlannerFormat(headers);
 
   return (
-    <div className="flex-1 overflow-y-auto bg-slate-50 p-6 lg:p-8 dark:bg-slate-950">
-      <div className="mx-auto flex max-w-6xl flex-col gap-8">
-        <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300">
-              <Icon name="calendar" size={14} />
-              Garde Upload
-            </span>
-            <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 dark:text-white lg:text-4xl">
-              Upload Garde Planning
-            </h1>
-            <p className="mt-2 max-w-3xl text-sm text-slate-600 dark:text-slate-400">
-              The current backend has no garde upload API. This page restores the missing UI flow by
-              validating and previewing garde CSV files in the admin panel, so the schedule format is ready
-              when the backend endpoint is added.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-amber-400"
-          >
-            <Icon name="upload" size={16} />
-            Choose Garde CSV
-          </button>
-        </section>
+    <div className="page-shell">
+      <div className="page-content">
+        <SectionHeader
+          eyebrow="Planner import"
+          title="Upload garde planning"
+          description="Validate canonical and planner-format CSV files before pushing garde rows into the live scheduling backend."
+          actions={
+            <>
+              <Button variant="secondary" onClick={() => inputRef.current?.click()}>
+                <FileSpreadsheet className="h-4 w-4" />
+                Choose CSV
+              </Button>
+              <Button onClick={handleUpload} disabled={!selectedFile || isUploading}>
+                <UploadCloud className="h-4 w-4" />
+                {isUploading ? 'Uploading...' : 'Upload garde'}
+              </Button>
+            </>
+          }
+        />
 
-        <section className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <input
-              ref={inputRef}
-              type="file"
-              accept=".csv,text/csv"
-              className="hidden"
-              onChange={(event) => handleFile(event.target.files?.[0])}
-            />
+        <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+          <Card>
+            <CardContent className="p-6">
+              <input
+                ref={inputRef}
+                type="file"
+                accept=".csv,text/csv"
+                className="hidden"
+                onChange={(event) => handleFile(event.target.files?.[0])}
+              />
 
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              className="flex min-h-[240px] w-full flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 text-center transition hover:border-amber-400 hover:bg-amber-50/50 dark:border-slate-700 dark:bg-slate-950/40 dark:hover:border-amber-500 dark:hover:bg-amber-950/10"
-            >
-              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300">
-                <Icon name="calendar" size={28} />
-              </div>
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-                Load a garde CSV for validation
-              </h2>
-              <p className="mt-2 max-w-md text-sm text-slate-600 dark:text-slate-400">
-                Expected columns: <code>date</code>, <code>pharmacy_name</code>, <code>start_time</code>,
-                <code>end_time</code>. Optional fields like <code>city</code> or <code>governorate</code> can be included too.
-              </p>
-            </button>
-
-            {fileName && (
-              <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/50">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                  Loaded file
+              <button
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                className="flex min-h-[280px] w-full flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-surface px-8 text-center transition hover:border-primary/40 hover:bg-surface-muted"
+              >
+                <div className="mb-5 rounded-3xl bg-warning-soft p-4 text-warning">
+                  <CalendarDays className="h-8 w-8" />
+                </div>
+                <h2 className="font-display text-2xl font-semibold text-foreground">Load a garde CSV</h2>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
+                  Required canonical columns: <code>date</code>, <code>pharmacy_name</code>, <code>start_time</code>, <code>end_time</code>.
+                  Planner format is also accepted with <code>Category</code>, <code>Month/Holiday</code>, <code>Date</code>, <code>Pharmacist_1</code>, and <code>Pharmacist_2</code>.
                 </p>
-                <p className="mt-2 text-sm font-medium text-slate-900 dark:text-white">{fileName}</p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{rows.length} garde rows detected</p>
-              </div>
-            )}
+              </button>
 
-            {error && (
-              <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
-                {error}
+              <div className="mt-5 grid gap-4 md:grid-cols-3">
+                <div className="rounded-2xl border border-border bg-surface p-4">
+                  <p className="text-sm text-muted-foreground">Selected file</p>
+                  <p className="mt-2 text-sm font-medium text-foreground">{selectedFile ? selectedFile.name : 'No file selected'}</p>
+                </div>
+                <div className="rounded-2xl border border-border bg-surface p-4">
+                  <p className="text-sm text-muted-foreground">Preview rows</p>
+                  <p className="mt-2 font-display text-2xl font-semibold text-foreground">{rows.length}</p>
+                </div>
+                <div className="rounded-2xl border border-border bg-surface p-4">
+                  <p className="text-sm text-muted-foreground">Detected format</p>
+                  <p className="mt-2 text-sm font-medium text-foreground">
+                    {canonicalReady ? 'Canonical' : plannerReady ? 'Planner' : headers.length ? 'Incomplete' : 'Waiting for file'}
+                  </p>
+                </div>
               </div>
-            )}
-          </div>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Validation summary</h2>
-            <div className="mt-6 space-y-3">
-              {REQUIRED_COLUMNS.map((column) => {
-                const present = headers.includes(column);
-                return (
-                  <div
-                    key={column}
-                    className={`flex items-center justify-between rounded-2xl px-4 py-3 text-sm ${
-                      present
-                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-300'
-                        : 'bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-300'
-                    }`}
-                  >
-                    <span className="font-medium">{column}</span>
-                    <span>{present ? 'present' : 'missing'}</span>
+              {error ? (
+                <div className="mt-5 rounded-2xl border border-danger/30 bg-danger-soft p-4 text-sm text-danger">{error}</div>
+              ) : null}
+
+              {result ? (
+                <div className="mt-5 grid gap-4 md:grid-cols-3">
+                  <div className="rounded-2xl bg-surface-muted p-4">
+                    <p className="text-sm text-muted-foreground">Rows</p>
+                    <p className="mt-2 font-display text-2xl font-semibold text-foreground">{result.total_rows}</p>
                   </div>
-                );
-              })}
-            </div>
+                  <div className="rounded-2xl bg-success-soft p-4">
+                    <p className="text-sm text-success">Saved</p>
+                    <p className="mt-2 font-display text-2xl font-semibold text-success">{result.successful}</p>
+                  </div>
+                  <div className="rounded-2xl bg-danger-soft p-4">
+                    <p className="text-sm text-danger">Failed</p>
+                    <p className="mt-2 font-display text-2xl font-semibold text-danger">{result.failed}</p>
+                  </div>
+                </div>
+              ) : null}
+            </CardContent>
+          </Card>
 
-            <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-400">
-              {headers.length
-                ? missingColumns.length
-                  ? `This file is not ready yet. Missing required columns: ${missingColumns.join(', ')}.`
-                  : 'This garde file structure is ready for backend integration.'
-                : 'Load a CSV file to validate garde columns and preview schedule rows.'}
-            </div>
-          </div>
-        </section>
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <div>
+                  <CardTitle>Validation summary</CardTitle>
+                  <CardDescription>Column readiness before upload.</CardDescription>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {REQUIRED_COLUMNS.map((column) => {
+                  const present = plannerReady || headers.includes(column);
+                  return (
+                    <div key={column} className="flex items-center justify-between rounded-2xl bg-surface-muted px-4 py-3">
+                      <span className="text-sm text-foreground">{column}</span>
+                      <Badge variant={present ? 'success' : 'warning'}>{present ? 'Ready' : 'Missing'}</Badge>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
 
-        <section className="rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-800">
-            <div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Preview</h2>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                First imported garde rows from the selected CSV file.
-              </p>
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead className="bg-slate-50 dark:bg-slate-950/50">
-                <tr>
-                  <th className="px-4 py-3 font-semibold text-slate-600 dark:text-slate-400">Row</th>
-                  {headers.map((header) => (
-                    <th key={header} className="px-4 py-3 font-semibold text-slate-600 dark:text-slate-400">
-                      {header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.length ? (
-                  rows.slice(0, 20).map((row) => (
-                    <tr key={row.__row} className="border-t border-slate-200 dark:border-slate-800">
-                      <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{row.__row}</td>
-                      {headers.map((header) => (
-                        <td key={`${row.__row}-${header}`} className="px-4 py-3 text-slate-600 dark:text-slate-400">
-                          {row[header] || '-'}
-                        </td>
+            <Card>
+              <CardHeader>
+                <div>
+                  <CardTitle>Recent garde rows</CardTitle>
+                  <CardDescription>Latest entries returned from the scheduling API.</CardDescription>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {recentGardes.length ? (
+                  <Table>
+                    <TableHead>
+                      <tr>
+                        <TableHeaderCell>Date</TableHeaderCell>
+                        <TableHeaderCell>Pharmacy</TableHeaderCell>
+                        <TableHeaderCell>Shift</TableHeaderCell>
+                      </tr>
+                    </TableHead>
+                    <TableBody>
+                      {recentGardes.slice(0, 6).map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell>{item.date || '-'}</TableCell>
+                          <TableCell className="text-foreground">{item.pharmacy_name || '-'}</TableCell>
+                          <TableCell>{item.start_time} - {item.end_time}</TableCell>
+                        </TableRow>
                       ))}
-                    </tr>
-                  ))
+                    </TableBody>
+                  </Table>
                 ) : (
-                  <tr>
-                    <td className="px-4 py-6 text-slate-600 dark:text-slate-400" colSpan={Math.max(headers.length + 1, 2)}>
-                      No garde data loaded yet.
-                    </td>
-                  </tr>
+                  <EmptyState
+                    icon={CheckCircle2}
+                    title={loadingRecent ? 'Loading garde rows' : 'No garde rows yet'}
+                    description={
+                      loadingRecent
+                        ? 'Fetching recent saved rows from the backend.'
+                        : 'Upload a garde file to populate recent scheduling activity.'
+                    }
+                  />
                 )}
-              </tbody>
-            </table>
+              </CardContent>
+            </Card>
           </div>
-        </section>
+        </div>
       </div>
     </div>
   );

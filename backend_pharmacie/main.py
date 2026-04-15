@@ -10,6 +10,7 @@ Environment:
 """
 
 import os
+from datetime import date
 from math import atan2, cos, radians, sin, sqrt
 
 import models
@@ -20,14 +21,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from events import register_default_listeners
 from routers import auth, admin, analytics
+from schema_migrations import run_schema_migrations
 from services import CacheService
+from services.garde_service import GardeService
+from services.medicine_service import MedicineService
 from sqlalchemy.orm import Session
 
 # Load environment variables
 load_dotenv()
 
-# Initialize the database tables if they don't exist
-models.Base.metadata.create_all(bind=engine)
+# Initialize and normalize the database schema on startup/import.
+run_schema_migrations(engine)
 
 app = FastAPI(
     title="PharmacieConnect API", version="2.0.0", description="Secure pharmacy management API"
@@ -100,6 +104,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(analytics.router)
+app.include_router(analytics.public_router)
 
 
 # ---- HEALTH CHECK ----
@@ -224,6 +229,16 @@ async def get_nearby_pharmacies(
         cache_key = f"pharmacies:nearby:{lat}:{lon}:{radius_km}:{limit}"
         cached = cache_service.get_json(cache_key)
         if cached is not None:
+            nearest_governorate = cached[0]["governorate"] if cached else None
+            analytics.record_search_event(
+                db,
+                event_type="nearby_pharmacy_search",
+                location_label=nearest_governorate,
+                governorate=nearest_governorate,
+                latitude=lat,
+                longitude=lon,
+                result_count=len(cached),
+            )
             return cached
 
         pharmacies = (
@@ -254,6 +269,16 @@ async def get_nearby_pharmacies(
 
         nearby.sort(key=lambda item: item["distance_km"])
         payload = nearby[:limit]
+        nearest_governorate = payload[0]["governorate"] if payload else None
+        analytics.record_search_event(
+            db,
+            event_type="nearby_pharmacy_search",
+            location_label=nearest_governorate,
+            governorate=nearest_governorate,
+            latitude=lat,
+            longitude=lon,
+            result_count=len(payload),
+        )
         cache_service.set_json(cache_key, payload, ttl_seconds=600)
         return payload
     except Exception as e:
@@ -305,4 +330,122 @@ async def get_pharmacy_by_id(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch pharmacy: {str(e)}",
+        )
+
+
+@app.get("/api/gardes")
+async def get_public_gardes(
+    date_value: date,
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+):
+    """
+    Get garde schedules for a specific day for mobile/public calendar usage.
+    """
+    if limit <= 0 or limit > 500:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="limit must be between 1 and 500",
+        )
+
+    try:
+        cache_key = f"gardes:list:{date_value.isoformat()}:{skip}:{limit}"
+        cached = cache_service.get_json(cache_key)
+        if cached is not None:
+            return cached
+
+        garde_service = GardeService(db)
+        payload = garde_service.get_public_gardes(garde_date=date_value, skip=skip, limit=limit)
+        cache_service.set_json(cache_key, payload, ttl_seconds=900)
+        return payload
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch garde schedules: {str(e)}",
+        )
+
+
+@app.get("/api/medicines")
+async def get_public_medicines(
+    q: str | None = None,
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+):
+    """Search and paginate public medicine catalog records."""
+    if limit <= 0 or limit > 500:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="limit must be between 1 and 500",
+        )
+
+    try:
+        cache_key = f"medicines:list:{q or ''}:{skip}:{limit}"
+        cached = cache_service.get_json(cache_key)
+        if cached is not None:
+            return cached
+
+        medicine_service = MedicineService(db)
+        payload = medicine_service.search_medicines(q=q, skip=skip, limit=limit)
+        cache_service.set_json(cache_key, payload, ttl_seconds=900)
+        return payload
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch medicines: {str(e)}",
+        )
+
+
+@app.get("/api/medicines/count")
+async def get_public_medicine_count(
+    q: str | None = None,
+    db: Session = Depends(get_db),
+):
+    """Return total public medicine count, optionally filtered by search query."""
+    try:
+        cache_key = f"medicines:count:{q or ''}"
+        cached = cache_service.get_json(cache_key)
+        if cached is not None:
+            return cached
+
+        medicine_service = MedicineService(db)
+        payload = {"total": medicine_service.get_public_medicine_count(q=q)}
+        cache_service.set_json(cache_key, payload, ttl_seconds=900)
+        return payload
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch medicine count: {str(e)}",
+        )
+
+
+@app.get("/api/medicines/{code_pct}")
+async def get_public_medicine_by_code_pct(
+    code_pct: str,
+    db: Session = Depends(get_db),
+):
+    """Get a specific medicine by its business identifier code_pct."""
+    try:
+        cache_key = f"medicines:by-code:{code_pct}"
+        cached = cache_service.get_json(cache_key)
+        if cached is not None:
+            return cached
+
+        medicine_service = MedicineService(db)
+        payload = medicine_service.get_medicine_by_code_pct(code_pct)
+        if not payload:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Medicine with code_pct {code_pct} not found",
+            )
+
+        cache_service.set_json(cache_key, payload, ttl_seconds=3600)
+        return payload
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch medicine: {str(e)}",
         )

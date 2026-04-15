@@ -12,8 +12,19 @@ Enums:
 import enum
 
 from database import Base
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, Enum, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import BigInteger, Boolean, Column, Date, DateTime, Enum, Float, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.sql import func
+
+
+def _string_enum(enum_cls: type[enum.Enum], length: int) -> Enum:
+    """Store enums as validated VARCHAR values instead of native DB enum types."""
+    return Enum(
+        enum_cls,
+        native_enum=False,
+        validate_strings=True,
+        values_callable=lambda members: [member.value for member in members],
+        length=length,
+    )
 
 
 class AdminRoleEnum(str, enum.Enum):
@@ -48,6 +59,8 @@ class AuditActionEnum(str, enum.Enum):
     ACCOUNT_REACTIVATED = "account_reactivated"
     LOGOUT = "logout"
     PHARMACY_BULK_UPLOAD = "pharmacy_bulk_upload"
+    GARDE_BULK_UPLOAD = "garde_bulk_upload"
+    MEDICINE_BULK_UPLOAD = "medicine_bulk_upload"
 
 
 class Administrateur(Base):
@@ -61,7 +74,7 @@ class Administrateur(Base):
     phone = Column(String(30), nullable=True)
     bio = Column(String(500), nullable=True)
     motDePasse = Column(String(255), nullable=False)
-    role = Column(Enum(AdminRoleEnum), default=AdminRoleEnum.ADMIN, nullable=False)
+    role = Column(_string_enum(AdminRoleEnum, 20), default=AdminRoleEnum.ADMIN, nullable=False)
 
     is_active = Column(Boolean, default=True, index=True)
     created_by = Column(
@@ -84,7 +97,12 @@ class Utilisateur(Base):
     motDePasse = Column(String(255), nullable=False)
 
     is_active = Column(Boolean, default=True, index=True)
-    source = Column(Enum(SourceEnum), default=SourceEnum.SELF_REGISTERED, nullable=False)
+    email_verified = Column(Boolean, default=False, index=True, nullable=False)
+    email_verification_code = Column(String(12), nullable=True, index=True)
+    email_verification_sent_at = Column(DateTime(timezone=True), nullable=True)
+    email_verification_expires_at = Column(DateTime(timezone=True), nullable=True)
+    email_verified_at = Column(DateTime(timezone=True), nullable=True)
+    source = Column(_string_enum(SourceEnum, 50), default=SourceEnum.SELF_REGISTERED, nullable=False)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -97,7 +115,7 @@ class AuditLog(Base):
     __tablename__ = "audit_logs"
 
     id = Column(Integer, primary_key=True, index=True)
-    action = Column(Enum(AuditActionEnum), nullable=False, index=True)
+    action = Column(_string_enum(AuditActionEnum, 50), nullable=False, index=True)
     entity_type = Column(String(50), nullable=False)  # 'administrateur' or 'utilisateur'
     entity_id = Column(Integer, nullable=False, index=True)
 
@@ -158,6 +176,72 @@ class Pharmacie(Base):
     governorate = Column(String(100), nullable=True, index=True)
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
+    created_by = Column(
+        Integer, ForeignKey("administrateurs.id"), nullable=False, index=True
+    )
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+
+class GardeSchedule(Base):
+    """Uploaded garde planning rows persisted by the admin panel."""
+
+    __tablename__ = "garde_schedules"
+    __table_args__ = (
+        UniqueConstraint(
+            "date",
+            "pharmacy_name",
+            "start_time",
+            "end_time",
+            name="uq_garde_schedule_slot",
+        ),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    date = Column(Date, nullable=False, index=True)
+    pharmacy_name = Column(String(255), nullable=False, index=True)
+    start_time = Column(String(20), nullable=False)
+    end_time = Column(String(20), nullable=False)
+    city = Column(String(120), nullable=True, index=True)
+    governorate = Column(String(120), nullable=True, index=True)
+    shift_type = Column(String(60), nullable=True)
+    notes = Column(Text, nullable=True)
+    created_by = Column(
+        Integer, ForeignKey("administrateurs.id"), nullable=False, index=True
+    )
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+
+class SearchEvent(Base):
+    """Track public search activity for admin analytics."""
+
+    __tablename__ = "search_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    event_type = Column(String(50), nullable=False, index=True)
+    query_text = Column(String(255), nullable=True, index=True)
+    location_label = Column(String(255), nullable=True, index=True)
+    governorate = Column(String(100), nullable=True, index=True)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    result_count = Column(Integer, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+
+class Medicine(Base):
+    """Central medicine catalog imported from admin CSV uploads."""
+
+    __tablename__ = "medicines"
+
+    id = Column(Integer, primary_key=True, index=True)
+    code_pct = Column(String(50), nullable=False, unique=True, index=True)
+    nom_commercial = Column(String(255), nullable=False, index=True)
+    prix_public_dt = Column(Numeric(10, 3), nullable=False)
+    tarif_reference_dt = Column(Numeric(10, 3), nullable=False)
+    categorie_remboursement = Column(String(20), nullable=False, index=True)
+    dci = Column(String(255), nullable=False, index=True)
+    ap = Column(String(20), nullable=False, index=True)
     created_by = Column(
         Integer, ForeignKey("administrateurs.id"), nullable=False, index=True
     )

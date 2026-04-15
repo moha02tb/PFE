@@ -1,189 +1,157 @@
-import React, { useState } from 'react';
-import {
-  TouchableOpacity,
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  Animated,
-} from 'react-native';
-import { getColors } from '../../utils/colors';
-import { SPACING, BORDER_RADIUS, LAYOUT } from '../../utils/spacing';
-import { getShadow, getContextualShadow } from '../../utils/shadows';
-import { TEXT_STYLES, getTextStyle } from '../../utils/typography';
+import React from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useAppTheme } from '../../utils/theme';
 
-/**
- * Button Component with multiple variants and states
- * Variants: contained (filled), outlined (bordered), text (no background)
- * Supports loading state, disabled state, and size variants
- */
-const Button = ({
-  onPress,
+const SIZE_MAP = {
+  small: { minHeight: 42, paddingHorizontal: 14, textVariant: 'labelMedium', iconSize: 16 },
+  medium: { minHeight: 48, paddingHorizontal: 18, textVariant: 'labelLarge', iconSize: 18 },
+  large: { minHeight: 54, paddingHorizontal: 20, textVariant: 'bodyMedium', iconSize: 18 },
+};
+
+export default function AppButton({
   title,
+  onPress,
   variant = 'contained',
+  color = 'primary',
   size = 'medium',
   disabled = false,
   loading = false,
-  icon = null,
-  isDarkMode = false,
-  style,
-  children,
-  color = 'primary',
+  icon,
+  iconPosition = 'leading',
   fullWidth = false,
-}) => {
-  const [isPressed, setIsPressed] = useState(false);
-  const scaleAnim = React.useRef(new Animated.Value(1)).current;
+  style,
+  textStyle,
+  children,
+  accessibilityLabel,
+}) {
+  const theme = useAppTheme();
+  const { colors, radius, shadows, textStyles, isRTL } = theme;
+  const config = SIZE_MAP[size] || SIZE_MAP.medium;
+  const tone = colors[color] || colors.primary;
 
-  const colors = getColors(isDarkMode);
-  const shadow = getContextualShadow(2, isDarkMode);
-
-  // Define button colors based on variant and color
-  const getButtonColors = () => {
-    const colorMap = {
-      primary: getColors(isDarkMode).primary || '#0066CC',
-      secondary: getColors(isDarkMode).secondary || '#22AA66',
-      error: getColors(isDarkMode).error || '#D32F2F',
-      text: colors.text,
-    };
-
-    return colorMap[color] || colorMap.primary;
-  };
-
-  const buttonColor = getButtonColors();
-
-  const handlePressIn = () => {
-    setIsPressed(true);
-    Animated.spring(scaleAnim, {
-      toValue: 0.95,
-      useNativeDriver: true,
-      speed: 20,
-    }).start();
-  };
-
-  const handlePressOut = () => {
-    setIsPressed(false);
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      useNativeDriver: true,
-      speed: 20,
-    }).start();
-  };
-
-  const handlePress = () => {
-    if (!disabled && !loading && onPress) {
-      onPress();
-    }
-  };
-
-  // Size variants
-  const sizeStyles = {
-    small: {
-      height: 32,
-      paddingHorizontal: 12,
+  const palette = {
+    contained: {
+      backgroundColor: disabled ? colors.disabledSurface : tone,
+      borderColor: disabled ? 'transparent' : colors.borderStrong,
+      textColor: colors.primaryForeground,
+      shadow: shadows.raised,
     },
-    medium: {
-      height: LAYOUT.buttonHeight,
-      paddingHorizontal: LAYOUT.buttonPadding,
+    outlined: {
+      backgroundColor: colors.surface,
+      borderColor: disabled ? colors.border : tone,
+      textColor: disabled ? colors.disabled : tone,
+      shadow: undefined,
     },
-    large: {
-      height: 56,
-      paddingHorizontal: 24,
+    tonal: {
+      backgroundColor: disabled ? colors.disabledSurface : color === 'secondary' ? colors.secondaryMuted : colors.primaryMuted,
+      borderColor: 'transparent',
+      textColor: disabled ? colors.disabled : tone,
+      shadow: undefined,
     },
+    ghost: {
+      backgroundColor: 'transparent',
+      borderColor: 'transparent',
+      textColor: disabled ? colors.disabled : tone,
+      shadow: undefined,
+    },
+    text: {
+      backgroundColor: 'transparent',
+      borderColor: 'transparent',
+      textColor: disabled ? colors.disabled : tone,
+      shadow: undefined,
+    },
+  }[variant] || {
+    backgroundColor: tone,
+    borderColor: 'transparent',
+    textColor: colors.primaryForeground,
+    shadow: shadows.card,
   };
-
-  const textSizeStyles = {
-    small: TEXT_STYLES.labelSmall,
-    medium: TEXT_STYLES.labelLarge,
-    large: TEXT_STYLES.labelLarge,
-  };
-
-  const currentSizeStyle = sizeStyles[size] || sizeStyles.medium;
-  const currentTextStyle = textSizeStyles[size] || textSizeStyles.medium;
-
-  // Variant styles
-  let buttonStyles = {};
-  let textColor = '';
-
-  switch (variant) {
-    case 'contained':
-      buttonStyles = {
-        backgroundColor: disabled ? colors.tertiaryLight : buttonColor,
-        borderWidth: 0,
-      };
-      textColor = '#FFFFFF';
-      break;
-    case 'outlined':
-      buttonStyles = {
-        backgroundColor: 'transparent',
-        borderWidth: 2,
-        borderColor: disabled ? colors.tertiaryLight : buttonColor,
-      };
-      textColor = disabled ? colors.textTertiary : buttonColor;
-      break;
-    case 'text':
-      buttonStyles = {
-        backgroundColor: 'transparent',
-        borderWidth: 0,
-      };
-      textColor = disabled ? colors.textTertiary : buttonColor;
-      break;
-  }
 
   const styles = StyleSheet.create({
     button: {
-      flexDirection: 'row',
+      minHeight: config.minHeight,
+      minWidth: fullWidth ? undefined : 110,
+      width: fullWidth ? '100%' : undefined,
+      borderRadius: radius.xl,
+      paddingHorizontal: config.paddingHorizontal,
+      borderWidth: variant === 'outlined' || variant === 'contained' ? 1 : 0,
+      borderColor: palette.borderColor,
+      backgroundColor: palette.backgroundColor,
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      borderRadius: BORDER_RADIUS.md,
-      opacity: disabled ? 0.6 : 1,
-      ...currentSizeStyle,
-      ...buttonStyles,
-      ...(variant === 'contained' && !disabled && shadow),
-      width: fullWidth ? '100%' : 'auto',
-      minWidth: LAYOUT.buttonMinWidth,
-      gap: icon ? 8 : 0,
+      gap: 10,
+      opacity: disabled ? 0.72 : 1,
+      overflow: 'hidden',
+    },
+    pressed: {
+      transform: [{ scale: 0.985 }],
+      opacity: 0.92,
+    },
+    sheen: {
+      position: 'absolute',
+      top: 1,
+      left: 1,
+      right: 1,
+      height: '52%',
+      borderTopLeftRadius: radius.xl,
+      borderTopRightRadius: radius.xl,
+      backgroundColor: variant === 'contained'
+        ? 'rgba(255,255,255,0.12)'
+        : 'transparent',
+    },
+    content: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 10,
     },
     text: {
-      color: textColor,
-      fontWeight: '600',
-      flex: 0,
+      ...textStyles[config.textVariant],
+      color: palette.textColor,
+      fontWeight: '700',
       textAlign: 'center',
-      textAlignVertical: 'center',
-      includeFontPadding: false,
+      letterSpacing: 0.2,
     },
-    iconView: {
-      width: 'auto',
-      height: 'auto',
-      justifyContent: 'center',
+    spinnerWrap: {
+      width: 18,
       alignItems: 'center',
-      display: 'flex',
     },
   });
 
   return (
-    <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, style]}>
-      <TouchableOpacity
-        onPress={handlePress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        disabled={disabled || loading}
-        activeOpacity={0.9}
-        style={styles.button}
-      >
-        {loading ? (
-          <ActivityIndicator
-            size="small"
-            color={variant === 'contained' ? '#FFFFFF' : buttonColor}
-          />
-        ) : (
-          <>
-            {icon && <View style={styles.iconView}>{icon}</View>}
-            {children ? children : <Text style={[currentTextStyle, styles.text]}>{title}</Text>}
-          </>
-        )}
-      </TouchableOpacity>
-    </Animated.View>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel || title}
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
+      onPress={disabled || loading ? undefined : onPress}
+      style={({ pressed }) => [
+        styles.button,
+        palette.shadow,
+        pressed && !disabled && !loading ? styles.pressed : null,
+        style,
+      ]}
+    >
+      <View pointerEvents="none" style={styles.sheen} />
+      {loading ? (
+        <View style={styles.content}>
+          <View style={styles.spinnerWrap}>
+            <ActivityIndicator
+              size="small"
+              color={variant === 'contained' ? colors.primaryForeground : palette.textColor}
+            />
+          </View>
+          <Text style={[styles.text, textStyle]}>{title}</Text>
+        </View>
+      ) : children ? (
+        children
+      ) : (
+        <View style={styles.content}>
+          {icon && iconPosition === 'leading' ? icon : null}
+          <Text style={[styles.text, textStyle]}>{title}</Text>
+          {icon && iconPosition === 'trailing' ? icon : null}
+        </View>
+      )}
+    </Pressable>
   );
-};
-
-export default Button;
+}

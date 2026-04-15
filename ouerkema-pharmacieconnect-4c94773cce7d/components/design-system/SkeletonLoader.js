@@ -1,55 +1,47 @@
-import React, { useRef, useEffect } from 'react';
-import { View, Animated, StyleSheet } from 'react-native';
-import { getColors } from '../../utils/colors';
-import { SPACING } from '../../utils/spacing';
+import React, { useEffect, useRef } from 'react';
+import { Animated, StyleSheet, View } from 'react-native';
+import { useAppTheme } from '../../utils/theme';
 
-const SkeletonLoader = ({
-  isDarkMode = false,
-  height = 50,
+export default function LoadingSkeleton({
+  count = 1,
+  height = 18,
   width = '100%',
-  borderRadius = 8,
-  count = 3,
-}) => {
-  const shimmerAnimated = useRef(new Animated.Value(0)).current;
+  borderRadius = 12,
+  gap = 12,
+  style,
+}) {
+  const { colors } = useAppTheme();
+  const shimmer = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(shimmerAnimated, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(shimmerAnimated, {
-          toValue: 0,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
+        Animated.timing(shimmer, { toValue: 1, duration: 900, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 0, duration: 900, useNativeDriver: true }),
       ])
     ).start();
-  }, [shimmerAnimated]);
+  }, [shimmer]);
 
-  const colors = getColors(isDarkMode);
-  const opacity = shimmerAnimated.interpolate({
+  const opacity = shimmer.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.3, 0.7],
+    outputRange: [0.55, 1],
   });
 
-  const skeletonStyle = {
-    height,
-    width,
-    borderRadius,
-    backgroundColor: isDarkMode ? '#333333' : '#E0E0E0',
-    opacity,
-  };
+  const styles = StyleSheet.create({
+    item: {
+      height,
+      width,
+      borderRadius,
+      backgroundColor: colors.skeletonBase,
+      marginBottom: gap,
+    },
+  });
 
   return (
-    <View>
+    <View style={style}>
       {Array.from({ length: count }).map((_, index) => (
-        <Animated.View key={index} style={[skeletonStyle, { marginBottom: SPACING.md }]} />
+        <Animated.View key={index} style={[styles.item, { opacity }]} />
       ))}
     </View>
   );
-};
-
-export default SkeletonLoader;
+}

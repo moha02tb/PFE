@@ -1,56 +1,47 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Switch,
-  TouchableOpacity,
-  ScrollView,
-  Linking,
-  I18nManager,
-  Alert,
-} from 'react-native';
-import { Feather, MaterialIcons } from '@expo/vector-icons';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Alert, Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from './ThemeContext';
 import { useLanguage } from './LanguageContext';
 import { useNotifications } from './NotificationContext';
 import { useAuth } from './AuthContext';
-import RTLUtils from '../utils/RTLUtils';
-import { useForceUpdate } from '../hooks/useForceUpdate';
-import logger from '../utils/logger';
-import { Button, Card, Input, Modal } from '../components/design-system';
-import { getColors } from '../utils/colors';
-import { SPACING, LAYOUT, BORDER_RADIUS } from '../utils/spacing';
-import { getContextualShadow } from '../utils/shadows';
-import { TEXT_STYLES } from '../utils/typography';
+import {
+  AppButton,
+  AppCard,
+  AppHeader,
+  AppInput,
+  AppModal,
+  AppText,
+  SettingRow,
+} from '../components/design-system';
+import { useAppTheme } from '../utils/theme';
+
+const LANGUAGES = ['Français', 'English', 'العربية'];
 
 export default function SettingsScreen() {
-  const { isDarkMode, setIsDarkMode } = useTheme();
-  const { language, setLanguage, availableLanguages, isRTL } = useLanguage();
   const { t } = useTranslation();
+  const { isDarkMode, setIsDarkMode } = useTheme();
+  const { language, setLanguage, isRTL } = useLanguage();
   const {
     notificationsEnabled,
     toggleNotifications,
-    isLoading: notificationLoading,
     permissionStatus,
     sendPharmacyReminder,
     sendDailyReminder,
     clearAllNotifications,
   } = useNotifications();
-  const [modalLangVisible, setModalLangVisible] = useState(false);
-  const [modalSupportVisible, setModalSupportVisible] = useState(false);
-  const [modalNotificationVisible, setModalNotificationVisible] = useState(false);
-  const [modalProfileVisible, setModalProfileVisible] = useState(false);
   const { user, updateUserProfile, logout } = useAuth();
-  const [profileForm, setProfileForm] = useState({
-    username: '',
-    email: '',
-    phone: '',
-  });
+  const { colors, radius, shadows } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors, radius, shadows, isRTL), [colors, radius, shadows, isRTL]);
+
+  const [profileVisible, setProfileVisible] = useState(false);
+  const [languageVisible, setLanguageVisible] = useState(false);
+  const [notificationsVisible, setNotificationsVisible] = useState(false);
+  const [supportVisible, setSupportVisible] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
-  const [profileMessage, setProfileMessage] = useState('');
-  const forceUpdate = useForceUpdate() || (() => {});
+  const [profileForm, setProfileForm] = useState({ username: '', email: '', phone: '' });
+  const [support, setSupport] = useState({ subject: '', body: '' });
 
   useEffect(() => {
     setProfileForm({
@@ -60,481 +51,294 @@ export default function SettingsScreen() {
     });
   }, [user]);
 
-  const changeLanguage = (lang) => {
-    setLanguage(lang);
-    setModalLangVisible(false);
-    // Force immediate UI update
-    setTimeout(() => forceUpdate(), 100);
-  };
-
-  const sendEmail = () => {
-    Linking.openURL('mailto:support@example.com');
-  };
-
-  const callPhone = () => {
-    Linking.openURL('tel:+1234567890');
-  };
-
-  const handleNotificationToggle = async (enabled) => {
-    try {
-      await toggleNotifications(enabled);
-      if (enabled) {
-        // Send a welcome notification
-        await sendPharmacyReminder('Pharmacie Centrale', '123 Rue Habib Bourguiba, Tunis');
-      }
-    } catch (error) {
-      logger.error('SettingsScreen', 'Error handling notification toggle', error);
-    }
-  };
-
-  const testNotification = async () => {
-    try {
-      await sendPharmacyReminder('Test Pharmacie', 'Test Address - Notification de test');
-      setModalNotificationVisible(false);
-    } catch (error) {
-      logger.error('SettingsScreen', 'Error sending test notification', error);
-    }
-  };
-
-  const setupDailyReminder = async () => {
-    try {
-      await sendDailyReminder();
-      setModalNotificationVisible(false);
-    } catch (error) {
-      logger.error('SettingsScreen', 'Error setting up daily reminder', error);
-    }
-  };
-
-  const handleClearNotifications = async () => {
-    try {
-      await clearAllNotifications();
-      setModalNotificationVisible(false);
-    } catch (error) {
-      logger.error('SettingsScreen', 'Error clearing notifications', error);
-    }
-  };
+  const profileName = user?.nomUtilisateur || user?.username || t('settings.profile', 'Profile');
+  const profileEmail = user?.email || t('settings.noEmail', 'No email set');
+  const profilePhone = user?.phone || t('settings.noPhone', 'No phone set');
+  const permissionLabel =
+    permissionStatus === 'granted'
+      ? t('settings.notificationsGranted', 'Allowed')
+      : permissionStatus === 'denied'
+        ? t('settings.notificationsDenied', 'Blocked')
+        : t('settings.notificationsUnknown', 'Not configured');
 
   const saveProfile = async () => {
     setSavingProfile(true);
-    setProfileMessage('');
     const result = await updateUserProfile({
       nomUtilisateur: profileForm.username,
       username: profileForm.username,
       email: profileForm.email,
       phone: profileForm.phone,
     });
-    if (result?.success) {
-      setProfileMessage('Profile updated successfully.');
-      setModalProfileVisible(false);
-      Alert.alert('Success', 'Profile updated successfully.');
-    } else {
-      const msg = result?.error || 'Failed to update profile.';
-      setProfileMessage(msg);
-      Alert.alert('Update failed', msg);
-    }
     setSavingProfile(false);
+    if (result?.success) {
+      setProfileVisible(false);
+      Alert.alert(t('settings.profileSaved', 'Profile updated'), t('settings.profileSavedMessage', 'Your profile information was saved successfully.'));
+      return;
+    }
+    Alert.alert(t('settings.updateFailed', 'Update failed'), result?.error || t('settings.updateFailedMessage', 'Unable to update profile.'));
   };
 
-  const handleLogout = async () => {
-    Alert.alert('Sign out', 'Do you want to sign out of the app?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign out',
-        style: 'destructive',
-        onPress: async () => {
-          await logout();
-          setModalProfileVisible(false);
-        },
-      },
-    ]);
+  const handleLogout = () => {
+    Alert.alert(
+      t('settings.signOut', 'Sign out'),
+      t('settings.signOutConfirm', 'Do you want to sign out of the app?'),
+      [
+        { text: t('settings.cancel', 'Cancel'), style: 'cancel' },
+        { text: t('settings.signOut', 'Sign out'), style: 'destructive', onPress: logout },
+      ]
+    );
   };
 
-  // Force re-render when RTL changes for instant updates
-  useEffect(() => {
-    forceUpdate();
-  }, [isRTL, forceUpdate]);
-
-  const styles = getStyles(isDarkMode, isRTL);
+  const sendSupportEmail = async () => {
+    const mail = `mailto:support@pharmacieconnect.app?subject=${encodeURIComponent(
+      support.subject || 'Mobile app support request'
+    )}&body=${encodeURIComponent(support.body || '')}`;
+    await Linking.openURL(mail);
+  };
 
   return (
-    <ScrollView style={styles.container} scrollEnabled={true}>
-      {/* Title Header */}
-      <View style={styles.titleContainer}>
-        <Feather name="settings" size={20} color="#fff" />
-        <Text style={styles.titleText}>{t('settings.title')}</Text>
-      </View>
+    <>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <View style={styles.content}>
+          <View style={styles.hero}>
+            <View style={styles.heroBadge}>
+              <Feather name="settings" size={16} color="#FFFFFF" />
+              <AppText variant="labelMedium" color="#FFFFFF">
+                {t('settings.title', 'Settings')}
+              </AppText>
+            </View>
+            <AppText variant="headerLarge" color="#FFFFFF" style={{ marginTop: 14 }}>
+              {profileName}
+            </AppText>
+            <AppText variant="bodyMedium" color="rgba(255,255,255,0.82)" style={{ marginTop: 4 }}>
+              {profileEmail}
+            </AppText>
 
-      {/* Profile */}
-      <Card
-        isDarkMode={isDarkMode}
-        elevation={2}
-        margin={LAYOUT.screenHorizontalPadding}
-        marginBottom={SPACING.md}
-      >
-        <TouchableOpacity
-          style={styles.optionRow}
-          onPress={() => setModalProfileVisible(true)}
-          activeOpacity={0.7}
-          accessibilityLabel="Profile"
-          accessibilityRole="button"
-        >
-          <View style={styles.optionLeft}>
-            <Feather name="user" size={24} color={getColors(isDarkMode).primary} />
-            <View>
-              <Text style={styles.optionText}>Profile</Text>
-              <Text style={styles.optionValueSmall}>
-                {user?.nomUtilisateur || user?.username || user?.email || 'User'}
-              </Text>
-              <Text style={styles.optionValueSmall}>{user?.email || 'No email set'}</Text>
-              <Text style={styles.optionValueSmall}>{user?.phone || 'No phone set'}</Text>
+            <View style={styles.heroStats}>
+              <View style={styles.heroStat}>
+                <AppText variant="labelLarge" color="#FFFFFF">{language}</AppText>
+                <AppText variant="labelSmall" color="rgba(255,255,255,0.72)">{t('settings.language', 'Language')}</AppText>
+              </View>
+              <View style={styles.heroDivider} />
+              <View style={styles.heroStat}>
+                <AppText variant="labelLarge" color="#FFFFFF">
+                  {notificationsEnabled ? t('settings.on', 'On') : t('settings.off', 'Off')}
+                </AppText>
+                <AppText variant="labelSmall" color="rgba(255,255,255,0.72)">{t('settings.notifications', 'Notifications')}</AppText>
+              </View>
             </View>
           </View>
-          <MaterialIcons
-            name="keyboard-arrow-right"
-            size={24}
-            color={getColors(isDarkMode).textSecondary}
-          />
-        </TouchableOpacity>
-      </Card>
 
-      {/* Language Setting */}
-      <Card
-        isDarkMode={isDarkMode}
-        elevation={2}
-        margin={LAYOUT.screenHorizontalPadding}
-        marginBottom={SPACING.md}
-      >
-        <TouchableOpacity
-          style={styles.optionRow}
-          onPress={() => setModalLangVisible(true)}
-          activeOpacity={0.7}
-          accessibilityLabel={t('settings.language')}
-          accessibilityRole="button"
-          accessibilityHint={`${t('settings.currentLanguage', 'Current language')}: ${language}`}
-        >
-          <View style={styles.optionLeft}>
-            <Feather name="globe" size={24} color={getColors(isDarkMode).primary} />
-            <Text style={styles.optionText}>{t('settings.language')}</Text>
-          </View>
-          <View style={styles.optionRight}>
-            <Text style={styles.optionValue}>{language}</Text>
-            <MaterialIcons
-              name="keyboard-arrow-right"
-              size={24}
-              color={getColors(isDarkMode).textSecondary}
+          <AppHeader
+            eyebrow={t('settings.preferences', 'Preferences')}
+            title={t('settings.appPreferences', 'App preferences')}
+            subtitle={t('settings.preferencesSubtitle', 'Theme, language, and personalization controls')}
+          />
+          <AppCard style={styles.group}>
+            <SettingRow
+              icon="account-circle-outline"
+              title={t('settings.profile', 'Profile')}
+              subtitle={`${profileEmail} · ${profilePhone}`}
+              onPress={() => setProfileVisible(true)}
             />
-          </View>
-        </TouchableOpacity>
-      </Card>
+            <View style={styles.divider} />
+            <SettingRow
+              icon="translate"
+              title={t('settings.language', 'Language')}
+              subtitle={language}
+              onPress={() => setLanguageVisible(true)}
+            />
+            <View style={styles.divider} />
+            <SettingRow
+              icon="theme-light-dark"
+              title={t('settings.darkMode', 'Dark mode')}
+              subtitle={isDarkMode ? t('settings.darkModeOn', 'Dark mode is on') : t('settings.darkModeOff', 'Dark mode is off')}
+              switchValue={isDarkMode}
+              onSwitchChange={setIsDarkMode}
+            />
+          </AppCard>
 
-      {/* Dark Mode Toggle */}
-      <Card
-        isDarkMode={isDarkMode}
-        elevation={2}
-        margin={LAYOUT.screenHorizontalPadding}
-        marginBottom={SPACING.md}
-      >
-        <View style={styles.optionRow}>
-          <View style={styles.optionLeft}>
-            <Feather name="moon" size={24} color={getColors(isDarkMode).primary} />
-            <Text style={styles.optionText}>{t('settings.darkMode')}</Text>
-          </View>
-          <Switch
-            value={isDarkMode}
-            onValueChange={setIsDarkMode}
-            thumbColor={isDarkMode ? '#22AA66' : '#FFFFFF'}
-            trackColor={{ false: '#E0E0E0', true: '#0066CC' }}
-            style={{ marginRight: isRTL ? SPACING.md : 0, marginLeft: isRTL ? 0 : SPACING.md }}
-            accessible={true}
-            accessibilityLabel={t('settings.darkMode')}
-            accessibilityRole="switch"
-            accessibilityState={{ checked: isDarkMode }}
-            accessibilityHint={
-              isDarkMode
-                ? t('settings.darkModeOn', 'Dark mode is on')
-                : t('settings.darkModeOff', 'Dark mode is off')
-            }
+          <AppHeader
+            eyebrow={t('settings.supportAndAlerts', 'Support and alerts')}
+            title={t('settings.notificationsAndSupport', 'Notifications and support')}
+            subtitle={t('settings.supportSubtitle', 'Control reminders and contact assistance')}
           />
+          <AppCard style={styles.group}>
+            <SettingRow
+              icon="bell-badge-outline"
+              title={t('settings.notifications', 'Notifications')}
+              subtitle={`${permissionLabel} · ${notificationsEnabled ? t('settings.enabled', 'Enabled') : t('settings.disabled', 'Disabled')}`}
+              onPress={() => setNotificationsVisible(true)}
+            />
+            <View style={styles.divider} />
+            <SettingRow
+              icon="lifebuoy"
+              title={t('settings.contactSupport', 'Contact support')}
+              subtitle="support@pharmacieconnect.app"
+              onPress={() => setSupportVisible(true)}
+            />
+          </AppCard>
+
+          <AppHeader
+            eyebrow={t('settings.account', 'Account')}
+            title={t('settings.session', 'Session')}
+            subtitle={t('settings.accountSubtitle', 'Security and access controls')}
+          />
+          <AppCard style={styles.group}>
+            <SettingRow
+              icon="logout"
+              title={t('settings.signOut', 'Sign out')}
+              subtitle={t('settings.signOutHint', 'End the current session on this device')}
+              onPress={handleLogout}
+              destructive
+            />
+          </AppCard>
         </View>
-      </Card>
+      </ScrollView>
 
-      {/* Contact Support */}
-      <Card
-        isDarkMode={isDarkMode}
-        elevation={2}
-        margin={LAYOUT.screenHorizontalPadding}
-        marginBottom={SPACING.lg}
-      >
-        <TouchableOpacity
-          style={styles.optionRow}
-          onPress={() => setModalSupportVisible(true)}
-          activeOpacity={0.7}
-          accessibilityLabel={t('settings.contactSupport')}
-          accessibilityRole="button"
-          accessibilityHint={t('settings.contactSupportHint', 'Open contact support options')}
-        >
-          <View style={styles.optionLeft}>
-            <Feather name="mail" size={24} color={getColors(isDarkMode).primary} />
-            <Text style={styles.optionText}>{t('settings.contactSupport')}</Text>
-          </View>
-          <MaterialIcons
-            name="keyboard-arrow-right"
-            size={24}
-            color={getColors(isDarkMode).textSecondary}
-          />
-        </TouchableOpacity>
-      </Card>
+      <AppModal visible={profileVisible} onClose={() => setProfileVisible(false)} title={t('settings.profile', 'Profile')}>
+        <AppInput
+          label={t('Username', 'Username')}
+          value={profileForm.username}
+          onChangeText={(value) => setProfileForm((current) => ({ ...current, username: value }))}
+          icon={<Feather name="user" size={18} color={colors.iconMuted} />}
+        />
+        <AppInput
+          label={t('Email', 'Email')}
+          value={profileForm.email}
+          onChangeText={(value) => setProfileForm((current) => ({ ...current, email: value }))}
+          keyboardType="email-address"
+          icon={<Feather name="mail" size={18} color={colors.iconMuted} />}
+        />
+        <AppInput
+          label={t('Phone', 'Phone')}
+          value={profileForm.phone}
+          onChangeText={(value) => setProfileForm((current) => ({ ...current, phone: value }))}
+          keyboardType="phone-pad"
+          icon={<Feather name="phone" size={18} color={colors.iconMuted} />}
+        />
+        <AppButton title={t('settings.saveProfile', 'Save Profile')} onPress={saveProfile} loading={savingProfile} fullWidth />
+      </AppModal>
 
-      {/* Language Selection Modal */}
-      <Modal
-        visible={modalProfileVisible}
-        onClose={() => setModalProfileVisible(false)}
-        title="Profile"
-        isDarkMode={isDarkMode}
-      >
-        <View style={styles.languageModalContent}>
-          <Input
-            placeholder="Username"
-            value={profileForm.username}
-            onChangeText={(text) => setProfileForm((prev) => ({ ...prev, username: text }))}
-            isDarkMode={isDarkMode}
-            isRTL={isRTL}
-          />
-          <Input
-            placeholder="Email"
-            value={profileForm.email}
-            onChangeText={(text) => setProfileForm((prev) => ({ ...prev, email: text }))}
-            isDarkMode={isDarkMode}
-            isRTL={isRTL}
-          />
-          <Input
-            placeholder="Phone"
-            value={profileForm.phone}
-            onChangeText={(text) => setProfileForm((prev) => ({ ...prev, phone: text }))}
-            isDarkMode={isDarkMode}
-            isRTL={isRTL}
-          />
-          <Button
-            title={savingProfile ? 'Saving...' : 'Save Profile'}
-            onPress={saveProfile}
-            variant="contained"
-            size="medium"
-            isDarkMode={isDarkMode}
-            fullWidth={true}
-            disabled={savingProfile}
-          />
-          <Button
-            title="Sign Out"
-            onPress={handleLogout}
-            variant="outlined"
-            size="medium"
-            isDarkMode={isDarkMode}
-            fullWidth={true}
-          />
-          {profileMessage ? <Text style={styles.infoText}>{profileMessage}</Text> : null}
-        </View>
-      </Modal>
-
-      {/* Language Selection Modal */}
-      <Modal
-        visible={modalLangVisible}
-        onClose={() => setModalLangVisible(false)}
-        title={t('settings.chooseLanguage')}
-        isDarkMode={isDarkMode}
-      >
-        <View style={styles.languageModalContent}>
-          <Button
-            title=" Français"
-            onPress={() => changeLanguage('Français')}
-            variant="outlined"
-            size="medium"
-            isDarkMode={isDarkMode}
-            fullWidth={true}
-            accessibilityLabel="Français"
-            accessibilityRole="radio"
-            accessibilityState={{ selected: language === 'Français' }}
-          />
-          <Button
-            title=" English"
-            onPress={() => changeLanguage('English')}
-            variant="outlined"
-            size="medium"
-            isDarkMode={isDarkMode}
-            fullWidth={true}
-            accessibilityLabel="English"
-            accessibilityRole="radio"
-            accessibilityState={{ selected: language === 'English' }}
-          />
-          <Button
-            title=" العربية"
-            onPress={() => changeLanguage('العربية')}
-            variant="outlined"
-            size="medium"
-            isDarkMode={isDarkMode}
-            fullWidth={true}
-            accessibilityLabel="العربية"
-            accessibilityRole="radio"
-            accessibilityState={{ selected: language === 'العربية' }}
-          />
-        </View>
-      </Modal>
-
-      {/* Support Modal */}
-      <Modal
-        visible={modalSupportVisible}
-        onClose={() => setModalSupportVisible(false)}
-        title={t('settings.contactSupport')}
-        isDarkMode={isDarkMode}
-      >
-        <View style={styles.supportModalContent}>
-          <Card isDarkMode={isDarkMode} elevation={1} marginBottom={SPACING.md}>
-            <TouchableOpacity
-              style={styles.supportOption}
-              onPress={sendEmail}
-              accessibilityLabel={t('settings.email')}
-              accessibilityRole="button"
-              accessibilityHint="Send email to support@example.com"
-            >
-              <Feather name="mail" size={20} color={getColors(isDarkMode).secondary} />
-              <View style={{ flex: 1, marginLeft: SPACING.md }}>
-                <Text style={styles.supportLabel}>{t('settings.email')}</Text>
-                <Text style={styles.supportValue}>support@example.com</Text>
-              </View>
-            </TouchableOpacity>
-          </Card>
-
-          <Card isDarkMode={isDarkMode} elevation={1} marginBottom={SPACING.md}>
-            <TouchableOpacity
-              style={styles.supportOption}
-              onPress={callPhone}
-              accessibilityLabel={t('settings.phone')}
-              accessibilityRole="button"
-              accessibilityHint="Call support at +1 234 567 890"
-            >
-              <Feather name="phone" size={20} color={getColors(isDarkMode).secondary} />
-              <View style={{ flex: 1, marginLeft: SPACING.md }}>
-                <Text style={styles.supportLabel}>{t('settings.phone')}</Text>
-                <Text style={styles.supportValue}>+1 234 567 890</Text>
-              </View>
-            </TouchableOpacity>
-          </Card>
-
-          <View
-            style={{
-              marginTop: SPACING.md,
-              padding: SPACING.md,
-              backgroundColor: getColors(isDarkMode).surface,
-              borderRadius: BORDER_RADIUS.md,
+      <AppModal visible={languageVisible} onClose={() => setLanguageVisible(false)} title={t('settings.language', 'Language')}>
+        {LANGUAGES.map((item) => (
+          <AppButton
+            key={item}
+            title={item}
+            onPress={() => {
+              setLanguage(item);
+              setLanguageVisible(false);
             }}
-          >
-            <Text style={styles.infoTitle}>{t('settings.aboutDeveloper')}</Text>
-            <Text style={styles.infoText}>{t('settings.developerInfo')}</Text>
-          </View>
-        </View>
-      </Modal>
-    </ScrollView>
+            variant={language === item ? 'contained' : 'outlined'}
+            fullWidth
+            style={{ marginBottom: 10 }}
+          />
+        ))}
+      </AppModal>
+
+      <AppModal visible={notificationsVisible} onClose={() => setNotificationsVisible(false)} title={t('settings.notifications', 'Notifications')}>
+        <AppText variant="bodyMedium" color={colors.textSecondary} style={{ marginBottom: 16 }}>
+          {t('settings.notificationsOverview', 'Manage permissions, test reminders, and clean up scheduled notifications.')}
+        </AppText>
+        <AppButton
+          title={notificationsEnabled ? t('settings.disableNotifications', 'Disable notifications') : t('settings.enableNotifications', 'Enable notifications')}
+          onPress={() => toggleNotifications(!notificationsEnabled)}
+          fullWidth
+          style={{ marginBottom: 10 }}
+        />
+        <AppButton
+          title={t('settings.sendTestNotification', 'Send test notification')}
+          onPress={() => sendPharmacyReminder('Test Pharmacie', 'Test Address')}
+          variant="tonal"
+          fullWidth
+          style={{ marginBottom: 10 }}
+        />
+        <AppButton
+          title={t('settings.dailyReminder', 'Daily reminder')}
+          onPress={sendDailyReminder}
+          variant="outlined"
+          fullWidth
+          style={{ marginBottom: 10 }}
+        />
+        <AppButton
+          title={t('settings.clearNotifications', 'Clear notifications')}
+          onPress={clearAllNotifications}
+          variant="ghost"
+          color="error"
+          fullWidth
+        />
+      </AppModal>
+
+      <AppModal visible={supportVisible} onClose={() => setSupportVisible(false)} title={t('settings.contactSupport', 'Contact support')}>
+        <AppInput
+          label={t('settings.subject', 'Subject')}
+          value={support.subject}
+          onChangeText={(value) => setSupport((current) => ({ ...current, subject: value }))}
+        />
+        <AppInput
+          label={t('settings.message', 'Message')}
+          value={support.body}
+          onChangeText={(value) => setSupport((current) => ({ ...current, body: value }))}
+          multiline
+          numberOfLines={5}
+          inputStyle={{ minHeight: 110, textAlignVertical: 'top' }}
+        />
+        <AppButton title={t('settings.sendEmail', 'Send email')} onPress={sendSupportEmail} fullWidth />
+      </AppModal>
+    </>
   );
 }
 
-const getStyles = (isDarkMode, isRTL = false) => {
-  const colors = getColors(isDarkMode);
-  const shadow = getContextualShadow(2, isDarkMode);
-
-  return StyleSheet.create({
+const createStyles = (colors, radius, shadows, isRTL) =>
+  StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: colors.background || '#FFFFFF',
+      backgroundColor: colors.backgroundAccent,
     },
-    titleContainer: {
+    content: {
+      padding: 16,
+      paddingTop: 108,
+      paddingBottom: 140,
+    },
+    hero: {
+      backgroundColor: colors.primary,
+      borderRadius: radius.xxl,
+      padding: 24,
+      marginBottom: 24,
+      ...shadows.floating,
+    },
+    heroBadge: {
+      alignSelf: isRTL ? 'flex-end' : 'flex-start',
       flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
-      paddingVertical: SPACING.lg,
-      paddingHorizontal: SPACING.lg,
-      backgroundColor: '#0066CC',
-      borderBottomLeftRadius: 12,
-      borderBottomRightRadius: 12,
-      marginBottom: SPACING.lg,
-      ...shadow,
+      gap: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: radius.full,
+      backgroundColor: 'rgba(255,255,255,0.16)',
     },
-    titleText: {
-      ...TEXT_STYLES.headerMedium,
-      color: '#FFFFFF',
-      marginLeft: isRTL ? 0 : SPACING.md,
-      marginRight: isRTL ? SPACING.md : 0,
-    },
-    optionRow: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      width: '100%',
-    },
-    optionLeft: {
+    heroStats: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
+      marginTop: 20,
+      backgroundColor: 'rgba(5, 22, 46, 0.22)',
+      borderRadius: radius.xl,
+      padding: 14,
+    },
+    heroStat: {
       flex: 1,
-      gap: SPACING.md,
-    },
-    optionRight: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
-      gap: SPACING.sm,
     },
-    optionText: {
-      ...TEXT_STYLES.bodyLarge,
-      color: colors.text,
+    heroDivider: {
+      width: 1,
+      height: 32,
+      backgroundColor: 'rgba(255,255,255,0.18)',
     },
-    optionValue: {
-      ...TEXT_STYLES.bodyMedium,
-      color: colors.textSecondary,
+    group: {
+      marginBottom: 24,
     },
-    optionValueSmall: {
-      ...TEXT_STYLES.bodySmall,
-      color: colors.textSecondary,
-      marginTop: 2,
-    },
-
-    /* Modal Content Styles */
-    languageModalContent: {
-      width: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: SPACING.md,
-      paddingHorizontal: SPACING.sm,
-    },
-    supportModalContent: {
-      width: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'stretch',
-      justifyContent: 'flex-start',
-      gap: SPACING.sm,
-    },
-    supportOption: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
-      alignItems: 'center',
-      padding: SPACING.md,
-    },
-    supportLabel: {
-      ...TEXT_STYLES.caption,
-      color: colors.textSecondary,
-    },
-    supportValue: {
-      ...TEXT_STYLES.bodyMedium,
-      color: colors.text,
-      marginTop: 2,
-    },
-    infoTitle: {
-      ...TEXT_STYLES.subtitle,
-      color: colors.text,
-      marginBottom: SPACING.sm,
-      fontWeight: '600',
-    },
-    infoText: {
-      ...TEXT_STYLES.bodySmall,
-      color: colors.textSecondary,
-      lineHeight: 20,
+    divider: {
+      height: 1,
+      backgroundColor: colors.divider,
     },
   });
-};

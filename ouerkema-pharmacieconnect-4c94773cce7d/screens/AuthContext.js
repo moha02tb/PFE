@@ -55,6 +55,7 @@ export const AuthProvider = ({ children }) => {
   const [refreshToken, setRefreshToken] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState(null);
 
   const clearAuthState = useCallback(async () => {
     await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
@@ -63,6 +64,7 @@ export const AuthProvider = ({ children }) => {
     setAccessToken(null);
     setRefreshToken(null);
     setUser(null);
+    setPendingVerificationEmail(null);
   }, []);
 
   // Initialize auth from stored tokens
@@ -159,6 +161,7 @@ export const AuthProvider = ({ children }) => {
       setAccessToken(newAccessToken);
       setRefreshToken(newRefreshToken);
       setUser(userData);
+      setPendingVerificationEmail(null);
 
       return { success: true, user: userData };
     } catch (err) {
@@ -171,6 +174,13 @@ export const AuthProvider = ({ children }) => {
           : isNetwork
             ? 'Network error: backend not reachable from mobile app.'
             : err.message || 'Login failed');
+      if (
+        email &&
+        typeof errorMessage === 'string' &&
+        errorMessage.toLowerCase().includes('verify your email')
+      ) {
+        setPendingVerificationEmail(email);
+      }
       setError(errorMessage);
       return { success: false, error: errorMessage };
     } finally {
@@ -220,26 +230,68 @@ export const AuthProvider = ({ children }) => {
         username: username || email,
       });
 
-      const { access_token: newAccessToken, refresh_token: newRefreshToken } = response.data;
-
-      // Fetch user data using new token
-      const apiClientWithToken = createApiClient(newAccessToken);
-      const userResponse = await apiClientWithToken.get('/api/auth/me');
-      const userData = userResponse.data;
-
-      // Store tokens and user data
-      await AsyncStorage.setItem(ACCESS_TOKEN_KEY, newAccessToken);
-      await AsyncStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
-      await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
-
-      // Update state
-      setAccessToken(newAccessToken);
-      setRefreshToken(newRefreshToken);
-      setUser(userData);
-
-      return { success: true, user: userData };
+      return {
+        success: true,
+        requiresVerification: !!response.data?.requires_verification,
+        email: response.data?.email || email,
+        message:
+          response.data?.message || 'Registration successful. Please verify your email before signing in.',
+      };
     } catch (err) {
       const errorMessage = err.response?.data?.detail || err.message || 'Registration failed';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const verifyEmailCode = useCallback(async (email, code) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const apiClient = createApiClient(null);
+      const response = await apiClient.post('/api/auth/verify-email', {
+        email,
+        code,
+      });
+      setPendingVerificationEmail(null);
+
+      return {
+        success: true,
+        message: response.data?.message || 'Email verified successfully. You can now sign in.',
+      };
+    } catch (err) {
+      const errorMessage = err.response?.data?.detail || err.message || 'Verification failed';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const beginEmailVerification = useCallback((email) => {
+    setPendingVerificationEmail(email || null);
+  }, []);
+
+  const clearPendingVerification = useCallback(() => {
+    setPendingVerificationEmail(null);
+  }, []);
+
+  const resendVerificationEmail = useCallback(async (email) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const apiClient = createApiClient(null);
+      const response = await apiClient.post('/api/auth/resend-verification', { email });
+      return {
+        success: true,
+        message: response.data?.message || 'Verification email sent',
+      };
+    } catch (err) {
+      const errorMessage = err.response?.data?.detail || err.message || 'Unable to resend verification email';
       setError(errorMessage);
       return { success: false, error: errorMessage };
     } finally {
@@ -305,11 +357,16 @@ export const AuthProvider = ({ children }) => {
     refreshToken,
     loading,
     error,
+    pendingVerificationEmail,
     isAuthenticated: !!user && !!accessToken,
 
     // Methods
     login,
     register,
+    verifyEmailCode,
+    resendVerificationEmail,
+    beginEmailVerification,
+    clearPendingVerification,
     refreshAccessToken,
     logout,
     updateUserProfile,

@@ -1,54 +1,70 @@
 import React from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
-import { getColors } from '../../utils/colors';
-import { SPACING, BORDER_RADIUS, LAYOUT } from '../../utils/spacing';
-import { getContextualShadow } from '../../utils/shadows';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { useAppTheme } from '../../utils/theme';
 
-/**
- * Card Component - Reusable container for content
- * Supports elevation, customizable padding, and theme-aware styling
- */
-const Card = ({
+export default function AppCard({
   children,
-  isDarkMode = false,
-  elevation = 2,
-  padding = LAYOUT.cardPadding,
-  margin = 0,
-  marginBottom = 0,
   style,
-  onPress = null,
+  contentStyle,
+  onPress,
   pressable = false,
-  borderColor = null,
+  elevation = 2,
+  padding = 16,
+  margin,
+  marginBottom = 0,
   borderAccent = false,
-}) => {
-  const colors = getColors(isDarkMode);
-  const shadow = getContextualShadow(elevation, isDarkMode);
+}) {
+  const { colors, radius, shadows } = useAppTheme();
+  const shadowMap = {
+    1: shadows.subtle,
+    2: shadows.card,
+    3: shadows.raised,
+    4: shadows.floating,
+    5: shadows.modal,
+  };
 
   const styles = StyleSheet.create({
-    card: {
-      backgroundColor: colors.surface || '#FFFFFF',
-      borderRadius: BORDER_RADIUS.lg,
-      padding: padding,
-      marginHorizontal: margin,
-      marginBottom: marginBottom || margin,
-      borderLeftWidth: borderAccent ? 4 : 0,
-      borderLeftColor: borderAccent ? '#0066CC' : 'transparent',
-      ...shadow,
+    shell: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.xxl,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginHorizontal: margin ?? 0,
+      marginBottom,
+      overflow: 'hidden',
+    },
+    accent: {
+      height: 4,
+      backgroundColor: borderAccent ? colors.primary : colors.surfaceSecondary,
+      opacity: borderAccent ? 1 : 0.9,
+    },
+    content: {
+      padding,
+      backgroundColor: colors.surface,
+    },
+    pressed: {
+      opacity: 0.92,
+      transform: [{ scale: 0.992 }],
     },
   });
 
-  if (pressable && onPress) {
+  const body = (
+    <>
+      <View style={styles.accent} />
+      <View style={[styles.content, contentStyle]}>{children}</View>
+    </>
+  );
+
+  if (pressable || onPress) {
     return (
       <Pressable
         onPress={onPress}
-        style={({ pressed }) => [styles.card, pressed && { opacity: 0.8 }, style]}
+        style={({ pressed }) => [styles.shell, shadowMap[elevation] || shadows.card, pressed && styles.pressed, style]}
       >
-        {children}
+        {body}
       </Pressable>
     );
   }
 
-  return <View style={[styles.card, style]}>{children}</View>;
-};
-
-export default Card;
+  return <View style={[styles.shell, shadowMap[elevation] || shadows.card, style]}>{body}</View>;
+}

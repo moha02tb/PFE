@@ -14,11 +14,23 @@
       }
     },
     "preview": {
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://6262-196-187-132-115.ngrok-free.app"
+      },
       "android": {
         "distribution": "internal"
       },
       "ios": {
         "distribution": "internal"
+      }
+    },
+    "preview-apk": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://6262-196-187-132-115.ngrok-free.app"
+      },
+      "android": {
+        "buildType": "apk"
       }
     },
     "production": {

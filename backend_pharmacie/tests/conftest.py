@@ -16,9 +16,13 @@ import os
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from database import Base, get_db
+# Keep tests isolated from the developer's real PostgreSQL configuration.
+os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
+os.environ.setdefault("ENABLE_REDIS_CACHE", "false")
+
+from database import get_db
 from main import app
-from fastapi.testclient import TestClient
+from schema_migrations import run_schema_migrations
 
 
 # Database fixtures
@@ -30,7 +34,7 @@ def test_db() -> Generator[Session, None, None]:
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    Base.metadata.create_all(bind=engine)
+    run_schema_migrations(engine)
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
     def override_get_db():
@@ -45,8 +49,10 @@ def test_db() -> Generator[Session, None, None]:
 
 
 @pytest.fixture
-def client(test_db: Session) -> TestClient:
+def client(test_db: Session):
     """Provide a FastAPI test client with test database."""
+    from fastapi.testclient import TestClient
+
     return TestClient(app)
 
 
@@ -80,6 +86,7 @@ def test_user(test_db: Session):
         nomUtilisateur="test_user",
         email="test_user@test.com",
         motDePasse=hash_password("TestPassword123"),
+        email_verified=True,
     )
     test_db.add(user)
     test_db.commit()
@@ -89,7 +96,7 @@ def test_user(test_db: Session):
 
 # Authentication fixtures
 @pytest.fixture
-def admin_token(client: TestClient, test_admin):
+def admin_token(test_admin):
     """Obtain JWT access token for test admin."""
     from security import create_access_token
 
@@ -98,7 +105,7 @@ def admin_token(client: TestClient, test_admin):
 
 
 @pytest.fixture
-def user_token(client: TestClient, test_user):
+def user_token(test_user):
     """Obtain JWT access token for test user."""
     from security import create_access_token
 

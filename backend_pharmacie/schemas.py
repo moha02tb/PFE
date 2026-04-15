@@ -108,6 +108,45 @@ class RegisterRequest(BaseModel):
         }
 
 
+class RegisterResponse(BaseModel):
+    """Registration response for email-verification flows."""
+
+    message: str
+    email: EmailStr
+    requires_verification: bool = True
+
+
+class VerifyEmailResponse(BaseModel):
+    """Simple verification response payload."""
+
+    message: str
+
+
+class VerifyEmailCodeRequest(BaseModel):
+    """Verify account email with a short code."""
+
+    email: EmailStr
+    code: str = Field(..., min_length=4, max_length=12)
+
+
+class ResendVerificationRequest(BaseModel):
+    """Resend verification email request."""
+
+    email: EmailStr
+
+
+class SearchEventCreate(BaseModel):
+    """Public search analytics ingestion payload."""
+
+    event_type: str = Field(..., min_length=3, max_length=50)
+    query_text: Optional[str] = Field(None, max_length=255)
+    location_label: Optional[str] = Field(None, max_length=255)
+    governorate: Optional[str] = Field(None, max_length=100)
+    latitude: Optional[float] = Field(None, ge=-90, le=90)
+    longitude: Optional[float] = Field(None, ge=-180, le=180)
+    result_count: Optional[int] = Field(None, ge=0)
+
+
 class AdminResponse(BaseModel):
     """Admin user response (no password)"""
 
@@ -130,6 +169,7 @@ class UserResponse(BaseModel):
     email: str
     phone: Optional[str] = None
     is_active: bool
+    email_verified: bool = False
     source: str
 
     class Config:
@@ -350,3 +390,45 @@ class PharmacieUploadResponse(BaseModel):
             }
         }
 
+
+class MedicineUploadIssueDetail(BaseModel):
+    """Detail of a validation error or warning during medicine upload."""
+
+    row_number: int = Field(..., description="CSV row number (1-indexed)")
+    error_message: str = Field(..., description="Issue description")
+
+
+class MedicineCreate(BaseModel):
+    """Medicine creation input derived from CSV rows."""
+
+    code_pct: str = Field(..., min_length=1, max_length=50)
+    nom_commercial: str = Field(..., min_length=1, max_length=255)
+    prix_public_dt: float = Field(..., ge=0)
+    tarif_reference_dt: float = Field(..., ge=0)
+    categorie_remboursement: str = Field(..., min_length=1, max_length=20)
+    dci: str = Field(..., min_length=1, max_length=255)
+    ap: str = Field(..., min_length=1, max_length=20)
+
+
+class MedicineResponse(BaseModel):
+    id: int
+    code_pct: str
+    nom_commercial: str
+    prix_public_dt: float
+    tarif_reference_dt: float
+    categorie_remboursement: str
+    dci: str
+    ap: str
+    created_by: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class MedicineUploadResponse(BaseModel):
+    total_rows: int
+    successful: int
+    failed: int
+    errors: List[MedicineUploadIssueDetail] = Field(default_factory=list)
+    warnings: List[MedicineUploadIssueDetail] = Field(default_factory=list)

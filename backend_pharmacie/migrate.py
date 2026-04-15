@@ -1,116 +1,89 @@
 #!/usr/bin/env python3
-"""
-Database migration script for moving to the new authentication system.
-This script will:
-1. Create new tables (RefreshToken, LoginAttempt)
-2. Add new columns to Administrateur table
-3. Hash existing plain text passwords
-"""
+"""Run idempotent schema migrations and legacy password cleanup."""
+
+from __future__ import annotations
 
 import sys
 
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
 import models
-from database import SQLALCHEMY_DATABASE_URL
+from database import SessionLocal, SQLALCHEMY_DATABASE_URL, engine
+from schema_migrations import run_schema_migrations
 from security import hash_password
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
 
 
-def run_migration():
-    """Run the database migration"""
+def _hash_legacy_passwords() -> dict[str, int]:
+    """Hash any legacy plain-text passwords that are still stored in the DB."""
+    session = SessionLocal()
+    counters = {"administrateurs": 0, "utilisateurs": 0}
 
-    # Connect to database
-    engine = create_engine(SQLALCHEMY_DATABASE_URL)
-    SessionLocal = sessionmaker(bind=engine)
-
-    print("=" * 60)
-    print("DATABASE MIGRATION SCRIPT")
-    print("=" * 60)
-
-    # Create new tables
-    print("\n[1/3] Creating new tables...")
     try:
-        models.Base.metadata.create_all(bind=engine)
-        print("✓ Tables created successfully")
-    except Exception as e:
-        print(f"✗ Error creating tables: {e}")
-        return False
-
-    # Hash existing passwords
-    print("\n[2/3] Hashing existing passwords...")
-    try:
-        db = SessionLocal()
-        admins = db.query(models.Administrateur).all()
-
-        hashed_count = 0
-        for admin in admins:
-            # Only hash if not already hashed (bcrypt hashes start with $2)
+        for admin in session.query(models.Administrateur).all():
             if not admin.motDePasse.startswith("$2"):
-                old_password = admin.motDePasse
                 admin.motDePasse = hash_password(admin.motDePasse)
-                hashed_count += 1
-                print(f"  ✓ Hashed password for {admin.email}")
-            else:
-                print(f"  ⊘ Password already hashed for {admin.email}")
+                counters["administrateurs"] += 1
 
-        db.commit()
-        db.close()
+        for user in session.query(models.Utilisateur).all():
+            if not user.motDePasse.startswith("$2"):
+                user.motDePasse = hash_password(user.motDePasse)
+                counters["utilisateurs"] += 1
 
-        if hashed_count == 0:
-            print("✓ No passwords needed hashing")
-        else:
-            print(f"✓ Successfully hashed {hashed_count} password(s)")
+        session.commit()
+        return counters
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
-    except Exception as e:
-        print(f"✗ Error hashing passwords: {e}")
-        return False
 
-    # Verify migration
-    print("\n[3/3] Verifying migration...")
+def _table_count(model) -> int:
+    session = SessionLocal()
     try:
-        db = SessionLocal()
-        admin_count = db.query(models.Administrateur).count()
-        print(f"✓ Found {admin_count} administrator(s)")
+        return session.query(model).count()
+    finally:
+        session.close()
 
-        # Check if new columns exist
-        with engine.connect() as conn:
-            result = conn.execute(
-                text(
-                    "SELECT column_name FROM information_schema.columns WHERE table_name='administrateur'"
-                )
-            )
-            columns = [row[0] for row in result]
 
-            required_columns = ["is_active", "created_at", "updated_at"]
-            for col in required_columns:
-                if col in columns:
-                    print(f"✓ Column '{col}' exists")
-                else:
-                    print(f"✗ Column '{col}' missing")
+def run_migration() -> bool:
+    """Apply schema migrations and print a short summary."""
+    print("=" * 60)
+    print("DATABASE MIGRATION")
+    print("=" * 60)
+    print(f"Database URL: {SQLALCHEMY_DATABASE_URL}")
 
-        db.close()
+    try:
+        applied = run_schema_migrations(engine)
+        password_updates = _hash_legacy_passwords()
 
-    except Exception as e:
-        print(f"✗ Error verifying migration: {e}")
+        print("\nApplied schema migrations:")
+        if applied:
+            for version in applied:
+                print(f"  - {version}")
+        else:
+            print("  - none")
+
+        print("\nLegacy password updates:")
+        print(f"  - administrateurs: {password_updates['administrateurs']}")
+        print(f"  - utilisateurs: {password_updates['utilisateurs']}")
+
+        print("\nCurrent table counts:")
+        print(f"  - administrateurs: {_table_count(models.Administrateur)}")
+        print(f"  - utilisateurs: {_table_count(models.Utilisateur)}")
+        print(f"  - pharmacies: {_table_count(models.Pharmacie)}")
+        print(f"  - audit_logs: {_table_count(models.AuditLog)}")
+        print(f"  - login_attempts: {_table_count(models.LoginAttempt)}")
+        print(f"  - refresh_tokens: {_table_count(models.RefreshToken)}")
+    except Exception as exc:
+        print(f"\nMigration failed: {exc}")
         return False
 
-    print("\n" + "=" * 60)
-    print("✓ MIGRATION COMPLETED SUCCESSFULLY")
-    print("=" * 60)
-    print("\nNext steps:")
-    print("1. Start the backend: python -m uvicorn main:app --reload")
-    print("2. Test login at: POST /api/auth/login")
-    print("3. Update frontend with new auth system")
-    print("=" * 60)
-
+    print("\nMigration completed successfully.")
     return True
 
 
 if __name__ == "__main__":
-    success = run_migration()
-    sys.exit(0 if success else 1)
+    sys.exit(0 if run_migration() else 1)

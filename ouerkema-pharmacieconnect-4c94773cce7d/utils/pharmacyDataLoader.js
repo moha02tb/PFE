@@ -7,6 +7,15 @@ const API_BASE_URL = API_CONFIG.baseURL;
 
 console.log(`[Pharmacy Loader] Initialized with API URL: ${API_BASE_URL}`);
 
+const formatDateParam = (value) => {
+  if (!(value instanceof Date)) return value;
+
+  const year = value.getFullYear();
+  const month = `${value.getMonth() + 1}`.padStart(2, '0');
+  const day = `${value.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 /**
  * Fetch pharmacies from backend API
  * @param {number} skip - Number of records to skip (pagination)
@@ -105,6 +114,94 @@ export const fetchNearbyPharmaciesFromAPI = async (
     }));
   } catch (error) {
     console.error('[API] Error fetching nearby pharmacies:', {
+      message: error.message,
+      code: error.code,
+      url: error.config?.url,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+    });
+    return null;
+  }
+};
+
+export const trackSearchEvent = async ({
+  eventType,
+  queryText = null,
+  locationLabel = null,
+  governorate = null,
+  latitude = null,
+  longitude = null,
+  resultCount = null,
+}) => {
+  try {
+    await axios.post(
+      `${API_BASE_URL}${API_CONFIG.endpoints.analyticsSearchEvents}`,
+      {
+        event_type: eventType,
+        query_text: queryText,
+        location_label: locationLabel,
+        governorate,
+        latitude,
+        longitude,
+        result_count: resultCount,
+      },
+      {
+        timeout: API_CONFIG.timeout,
+      }
+    );
+  } catch (error) {
+    console.warn('[Analytics] Failed to track search event:', {
+      message: error.message,
+      code: error.code,
+      status: error.response?.status,
+    });
+  }
+};
+
+export const fetchCalendarPharmaciesFromAPI = async (date) => {
+  try {
+    const dateParam = formatDateParam(date);
+    console.log(`[API] Fetching garde schedule from: ${API_BASE_URL}${API_CONFIG.endpoints.gardes}`);
+
+    const response = await axios.get(`${API_BASE_URL}${API_CONFIG.endpoints.gardes}`, {
+      params: { date_value: dateParam, limit: 200 },
+      timeout: API_CONFIG.timeout,
+    });
+
+    console.log(`[API] Successfully fetched ${response.data?.length || 0} garde rows`);
+
+    return response.data.map((garde, index) => {
+      const pharmacy = garde.pharmacy || {};
+      const scheduleLabel = garde.start_time && garde.end_time
+        ? `${garde.start_time} - ${garde.end_time}`
+        : 'Hours pending';
+
+      return {
+        id: pharmacy.id || `garde-${garde.id}-${index}`,
+        gardeId: garde.id,
+        name: pharmacy.name || garde.pharmacy_name,
+        address: pharmacy.address || garde.city || garde.governorate || 'Address unavailable',
+        phone: pharmacy.phone || '',
+        latitude: pharmacy.latitude ?? null,
+        longitude: pharmacy.longitude ?? null,
+        governorate: pharmacy.governorate || garde.governorate || 'Tunisia',
+        osm_id: pharmacy.osm_id,
+        osm_type: pharmacy.osm_type,
+        isOpen: true,
+        emergency: true,
+        openHours: scheduleLabel,
+        shiftType: garde.shift_type || null,
+        notes: garde.notes || null,
+        coordinates: pharmacy.latitude != null && pharmacy.longitude != null
+          ? {
+            latitude: pharmacy.latitude,
+            longitude: pharmacy.longitude,
+          }
+          : null,
+      };
+    });
+  } catch (error) {
+    console.error('[API] Error fetching garde schedule:', {
       message: error.message,
       code: error.code,
       url: error.config?.url,
