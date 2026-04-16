@@ -17,6 +17,7 @@ import { FavoritesProvider } from './screens/FavoritesContext';
 import { FilterProvider } from './screens/FilterContext';
 import { SearchHistoryProvider } from './screens/SearchHistoryContext';
 import { RatingProvider } from './screens/RatingContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import { getTheme } from './utils/theme';
 import HomeScreen from './screens/HomeScreen';
 import MapboxMapScreen from './screens/MapboxMapScreen';
@@ -274,28 +275,30 @@ function MainAppNavigator({ navigation }) {
 
 export default function App() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <ThemeProvider>
-          <LanguageProvider>
-            <AuthProvider>
-              <FavoritesProvider>
-                <FilterProvider>
-                  <SearchHistoryProvider>
-                    <RatingProvider>
-                      <NotificationProvider>
-                        <AppNavigator />
-                        <StatusBar style="auto" />
-                      </NotificationProvider>
-                    </RatingProvider>
-                  </SearchHistoryProvider>
-                </FilterProvider>
-              </FavoritesProvider>
-            </AuthProvider>
-          </LanguageProvider>
-        </ThemeProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <ErrorBoundary>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <ThemeProvider>
+            <LanguageProvider>
+              <AuthProvider>
+                <FavoritesProvider>
+                  <FilterProvider>
+                    <SearchHistoryProvider>
+                      <RatingProvider>
+                        <NotificationProvider>
+                          <AppNavigator />
+                          <StatusBar style="auto" />
+                        </NotificationProvider>
+                      </RatingProvider>
+                    </SearchHistoryProvider>
+                  </FilterProvider>
+                </FavoritesProvider>
+              </AuthProvider>
+            </LanguageProvider>
+          </ThemeProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    </ErrorBoundary>
   );
 }
 

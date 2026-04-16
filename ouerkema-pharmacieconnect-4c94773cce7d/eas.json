@@ -15,7 +15,7 @@
     },
     "preview": {
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://6262-196-187-132-115.ngrok-free.app"
+        "EXPO_PUBLIC_API_URL": "https://0404-196-235-234-156.ngrok-free.app"
       },
       "android": {
         "distribution": "internal"
@@ -27,7 +27,7 @@
     "preview-apk": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://6262-196-187-132-115.ngrok-free.app"
+        "EXPO_PUBLIC_API_URL": "https://0404-196-235-234-156.ngrok-free.app"
       },
       "android": {
         "buildType": "apk"

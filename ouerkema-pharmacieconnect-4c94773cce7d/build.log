@@ -1,11 +1,23 @@
-Resolved "preview" environment for the build. Learn more: https://docs.expo.dev/eas/environment-variables/#setting-the-environment-for-your-builds
-No environment variables with visibility "Plain text" and "Sensitive" found for the "preview" environment on EAS.
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
 
+FAILURE: Build failed with an exception.
 
+* What went wrong:
+Directory '/home/mohamed/PFE/ouerkema-pharmacieconnect-4c94773cce7d' does not contain a Gradle build.
 
-✔ Using remote Android credentials (Expo server)
-✔ Created keystore
+A Gradle build's root directory should contain one of the possible settings files: settings.gradle, settings.gradle.kts, settings.gradle.dcl.It may also contain one of the possible build files: build.gradle, build.gradle.kts, build.gradle.dcl.
 
-Compressing project files and uploading to EAS Build. Learn more: https://expo.fyi/eas-build-archive
-- Compressing project files
-- Uploading to EAS Build (0 / 136 MB)
+To create a new Gradle build in this directory run 'gradlew init'
+
+For more information about the 'init' task, please refer to https://docs.gradle.org/8.14.3/userguide/build_init_plugin.html in the Gradle documentation.
+
+For more details on creating a Gradle build, please refer to https://docs.gradle.org/8.14.3/userguide/tutorial_using_tasks.html in the Gradle documentation.
+
+* Try:
+> Run gradlew init to create a new Gradle build in this directory.
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 6s

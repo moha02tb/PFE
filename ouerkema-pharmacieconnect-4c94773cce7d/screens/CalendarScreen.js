@@ -101,15 +101,42 @@ export default function CalendarScreen({ navigation }) {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
+        logger.warn('CalendarScreen', 'Location permission denied', { status });
         if (navigation?.jumpTo) navigation.jumpTo('Carte', { pharmacies, targetPharmacy: item });
         else navigation.navigate('Carte', { pharmacies, targetPharmacy: item });
         return;
       }
-      const { coords } = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest });
+
+      // Try to get current position with timeout
+      let position;
+      try {
+        position = await Promise.race([
+          Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest }),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Location request timeout')), 15000)
+          ),
+        ]);
+      } catch (positionError) {
+        // Fallback to last known position if current request fails
+        logger.warn('CalendarScreen', 'getCurrentPosition failed, trying last known', positionError);
+        const lastKnown = await Location.getLastKnownPositionAsync();
+        if (!lastKnown?.coords) {
+          throw new Error('Could not determine user location');
+        }
+        position = lastKnown;
+      }
+
+      const coords = position?.coords;
+      if (!coords?.latitude || !coords?.longitude) {
+        throw new Error('Invalid coordinates received');
+      }
+
       const params = { pharmacies, initialLocation: coords, targetPharmacy: item };
       if (navigation?.jumpTo) navigation.jumpTo('Carte', params);
       else navigation.navigate('Carte', params);
-    } catch {
+    } catch (error) {
+      logger.error('CalendarScreen', 'Error in openDirections', error);
+      // Navigate to map anyway without user's current location
       if (navigation?.jumpTo) navigation.jumpTo('Carte', { pharmacies, targetPharmacy: item });
       else navigation.navigate('Carte', { pharmacies, targetPharmacy: item });
     }

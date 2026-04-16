@@ -73,22 +73,70 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
+  const getLocationWithAndroidFix = async () => {
+    try {
+      // First, ensure permission is granted
+      let permStatus = await Location.getForegroundPermissionsAsync();
+      if (permStatus.status !== 'granted') {
+        logger.warn('HomeScreen', 'Permission not granted, requesting...');
+        const requestResult = await Location.requestForegroundPermissionsAsync();
+        if (requestResult.status !== 'granted') {
+          logger.warn('HomeScreen', 'Location permission denied by user');
+          return null;
+        }
+      }
+
+      // Check if location services are enabled (Android specific)
+      try {
+        const isEnabled = await Location.hasServicesEnabledAsync();
+        if (!isEnabled) {
+          logger.warn('HomeScreen', 'Location services disabled on device');
+          return null;
+        }
+      } catch (checkError) {
+        logger.warn('HomeScreen', 'Could not check location services', checkError);
+        // Continue anyway - some devices might not support this check
+      }
+
+      // Try to get current position with timeout
+      const coords = await Promise.race([
+        Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+          maximumAge: 10000, // Use cached location if available
+        }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('getCurrentPositionAsync timeout')), 10000)
+        ),
+      ]);
+
+      return coords.coords;
+    } catch (currentError) {
+      logger.warn('HomeScreen', 'getCurrentPositionAsync failed', currentError);
+
+      // Fallback to last known position
+      try {
+        const lastKnown = await Location.getLastKnownPositionAsync();
+        if (lastKnown?.coords) {
+          logger.warn('HomeScreen', 'Using last known position');
+          return lastKnown.coords;
+        }
+      } catch (lastKnownError) {
+        logger.warn('HomeScreen', 'getLastKnownPosition failed', lastKnownError);
+      }
+
+      return null;
+    }
+  };
+
   useEffect(() => {
     const bootstrap = async () => {
-      try {
-        const perm = await Location.getForegroundPermissionsAsync();
-        if (perm.status === 'granted') {
-          const current = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Balanced,
-          });
-          setUserLocation(current.coords);
-          await loadData(current.coords);
-          return;
-        }
-      } catch (error) {
-        logger.warn('HomeScreen', 'Location bootstrap failed', error);
+      const coords = await getLocationWithAndroidFix();
+      if (coords) {
+        setUserLocation(coords);
+        await loadData(coords);
+      } else {
+        await loadData(null);
       }
-      await loadData(null);
     };
 
     bootstrap();
@@ -101,24 +149,21 @@ export default function HomeScreen({ navigation }) {
 
   const goToUserLocation = async () => {
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
+      const coords = await getLocationWithAndroidFix();
+
+      if (coords) {
+        setUserLocation(coords);
+        await loadData(coords);
+        const nextPharmacies = await loadPharmaciesAsync(t, true, coords).catch(() => pharmacies);
+        setPharmacies(nextPharmacies);
+        const params = { pharmacies: nextPharmacies, initialLocation: coords };
+        if (navigation?.jumpTo) navigation.jumpTo('Carte', params);
+        else navigation.navigate('Carte', params);
+      } else {
+        logger.warn('HomeScreen', 'No location available, navigating to map without coordinates');
         if (navigation?.jumpTo) navigation.jumpTo('Carte', { pharmacies });
-        else navigation.navigate?.('Carte', { pharmacies });
-        return;
+        else navigation.navigate('Carte', { pharmacies });
       }
-
-      const { coords } = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Highest,
-      });
-
-      setUserLocation(coords);
-      await loadData(coords);
-      const nextPharmacies = await loadPharmaciesAsync(t, true, coords).catch(() => pharmacies);
-      setPharmacies(nextPharmacies);
-      const params = { pharmacies: nextPharmacies, initialLocation: coords };
-      if (navigation?.jumpTo) navigation.jumpTo('Carte', params);
-      else navigation.navigate('Carte', params);
     } catch (error) {
       logger.error('HomeScreen', 'goToUserLocation failed', error);
       if (navigation?.jumpTo) navigation.jumpTo('Carte', { pharmacies });
@@ -128,20 +173,15 @@ export default function HomeScreen({ navigation }) {
 
   const goToDirections = async (item) => {
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        if (navigation?.jumpTo) navigation.jumpTo('Carte', { pharmacies, targetPharmacy: item });
-        else navigation.navigate('Carte', { pharmacies, targetPharmacy: item });
-        return;
-      }
-      const { coords } = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Highest,
-      });
-      const params = { pharmacies, initialLocation: coords, targetPharmacy: item };
+      const coords = await getLocationWithAndroidFix();
+      const params = coords 
+        ? { pharmacies, initialLocation: coords, targetPharmacy: item }
+        : { pharmacies, targetPharmacy: item };
+      
       if (navigation?.jumpTo) navigation.jumpTo('Carte', params);
       else navigation.navigate('Carte', params);
     } catch (error) {
-      logger.warn('HomeScreen', 'Directions location failed', error);
+      logger.warn('HomeScreen', 'goToDirections failed', error);
       if (navigation?.jumpTo) navigation.jumpTo('Carte', { pharmacies, targetPharmacy: item });
       else navigation.navigate('Carte', { pharmacies, targetPharmacy: item });
     }

@@ -117,34 +117,56 @@ export default function MapboxMapScreen({ route }) {
     const loadLocation = async () => {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') return;
+        if (status !== 'granted') {
+          logger.warn('MapboxMapScreen', 'Location permission not granted');
+          return;
+        }
 
-        const lastKnown = await Location.getLastKnownPositionAsync();
-        if (isMounted && lastKnown?.coords) {
+        // Try last known position first (fast)
+        try {
+          const lastKnown = await Location.getLastKnownPositionAsync();
+          if (isMounted && lastKnown?.coords) {
+            setLocation((previous) => ({
+              latitude: lastKnown.coords.latitude,
+              longitude: lastKnown.coords.longitude,
+              latitudeDelta: previous?.latitudeDelta || DEFAULT_REGION.latitudeDelta,
+              longitudeDelta: previous?.longitudeDelta || DEFAULT_REGION.longitudeDelta,
+            }));
+            setCanFetchNearby(true);
+          }
+        } catch (lastKnownError) {
+          logger.warn('MapboxMapScreen', 'Could not get last known position', lastKnownError);
+        }
+
+        // Try current position with timeout
+        try {
+          const current = await Promise.race([
+            Location.getCurrentPositionAsync({
+              accuracy: Location.Accuracy.Balanced,
+              maximumAge: 15000,
+            }),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Location request timeout')), 20000)
+            ),
+          ]);
+
+          if (!isMounted || !current?.coords) return;
           setLocation((previous) => ({
-            latitude: lastKnown.coords.latitude,
-            longitude: lastKnown.coords.longitude,
+            latitude: current.coords.latitude,
+            longitude: current.coords.longitude,
             latitudeDelta: previous?.latitudeDelta || DEFAULT_REGION.latitudeDelta,
             longitudeDelta: previous?.longitudeDelta || DEFAULT_REGION.longitudeDelta,
           }));
           setCanFetchNearby(true);
+        } catch (currentError) {
+          logger.warn('MapboxMapScreen', 'Could not get current position', currentError);
+          // Still allow search/nearby if we have last known or initial location
+          if (isMounted && (location?.latitude || initialMapCenter?.latitude)) {
+            setCanFetchNearby(true);
+          }
         }
-
-        const current = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-          maximumAge: 15000,
-        });
-
-        if (!isMounted || !current?.coords) return;
-        setLocation((previous) => ({
-          latitude: current.coords.latitude,
-          longitude: current.coords.longitude,
-          latitudeDelta: previous?.latitudeDelta || DEFAULT_REGION.latitudeDelta,
-          longitudeDelta: previous?.longitudeDelta || DEFAULT_REGION.longitudeDelta,
-        }));
-        setCanFetchNearby(true);
       } catch (error) {
-        logger.error('MapboxMapScreen', 'Location request failed', error);
+        logger.error('MapboxMapScreen', 'Location initialization failed', error);
       }
     };
 
@@ -188,24 +210,67 @@ export default function MapboxMapScreen({ route }) {
 
   const fetchDirections = async (origin, destination) => {
     try {
+      // Validate input coordinates
+      if (!origin?.latitude || !origin?.longitude || !destination?.latitude || !destination?.longitude) {
+        logger.warn('MapboxMapScreen', 'Invalid coordinates for directions', { origin, destination });
+        return;
+      }
+
       const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}?access_token=${MAPBOX_API_TOKEN}&geometries=geojson`;
       const response = await fetch(url);
+      
+      if (!response.ok) {
+        logger.warn('MapboxMapScreen', 'Directions API error', { status: response.status });
+        return;
+      }
+
       const data = await response.json();
-      if (!data.routes?.length) return;
+      if (!data.routes?.length) {
+        logger.warn('MapboxMapScreen', 'No routes found in directions response');
+        return;
+      }
+
       const route = data.routes[0];
-      const nextCoordinates = route.geometry.coordinates.map((coord) => ({
-        latitude: coord[1],
-        longitude: coord[0],
-      }));
+      
+      if (!route.geometry?.coordinates?.length) {
+        logger.warn('MapboxMapScreen', 'Invalid route geometry');
+        return;
+      }
+
+      const nextCoordinates = route.geometry.coordinates
+        .map((coord) => ({
+          latitude: coord[1],
+          longitude: coord[0],
+        }))
+        .filter((c) => typeof c.latitude === 'number' && typeof c.longitude === 'number');
+
+      if (!nextCoordinates.length) {
+        logger.warn('MapboxMapScreen', 'No valid coordinates in route');
+        return;
+      }
+
       setRouteCoordinates(nextCoordinates);
       setRouteDistance(route.distance / 1000);
       setRouteDuration(route.duration / 60);
-      mapRef.current?.fitToCoordinates(nextCoordinates, {
-        edgePadding: { top: 140, right: 60, bottom: 220, left: 60 },
-        animated: true,
-      });
+
+      // Safely fit map to coordinates with error handling
+      if (mapRef.current && nextCoordinates.length > 0) {
+        try {
+          mapRef.current.fitToCoordinates(nextCoordinates, {
+            edgePadding: { top: 140, right: 60, bottom: 220, left: 60 },
+            animated: true,
+          });
+        } catch (mapError) {
+          logger.warn('MapboxMapScreen', 'fitToCoordinates failed', mapError);
+          // Silently fail - map state remains as is
+        }
+      }
     } catch (error) {
-      logger.error('MapboxMapScreen', 'Directions failed', error);
+      logger.error('MapboxMapScreen', 'Directions fetch failed', error);
+      // Clear route data on failure
+      setRouteCoordinates([]);
+      setRouteDistance(null);
+      setRouteDuration(null);
     }
   };
 
