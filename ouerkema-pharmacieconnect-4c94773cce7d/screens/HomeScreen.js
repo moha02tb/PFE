@@ -3,6 +3,7 @@ import {
   FlatList,
   Linking,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -17,7 +18,13 @@ import { useLanguage } from './LanguageContext';
 import { useFavorites } from './FavoritesContext';
 import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
 import { useDebounce } from '../hooks/useDebounce';
-import { loadPharmacies, loadPharmaciesAsync, filterPharmacies } from '../utils/pharmacyDataLoader';
+import { useLocationHistory } from '../hooks/useLocationHistory';
+import {
+  loadPharmacies,
+  loadPharmaciesAsync,
+  filterPharmacies,
+  searchPharmaciesAsync,
+} from '../utils/pharmacyDataLoader';
 import logger from '../utils/logger';
 import {
   AppButton,
@@ -30,8 +37,14 @@ import {
   SectionTitle,
 } from '../components/design-system';
 import PharmacyDetailsModal from '../components/PharmacyDetailsModal';
+import LocationPicker from '../components/LocationPicker';
 import { useRating } from './RatingContext';
 import { useAppTheme } from '../utils/theme';
+import {
+  ALL_LOCATION_OPTIONS,
+  createLocationSearchTarget,
+  POPULAR_GOVERNORATES,
+} from '../constants/locations';
 
 export default function HomeScreen({ navigation }) {
   const { isDarkMode } = useTheme();
@@ -47,30 +60,138 @@ export default function HomeScreen({ navigation }) {
   });
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchTarget, setSearchTarget] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
-  const [pharmacies, setPharmacies] = useState([]);
+  const [basePharmacies, setBasePharmacies] = useState([]);
+  const [visiblePharmacies, setVisiblePharmacies] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [selectedPharmacy, setSelectedPharmacy] = useState(null);
   const [detailsModalVisible, setDetailsModalVisible] = useState(false);
+  const [locationPickerVisible, setLocationPickerVisible] = useState(false);
+  const [resolvingLocation, setResolvingLocation] = useState(false);
+  const { history: locationHistory, addToHistory } = useLocationHistory();
 
   const debouncedSearchTerm = useDebounce(searchTerm, 250);
-  const filteredPharmacies = filterPharmacies(pharmacies, debouncedSearchTerm);
-  const openCount = pharmacies.filter((item) => item.isOpen).length;
-  const dutyCount = pharmacies.filter((item) => item.emergency).length;
+  const selectedGovernorate = searchTarget?.governorate || null;
+  const searchTargetCoords = useMemo(() => {
+    if (typeof searchTarget?.latitude === 'number' && typeof searchTarget?.longitude === 'number') {
+      return { latitude: searchTarget.latitude, longitude: searchTarget.longitude };
+    }
+
+    const firstPharmacyWithCoords = visiblePharmacies.find(
+      (item) => typeof item.latitude === 'number' && typeof item.longitude === 'number'
+    );
+
+    if (firstPharmacyWithCoords) {
+      return {
+        latitude: firstPharmacyWithCoords.latitude,
+        longitude: firstPharmacyWithCoords.longitude,
+      };
+    }
+
+    if (
+      typeof searchTarget?.fallbackLatitude === 'number' &&
+      typeof searchTarget?.fallbackLongitude === 'number'
+    ) {
+      return {
+        latitude: searchTarget.fallbackLatitude,
+        longitude: searchTarget.fallbackLongitude,
+      };
+    }
+
+    return null;
+  }, [searchTarget, visiblePharmacies]);
+  const openCount = visiblePharmacies.filter((item) => item.isOpen).length;
+  const dutyCount = visiblePharmacies.filter((item) => item.emergency).length;
   const styles = useMemo(() => createStyles(colors, radius, shadows, isRTL, insets.top), [colors, radius, shadows, isRTL, insets.top]);
 
-  const loadData = async (coords = userLocation) => {
+  const loadData = async ({ coords = userLocation, target = searchTarget } = {}) => {
     try {
-      const data = await loadPharmaciesAsync(t, true, coords);
-      setPharmacies(data);
+      if (target && !(target?.latitude && target?.longitude)) {
+        if (target?.queryText) {
+          const zoneResults = await searchPharmaciesAsync(target.queryText, {
+            governorate: target.governorate,
+            limit: 200,
+          });
+
+          if (Array.isArray(zoneResults)) {
+            setBasePharmacies(zoneResults);
+            return zoneResults;
+          }
+        }
+
+        setBasePharmacies([]);
+        return [];
+      }
+
+      const apiOptions = target?.latitude && target?.longitude
+        ? {
+          searchCoords: {
+            latitude: target.latitude,
+            longitude: target.longitude,
+          },
+          radiusKm: target.radiusKm ?? 20,
+          limit: 200,
+          fallbackGovernorate: target.governorate || target.label || null,
+        }
+        : coords?.latitude && coords?.longitude
+          ? {
+            searchCoords: coords,
+            radiusKm: 20,
+            limit: 100,
+          }
+          : null;
+
+      const data = await loadPharmaciesAsync(t, true, apiOptions);
+      setBasePharmacies(data);
+      return data;
     } catch (error) {
       logger.error('HomeScreen', 'Error loading pharmacies data', error);
-      setPharmacies(loadPharmacies(t));
+      const fallbackData = loadPharmacies(t);
+      setBasePharmacies(fallbackData);
+      return fallbackData;
     } finally {
       setInitialLoading(false);
       setRefreshing(false);
     }
+  };
+
+  const geocodeSearchTarget = async (placeLabel, baseTarget = null) => {
+    const trimmedPlace = `${placeLabel || ''}`.trim();
+    if (!trimmedPlace) {
+      return null;
+    }
+
+    const queries = [
+      [baseTarget?.label || trimmedPlace, baseTarget?.governorate, 'Tunisia']
+        .filter(Boolean)
+        .join(', '),
+      [baseTarget?.label || trimmedPlace, 'Tunisia'].filter(Boolean).join(', '),
+      trimmedPlace,
+    ];
+
+    for (const query of queries) {
+      try {
+        const results = await Location.geocodeAsync(query);
+        const firstResult = results?.[0];
+        if (firstResult) {
+          return {
+            ...(baseTarget || {}),
+            type: baseTarget?.type || 'place',
+            label: baseTarget?.label || trimmedPlace,
+            queryText: baseTarget?.queryText || trimmedPlace,
+            latitude: firstResult.latitude,
+            longitude: firstResult.longitude,
+            radiusKm: baseTarget?.radiusKm ?? 18,
+          };
+        }
+      } catch (error) {
+        logger.warn('HomeScreen', 'Place geocoding attempt failed', { query, error });
+      }
+    }
+
+    return null;
   };
 
   const getLocationWithAndroidFix = async () => {
@@ -133,18 +254,73 @@ export default function HomeScreen({ navigation }) {
       const coords = await getLocationWithAndroidFix();
       if (coords) {
         setUserLocation(coords);
-        await loadData(coords);
+        await loadData({ coords, target: null });
       } else {
-        await loadData(null);
+        await loadData({ coords: null, target: null });
       }
     };
 
     bootstrap();
   }, [t]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const syncVisiblePharmacies = async () => {
+      const term = debouncedSearchTerm.trim();
+
+      if (!term) {
+        if (!cancelled) {
+          setVisiblePharmacies(basePharmacies);
+        }
+        return;
+      }
+
+      if (term.length < 2) {
+        if (!cancelled) {
+          setVisiblePharmacies(filterPharmacies(basePharmacies, term));
+        }
+        return;
+      }
+
+      const searchedPharmacies = await searchPharmaciesAsync(term, {
+        governorate: selectedGovernorate,
+        limit: 100,
+      });
+
+      if (cancelled) {
+        return;
+      }
+
+      if (Array.isArray(searchedPharmacies)) {
+        setVisiblePharmacies(searchedPharmacies);
+        return;
+      }
+
+      setVisiblePharmacies(filterPharmacies(basePharmacies, term));
+    };
+
+    syncVisiblePharmacies();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [basePharmacies, debouncedSearchTerm, selectedGovernorate]);
+
+  // When the selected place changes, reload the base location result set.
+  useEffect(() => {
+    const loadForSearchTarget = async () => {
+      await loadData({ coords: userLocation, target: searchTarget });
+    };
+
+    if (!initialLoading) {
+      loadForSearchTarget();
+    }
+  }, [searchTarget, initialLoading, userLocation]);
+
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadData();
+    await loadData({ coords: userLocation, target: searchTarget });
   };
 
   const goToUserLocation = async () => {
@@ -153,37 +329,43 @@ export default function HomeScreen({ navigation }) {
 
       if (coords) {
         setUserLocation(coords);
-        await loadData(coords);
-        const nextPharmacies = await loadPharmaciesAsync(t, true, coords).catch(() => pharmacies);
-        setPharmacies(nextPharmacies);
+        setSearchTarget(null);
+        const nextPharmacies = await loadData({ coords, target: null });
         const params = { pharmacies: nextPharmacies, initialLocation: coords };
         if (navigation?.jumpTo) navigation.jumpTo('Carte', params);
         else navigation.navigate('Carte', params);
       } else {
         logger.warn('HomeScreen', 'No location available, navigating to map without coordinates');
-        if (navigation?.jumpTo) navigation.jumpTo('Carte', { pharmacies });
-        else navigation.navigate('Carte', { pharmacies });
+        if (navigation?.jumpTo) navigation.jumpTo('Carte', { pharmacies: visiblePharmacies });
+        else navigation.navigate('Carte', { pharmacies: visiblePharmacies });
       }
     } catch (error) {
       logger.error('HomeScreen', 'goToUserLocation failed', error);
-      if (navigation?.jumpTo) navigation.jumpTo('Carte', { pharmacies });
-      else navigation.navigate('Carte', { pharmacies });
+      if (navigation?.jumpTo) navigation.jumpTo('Carte', { pharmacies: visiblePharmacies });
+      else navigation.navigate('Carte', { pharmacies: visiblePharmacies });
     }
   };
 
   const goToDirections = async (item) => {
     try {
       const coords = await getLocationWithAndroidFix();
-      const params = coords 
-        ? { pharmacies, initialLocation: coords, targetPharmacy: item }
-        : { pharmacies, targetPharmacy: item };
+      const fallbackLocation = searchTargetCoords;
+      const params = coords
+        ? { pharmacies: visiblePharmacies, initialLocation: coords, targetPharmacy: item }
+        : fallbackLocation
+          ? { pharmacies: visiblePharmacies, initialLocation: fallbackLocation, targetPharmacy: item }
+          : { pharmacies: visiblePharmacies, targetPharmacy: item };
       
       if (navigation?.jumpTo) navigation.jumpTo('Carte', params);
       else navigation.navigate('Carte', params);
     } catch (error) {
       logger.warn('HomeScreen', 'goToDirections failed', error);
-      if (navigation?.jumpTo) navigation.jumpTo('Carte', { pharmacies, targetPharmacy: item });
-      else navigation.navigate('Carte', { pharmacies, targetPharmacy: item });
+      const fallbackLocation = searchTargetCoords;
+      const params = fallbackLocation
+        ? { pharmacies: visiblePharmacies, initialLocation: fallbackLocation, targetPharmacy: item }
+        : { pharmacies: visiblePharmacies, targetPharmacy: item };
+      if (navigation?.jumpTo) navigation.jumpTo('Carte', params);
+      else navigation.navigate('Carte', params);
     }
   };
 
@@ -202,6 +384,48 @@ export default function HomeScreen({ navigation }) {
   const openPharmacyDetails = (pharmacy) => {
     setSelectedPharmacy(pharmacy);
     setDetailsModalVisible(true);
+  };
+
+  const handleSelectLocation = async (locationLabel) => {
+    if (!locationLabel) {
+      setSearchTarget(null);
+      return;
+    }
+
+    const baseTarget = createLocationSearchTarget(locationLabel);
+
+    if (baseTarget?.latitude && baseTarget?.longitude) {
+      setSearchTarget(baseTarget);
+      addToHistory(baseTarget.label);
+      return;
+    }
+
+    setResolvingLocation(true);
+    try {
+      const geocodedTarget = await geocodeSearchTarget(locationLabel, baseTarget);
+      const nextTarget =
+        geocodedTarget ||
+        (baseTarget?.fallbackLatitude && baseTarget?.fallbackLongitude
+          ? {
+            ...baseTarget,
+            latitude: baseTarget.fallbackLatitude,
+            longitude: baseTarget.fallbackLongitude,
+          }
+          : baseTarget || {
+            type: 'place',
+            label: `${locationLabel}`.trim(),
+            queryText: `${locationLabel}`.trim(),
+            governorate: null,
+            radiusKm: 18,
+          });
+
+      setSearchTarget(nextTarget);
+      if (nextTarget?.label) {
+        addToHistory(nextTarget.label);
+      }
+    } finally {
+      setResolvingLocation(false);
+    }
   };
 
   const renderHeader = () => (
@@ -227,18 +451,34 @@ export default function HomeScreen({ navigation }) {
         </View>
 
         <AppText variant="headerLarge" color="#FFFFFF">
-          {t('home.nearbyPharmacies', 'Nearby pharmacies')}
+          {searchTarget
+            ? t('home.pharmaciesInLocation', 'Pharmacies in {{location}}', {
+              location: searchTarget.label,
+            })
+            : t('home.nearbyPharmacies', 'Nearby pharmacies')}
         </AppText>
         <AppText variant="bodyMedium" color="rgba(255,255,255,0.84)" style={{ marginTop: 8 }}>
-          {t(
-            'home.heroSubtitle',
-            'Search, call, and navigate to nearby pharmacies from one calm and reliable dashboard.'
-          )}
+          {searchTarget
+            ? searchTarget.type === 'city'
+              ? t(
+                'home.heroSubtitleZone',
+                'Browsing pharmacies in {{location}}, filtered inside {{governorate}}.',
+                { location: searchTarget.label, governorate: searchTarget.governorate }
+              )
+              : t(
+                'home.heroSubtitleLocation',
+                'Browsing pharmacies around {{location}} using map coordinates, even when address details are incomplete.',
+                { location: searchTarget.label }
+              )
+            : t(
+              'home.heroSubtitle',
+              'Search, call, and navigate to nearby pharmacies from one calm and reliable dashboard.'
+            )}
         </AppText>
 
         <View style={styles.metricsRow}>
           {[
-            { value: filteredPharmacies.length, label: t('home.results', 'Results') },
+            { value: visiblePharmacies.length, label: t('home.results', 'Results') },
             { value: openCount, label: t('home.openNow', 'Open now') },
             { value: dutyCount, label: t('home.onDuty', 'On duty') },
           ].map((metric) => (
@@ -260,18 +500,122 @@ export default function HomeScreen({ navigation }) {
           value={searchTerm}
           onChangeText={setSearchTerm}
         />
+        
+        {/* Location Filter - Quick Access Chips */}
+        <View style={styles.locationFilterScroll}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.locationFilterContent}
+          >
+            {/* All Locations */}
+            <TouchableOpacity
+              style={[
+                styles.locationFilterButton,
+                !searchTarget && styles.locationFilterButtonActive,
+              ]}
+              onPress={() => handleSelectLocation(null)}
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel={t('home.allLocations', 'All locations')}
+            >
+              <Feather
+                name="map"
+                size={14}
+                color={!searchTarget ? '#FFFFFF' : colors.primary}
+              />
+              <AppText
+                variant="labelSmall"
+                color={!searchTarget ? '#FFFFFF' : colors.textSecondary}
+              >
+                {t('home.all', 'All')}
+              </AppText>
+            </TouchableOpacity>
+
+            {/* Popular Governorates */}
+            {POPULAR_GOVERNORATES.map((gov) => (
+              <TouchableOpacity
+                key={gov}
+                style={[
+                  styles.locationFilterButton,
+                  searchTarget?.type === 'governorate' &&
+                    selectedGovernorate === gov &&
+                    styles.locationFilterButtonActive,
+                ]}
+                onPress={() => handleSelectLocation(gov)}
+                accessible
+                accessibilityRole="button"
+                accessibilityLabel={gov}
+              >
+                <Feather
+                  name="map-pin"
+                  size={14}
+                  color={
+                    searchTarget?.type === 'governorate' && selectedGovernorate === gov
+                      ? '#FFFFFF'
+                      : colors.primary
+                  }
+                />
+                <AppText
+                  variant="labelSmall"
+                  color={
+                    searchTarget?.type === 'governorate' && selectedGovernorate === gov
+                      ? '#FFFFFF'
+                      : colors.textSecondary
+                  }
+                >
+                  {gov.split(' ')[0]}
+                </AppText>
+              </TouchableOpacity>
+            ))}
+
+            {/* More Locations Button */}
+            <TouchableOpacity
+              style={[styles.locationFilterButton, styles.locationFilterButtonMore]}
+              onPress={() => setLocationPickerVisible(true)}
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel={t('home.moreLocations', 'More locations')}
+            >
+              <Ionicons
+                name="add"
+                size={14}
+                color={colors.primary}
+              />
+              <AppText
+                variant="labelSmall"
+                color={colors.textSecondary}
+              >
+                {t('home.more', 'More')}
+              </AppText>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+        
+        {/* Location Denial Banner */}
+        {!userLocation && !selectedGovernorate && (
+          <View style={styles.locationBanner}>
+            <MaterialCommunityIcons name="information" size={16} color={colors.primary} />
+            <AppText variant="labelSmall" color={colors.primary} style={{ flex: 1, marginLeft: 10 }}>
+              {t('home.selectLocationBanner', 'Select a location below to browse pharmacies. Enable location for nearby results.')}
+            </AppText>
+          </View>
+        )}
+        
         <View style={styles.quickActions}>
           <AppButton
             title={t('home.refresh', 'Refresh')}
             onPress={onRefresh}
             variant="outlined"
             style={{ flex: 1 }}
+            disabled={resolvingLocation}
             icon={<Feather name="refresh-cw" size={16} color={colors.primary} />}
           />
           <AppButton
             title={t('home.myLocation', 'My location')}
             onPress={goToUserLocation}
             style={{ flex: 1.1 }}
+            disabled={resolvingLocation}
             icon={<Feather name="navigation" size={16} color="#FFFFFF" />}
           />
         </View>
@@ -284,7 +628,7 @@ export default function HomeScreen({ navigation }) {
         aside={
           <View style={styles.countPill}>
             <AppText variant="labelLarge" color={colors.primary}>
-              {filteredPharmacies.length}
+              {visiblePharmacies.length}
             </AppText>
           </View>
         }
@@ -309,7 +653,7 @@ export default function HomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <FlatList
-        data={filteredPharmacies}
+        data={visiblePharmacies}
         keyExtractor={(item) => item.id.toString()}
         refreshControl={
           <RefreshControl
@@ -361,6 +705,15 @@ export default function HomeScreen({ navigation }) {
         isDarkMode={isDarkMode}
         isRTL={isRTL}
         onCopy={copyToClipboard}
+      />
+
+      <LocationPicker
+        visible={locationPickerVisible}
+        onClose={() => setLocationPickerVisible(false)}
+        allLocations={ALL_LOCATION_OPTIONS}
+        recentLocations={locationHistory}
+        selectedLocation={searchTarget?.label || null}
+        onSelectLocation={handleSelectLocation}
       />
     </View>
   );
@@ -451,6 +804,41 @@ const createStyles = (colors, radius, shadows, isRTL, topInset) =>
       borderRadius: 20,
       alignItems: 'center',
       justifyContent: 'center',
+      backgroundColor: colors.primaryMuted,
+    },
+    locationFilterScroll: {
+      marginVertical: 12,
+    },
+    locationFilterContent: {
+      paddingHorizontal: 0,
+      gap: 8,
+    },
+    locationFilterButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: radius.full,
+      backgroundColor: colors.surfaceSecondary,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    locationFilterButtonActive: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    locationFilterButtonMore: {
+      borderColor: colors.borderStrong,
+      borderWidth: 1.5,
+    },
+    locationBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      marginVertical: 12,
+      borderRadius: radius.lg,
       backgroundColor: colors.primaryMuted,
     },
   });

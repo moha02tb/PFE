@@ -1,64 +1,73 @@
 import React from 'react';
-import { BellRing, CheckCheck, Mail } from 'lucide-react';
-import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle, SectionHeader } from '../components/ui';
+import { BellRing, CheckCheck, Mail, MessageSquareWarning, RadioTower, Send } from 'lucide-react';
+import { Badge, Button, SectionHeader } from '../components/ui';
+import { useLanguage } from '../context/LanguageContext';
 
-const NotificationsPage = () => (
-  <div className="page-shell">
-    <div className="page-content">
-      <SectionHeader
-        eyebrow="Messaging"
-        title="Notification center"
-        description="A more polished overview for alert delivery, digest behavior, and unread operational signals."
-      />
-      <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <Card>
-          <CardHeader>
-            <div>
-              <CardTitle>Delivery channels</CardTitle>
-              <CardDescription>Core outbound paths used by the admin experience.</CardDescription>
+const NotificationsPage = () => {
+  const { t } = useLanguage();
+  const channels = [
+    [t('notifications.inAppAlerts'), t('notifications.inAppAlertsDesc'), BellRing],
+    [t('notifications.emailDigests'), t('notifications.emailDigestsDesc'), Mail],
+    [t('notifications.readState'), t('notifications.readStateDesc'), CheckCheck],
+  ];
+  const statuses = [
+    [t('notifications.criticalAlerts'), t('notifications.healthy'), BellRing],
+    [t('notifications.digestSchedule'), t('notifications.daily'), Mail],
+    [t('notifications.unreadPanelNoise'), t('notifications.needsTuning'), MessageSquareWarning],
+    [t('notifications.broadcastService'), t('notifications.connected'), RadioTower],
+  ];
+
+  return (
+    <div className="page-shell">
+      <div className="page-content">
+        <SectionHeader
+          eyebrow={t('notifications.eyebrow')}
+          title={t('notifications.title')}
+          description={t('notifications.description')}
+          actions={
+            <Button>
+              <Send className="h-4 w-4" />
+              {t('notifications.sendTestAlert')}
+            </Button>
+          }
+        />
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="bento-card p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="font-display text-xl font-bold text-foreground">{t('notifications.deliveryChannels')}</h2>
+                <p className="mt-1 text-sm text-muted-foreground">{t('notifications.deliveryChannelsDesc')}</p>
+              </div>
+              <Badge variant="success">{t('notifications.online')}</Badge>
             </div>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-2xl bg-surface-muted p-5">
-              <BellRing className="h-5 w-5 text-primary" />
-              <p className="mt-4 font-medium text-foreground">In-app alerts</p>
-              <p className="mt-1 text-sm text-muted-foreground">Operational notices and system prompts.</p>
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              {channels.map(([title, body, Icon]) => (
+                <div key={title} className="rounded-[12px] border border-border bg-surface-muted p-5">
+                  <Icon className="h-5 w-5 text-primary" />
+                  <p className="mt-4 font-bold text-foreground">{title}</p>
+                  <p className="mt-1 text-sm leading-5 text-muted-foreground">{body}</p>
+                </div>
+              ))}
             </div>
-            <div className="rounded-2xl bg-surface-muted p-5">
-              <Mail className="h-5 w-5 text-primary" />
-              <p className="mt-4 font-medium text-foreground">Email digests</p>
-              <p className="mt-1 text-sm text-muted-foreground">Scheduled delivery for lower-priority activity.</p>
+          </div>
+
+          <div className="pulse-panel p-6">
+            <h2 className="font-display text-xl font-bold text-white">{t('notifications.currentStatus')}</h2>
+            <p className="mt-1 text-sm text-slate-400">{t('notifications.currentStatusDesc')}</p>
+            <div className="mt-6 space-y-3">
+              {statuses.map(([label, status, Icon], index) => (
+                <div key={label} className="flex items-center justify-between rounded-[8px] border border-white/10 bg-white/[0.055] px-4 py-3">
+                  <span className="flex items-center gap-2 text-sm font-medium text-slate-200"><Icon className="h-4 w-4 text-blue-300" /> {label}</span>
+                  <Badge variant={index === 2 ? 'warning' : 'success'}>{status}</Badge>
+                </div>
+              ))}
             </div>
-            <div className="rounded-2xl bg-surface-muted p-5">
-              <CheckCheck className="h-5 w-5 text-success" />
-              <p className="mt-4 font-medium text-foreground">Read state</p>
-              <p className="mt-1 text-sm text-muted-foreground">Improved hierarchy and muted surfaces.</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Current status</CardTitle>
-            <CardDescription>Presentation-only summary for the redesigned center.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between rounded-2xl bg-surface-muted px-4 py-3">
-              <span className="text-sm text-foreground">Critical alerts</span>
-              <Badge variant="success">Healthy</Badge>
-            </div>
-            <div className="flex items-center justify-between rounded-2xl bg-surface-muted px-4 py-3">
-              <span className="text-sm text-foreground">Digest schedule</span>
-              <Badge variant="primary">Daily</Badge>
-            </div>
-            <div className="flex items-center justify-between rounded-2xl bg-surface-muted px-4 py-3">
-              <span className="text-sm text-foreground">Unread panel noise</span>
-              <Badge variant="warning">Needs tuning</Badge>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default NotificationsPage;

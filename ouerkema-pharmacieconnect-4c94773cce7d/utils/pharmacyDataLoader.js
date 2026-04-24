@@ -16,6 +16,50 @@ const formatDateParam = (value) => {
   return `${year}-${month}-${day}`;
 };
 
+const mapApiPharmacy = (pharmacy, fallbackGovernorate = null) => ({
+  id: pharmacy.id,
+  name: pharmacy.name,
+  address: pharmacy.address || 'No address available',
+  phone: pharmacy.phone || '',
+  latitude: pharmacy.latitude,
+  longitude: pharmacy.longitude,
+  governorate: pharmacy.governorate || fallbackGovernorate || null,
+  osm_id: pharmacy.osm_id,
+  osm_type: pharmacy.osm_type,
+  distanceKm: pharmacy.distance_km,
+  isOpen: true,
+  emergency: false,
+  coordinates: {
+    latitude: pharmacy.latitude,
+    longitude: pharmacy.longitude,
+  },
+});
+
+const normalizeLoadOptions = (optionsOrCoords) => {
+  if (!optionsOrCoords) {
+    return {};
+  }
+
+  if (
+    typeof optionsOrCoords.latitude === 'number' &&
+    typeof optionsOrCoords.longitude === 'number'
+  ) {
+    return {
+      searchCoords: optionsOrCoords,
+      radiusKm: 20,
+      limit: 100,
+      fallbackGovernorate: null,
+    };
+  }
+
+  return {
+    searchCoords: optionsOrCoords.searchCoords || null,
+    radiusKm: optionsOrCoords.radiusKm ?? 20,
+    limit: optionsOrCoords.limit ?? 100,
+    fallbackGovernorate: optionsOrCoords.fallbackGovernorate || null,
+  };
+};
+
 /**
  * Fetch pharmacies from backend API
  * @param {number} skip - Number of records to skip (pagination)
@@ -34,25 +78,46 @@ export const fetchPharmaciesFromAPI = async (skip = 0, limit = 100) => {
     console.log(`[API] Successfully fetched ${response.data?.length || 0} pharmacies`);
     
     // Transform API data to match mobile app format
-    return response.data.map((pharmacy, index) => ({
-      id: pharmacy.id,
-      name: pharmacy.name,
-      address: pharmacy.address || 'No address available',
-      phone: pharmacy.phone || '',
-      latitude: pharmacy.latitude,
-      longitude: pharmacy.longitude,
-      governorate: pharmacy.governorate || 'Tunisia',
-      osm_id: pharmacy.osm_id,
-      osm_type: pharmacy.osm_type,
-      isOpen: true, // Default to open - can be enhanced with operating hours data
-      emergency: false, // Can be enhanced based on data
-      coordinates: {
-        latitude: pharmacy.latitude,
-        longitude: pharmacy.longitude,
-      },
-    }));
+    return response.data.map((pharmacy) => mapApiPharmacy(pharmacy));
   } catch (error) {
     console.error('[API] Error fetching pharmacies from API:', {
+      message: error.message,
+      code: error.code,
+      url: error.config?.url,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+    });
+    return null;
+  }
+};
+
+export const searchPharmaciesFromAPI = async (
+  queryText,
+  { governorate = null, limit = 100 } = {}
+) => {
+  const normalizedQuery = `${queryText || ''}`.trim();
+  const normalizedGovernorate = `${governorate || ''}`.trim();
+
+  if (!normalizedQuery && !normalizedGovernorate) {
+    return [];
+  }
+
+  try {
+    console.log(`[API] Searching pharmacies from: ${API_BASE_URL}${API_CONFIG.endpoints.pharmaciesSearch}`);
+
+    const response = await axios.get(`${API_BASE_URL}${API_CONFIG.endpoints.pharmaciesSearch}`, {
+      params: {
+        query: normalizedQuery || undefined,
+        governorate: normalizedGovernorate || undefined,
+        limit,
+      },
+      timeout: API_CONFIG.timeout,
+    });
+
+    console.log(`[API] Successfully searched ${response.data?.length || 0} pharmacies`);
+    return response.data.map((pharmacy) => mapApiPharmacy(pharmacy));
+  } catch (error) {
+    console.error('[API] Error searching pharmacies:', {
       message: error.message,
       code: error.code,
       url: error.config?.url,
@@ -75,7 +140,8 @@ export const fetchNearbyPharmaciesFromAPI = async (
   latitude,
   longitude,
   radiusKm = 10,
-  limit = 50
+  limit = 50,
+  fallbackGovernorate = null
 ) => {
   try {
     console.log(
@@ -94,24 +160,7 @@ export const fetchNearbyPharmaciesFromAPI = async (
 
     console.log(`[API] Successfully fetched ${response.data?.length || 0} nearby pharmacies`);
 
-    return response.data.map((pharmacy) => ({
-      id: pharmacy.id,
-      name: pharmacy.name,
-      address: pharmacy.address || 'No address available',
-      phone: pharmacy.phone || '',
-      latitude: pharmacy.latitude,
-      longitude: pharmacy.longitude,
-      governorate: pharmacy.governorate || 'Tunisia',
-      osm_id: pharmacy.osm_id,
-      osm_type: pharmacy.osm_type,
-      distanceKm: pharmacy.distance_km,
-      isOpen: true,
-      emergency: false,
-      coordinates: {
-        latitude: pharmacy.latitude,
-        longitude: pharmacy.longitude,
-      },
-    }));
+    return response.data.map((pharmacy) => mapApiPharmacy(pharmacy, fallbackGovernorate));
   } catch (error) {
     console.error('[API] Error fetching nearby pharmacies:', {
       message: error.message,
@@ -218,18 +267,22 @@ export const fetchCalendarPharmaciesFromAPI = async (date) => {
  * @param {boolean} useAPI - Whether to try fetching from API first
  * @returns {Promise<Array>} Array of pharmacy objects
  */
-export const loadPharmaciesAsync = async (t, useAPI = true, userCoords = null) => {
+export const loadPharmaciesAsync = async (t, useAPI = true, optionsOrCoords = null) => {
   if (useAPI) {
     console.log('[Pharmacy] Attempting to load from API...');
     try {
-      if (userCoords?.latitude && userCoords?.longitude) {
+      const { searchCoords, radiusKm, limit, fallbackGovernorate } =
+        normalizeLoadOptions(optionsOrCoords);
+
+      if (searchCoords?.latitude && searchCoords?.longitude) {
         const nearby = await fetchNearbyPharmaciesFromAPI(
-          userCoords.latitude,
-          userCoords.longitude,
-          20,
-          100
+          searchCoords.latitude,
+          searchCoords.longitude,
+          radiusKm,
+          limit,
+          fallbackGovernorate
         );
-        if (nearby && nearby.length > 0) {
+        if (Array.isArray(nearby)) {
           console.log(`[Pharmacy] ✓ Loaded ${nearby.length} nearby pharmacies from API`);
           return nearby;
         }
@@ -257,6 +310,13 @@ export const loadPharmaciesAsync = async (t, useAPI = true, userCoords = null) =
     console.error('[Pharmacy] Failed to load static data:', error);
     return [];
   }
+};
+
+export const searchPharmaciesAsync = async (
+  queryText,
+  { governorate = null, limit = 100 } = {}
+) => {
+  return searchPharmaciesFromAPI(queryText, { governorate, limit });
 };
 
 /**
@@ -304,7 +364,9 @@ export const filterPharmacies = (pharmacies, searchTerm) => {
   const term = searchTerm.toLowerCase();
   return pharmacies.filter(
     (pharmacy) =>
-      pharmacy.name.toLowerCase().includes(term) || pharmacy.address.toLowerCase().includes(term)
+      (pharmacy.name || '').toLowerCase().includes(term) ||
+      (pharmacy.address || '').toLowerCase().includes(term) ||
+      (pharmacy.governorate || '').toLowerCase().includes(term)
   );
 };
 

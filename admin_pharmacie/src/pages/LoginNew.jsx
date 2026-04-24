@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from 'lucide-react';
+/* eslint-disable react/prop-types */
+import { useState } from 'react';
+import { Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { Badge, Button, Card, CardContent, Input } from '../components/ui';
 
 const LoginNew = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
@@ -52,7 +52,7 @@ const LoginNew = ({ onLoginSuccess }) => {
         error.response?.data?.detail ||
         error.message ||
         (isNetworkError
-          ? `Unable to reach backend API${baseURL ? ` (${baseURL})` : ''}. Check that the server is running and VITE_API_URL is correct.`
+          ? t('login.backendUnavailable', { baseURL: baseURL ? ` (${baseURL})` : '' })
           : null) ||
         t('login.unexpected');
       setErrorMessage(message);
@@ -62,120 +62,160 @@ const LoginNew = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_22rem),radial-gradient(circle_at_bottom_left,rgba(34,197,94,0.08),transparent_24rem)]" />
-      <div className="relative mx-auto grid min-h-screen max-w-7xl items-center gap-10 px-6 py-12 lg:grid-cols-[0.95fr_0.75fr]">
-        <div className="hidden lg:block">
-          <Badge variant="primary">{t('login.badge')}</Badge>
-          <h1 className="mt-6 max-w-xl font-display text-5xl font-semibold tracking-tight text-foreground">
-            {t('login.heading')}
-          </h1>
-          <p className="mt-5 max-w-xl text-base leading-7 text-muted-foreground">
-            {t('login.description')}
-          </p>
-          <div className="mt-10 grid max-w-xl gap-4 sm:grid-cols-2">
-            <div className="rounded-3xl border border-border bg-surface-elevated p-5 shadow-soft">
-              <ShieldCheck className="h-6 w-6 text-success" />
-              <p className="mt-4 font-medium text-foreground">{t('login.roleProtected')}</p>
-              <p className="mt-2 text-sm text-muted-foreground">{t('login.roleProtectedDesc')}</p>
-            </div>
-            <div className="rounded-3xl border border-border bg-surface-elevated p-5 shadow-soft">
-              <LockKeyhole className="h-6 w-6 text-primary" />
-              <p className="mt-4 font-medium text-foreground">{t('login.tokenSupport')}</p>
-              <p className="mt-2 text-sm text-muted-foreground">{t('login.tokenSupportDesc')}</p>
+    <div className="login-split-shell">
+      <section className="login-visual-panel">
+        <div className="relative z-[1] flex h-full flex-col justify-between p-8 text-white">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-6 w-6 text-blue-300" />
+            <span className="font-display text-2xl font-bold tracking-tight">{t('common.appName')} {t('common.admin')}</span>
+          </div>
+
+          <div className="max-w-md">
+            <p className="font-display text-2xl font-bold text-white/90">{t('login.heading')}</p>
+            <p className="mt-4 text-sm leading-6 text-white/70">
+              {t('login.description')}
+            </p>
+            <div className="mt-8 flex gap-8">
+              <div className="flex flex-col">
+                <span className="font-display text-4xl font-extrabold">99.9%</span>
+                <span className="text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-white/50">{t('login.uptimeReliability')}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="font-display text-4xl font-extrabold">ISO</span>
+                <span className="text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-white/50">{t('login.certifiedSecurity')}</span>
+              </div>
             </div>
           </div>
+
+          <div className="text-xs text-white/40">
+            © 2026 {t('common.appName')}. {t('common.allRightsReserved')}
+          </div>
         </div>
+      </section>
 
-        <Card className="mx-auto w-full max-w-md shadow-panel">
-          <CardContent className="p-8 sm:p-10">
-            <div className="mb-8">
-              <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-primary text-primary-foreground shadow-soft">
-                <ShieldCheck className="h-6 w-6" />
-              </div>
-              <h2 className="mt-6 font-display text-3xl font-semibold text-foreground">{t('login.signIn')}</h2>
-              <p className="mt-2 text-sm text-muted-foreground">{t('login.accessWorkspace')}</p>
-            </div>
+      <section className="login-form-panel">
+        <div className="mx-auto w-full max-w-sm lg:w-96">
+          <div className="mb-10 flex items-center gap-2 lg:hidden">
+            <ShieldCheck className="h-6 w-6 text-primary" />
+            <span className="font-display text-xl font-bold text-primary">{t('common.appName')} {t('common.admin')}</span>
+          </div>
 
-            <form className="space-y-5" onSubmit={handleLogin}>
-              {errorMessage ? (
-                <div className="rounded-2xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">{errorMessage}</div>
-              ) : null}
+          <div>
+            <h1 className="font-display text-2xl font-bold text-foreground">{t('login.signIn')}</h1>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{t('login.accessWorkspace')}</p>
+          </div>
 
-              <label className="grid gap-2">
-                <span className="text-sm font-medium text-foreground">{t('login.email')}</span>
-                <div className="relative">
-                  <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-9"
-                    placeholder="admin@pharmacieconnect.com"
-                  />
-                </div>
-              </label>
+          <form className="mt-8 space-y-6" onSubmit={handleLogin}>
+            {errorMessage ? (
+              <div className="rounded-[8px] border border-danger/25 bg-danger-soft px-4 py-3 text-sm font-medium text-danger">{errorMessage}</div>
+            ) : null}
 
-              <label className="grid gap-2">
-                <span className="text-sm font-medium text-foreground">{t('login.password')}</span>
-                <div className="relative">
-                  <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-9 pr-10"
-                    placeholder="••••••••"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                    aria-label="Toggle password visibility"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </label>
-
-              <label className="flex items-center gap-3 text-sm text-muted-foreground">
+            <label className="block">
+              <span className="mb-2 block text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-muted-foreground">{t('login.email')}</span>
+              <div className="relative">
+                <Mail className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                 <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                  autoComplete="email"
+                  className="login-input pl-12"
+                  name="email"
+                  placeholder="admin@pharmacieconnect.tn"
+                  required
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
                 />
-                {t('login.remember')}
-              </label>
+              </div>
+            </label>
 
-              <Button type="submit" className="w-full" disabled={!email || !password || isLoading}>
-                {isLoading ? t('login.signingIn') : t('login.signIn')}
-                {!isLoading ? <ArrowRight className="h-4 w-4" /> : null}
-              </Button>
-            </form>
+            <label className="block">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="block text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-muted-foreground">{t('login.password')}</span>
+                <button type="button" className="text-xs font-bold text-primary hover:underline">{t('login.forgotPassword')}</button>
+              </div>
+              <div className="relative">
+                <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  autoComplete="current-password"
+                  className="login-input pl-12 pr-12"
+                  name="password"
+                  placeholder="••••••••••••"
+                  required
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                />
+                <button
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  type="button"
+                  onClick={() => setShowPassword((current) => !current)}
+                  aria-label={t('login.togglePasswordVisibility')}
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
+            </label>
 
-            <div className="mt-8 border-t border-border pt-6">
-              <p className="mb-3 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">{t('login.interfaceLanguage')}</p>
-              <div className="flex flex-wrap gap-2">
-                {languages.map((item) => (
-                  <button
-                    key={item.code}
-                    type="button"
-                    onClick={() => setLanguage(item.code)}
-                    className={`rounded-xl px-3 py-2 text-sm transition ${
-                      language === item.code
-                        ? 'bg-primary-soft text-primary'
-                        : 'bg-surface text-muted-foreground hover:bg-surface-muted hover:text-foreground'
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
+            <label className="flex cursor-pointer items-center">
+              <input
+                className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                checked={rememberMe}
+                name="remember-me"
+                type="checkbox"
+                onChange={(event) => setRememberMe(event.target.checked)}
+              />
+              <span className="ml-2 text-xs text-muted-foreground">{t('login.remember')}</span>
+            </label>
+
+            <button
+              className="flex w-full justify-center rounded-[8px] bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+              type="submit"
+              disabled={!email || !password || isLoading}
+            >
+              {isLoading ? t('login.signingIn') : t('login.signIn')}
+            </button>
+          </form>
+
+          <div className="mt-8 border-t border-border pt-6">
+            <p className="text-center text-xs leading-5 text-muted-foreground">
+              {t('login.restrictedAccess')}
+              <br className="hidden sm:block" />
+              {t('login.agreePrefix')} <span className="font-bold text-foreground">{t('login.securityPolicy')}</span>.
+            </p>
+          </div>
+
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                <div className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-[0.6875rem] font-bold uppercase tracking-[0.08em]">
+                <span className="bg-background px-4 text-muted-foreground">{t('login.orContinueWith')}</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            <button type="button" className="mt-6 flex w-full items-center justify-center gap-2 rounded-[8px] border border-border bg-surface-elevated px-4 py-2.5 text-sm font-bold text-foreground shadow-soft transition hover:bg-surface-muted">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              {t('login.corporateSso')}
+            </button>
+          </div>
+
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
+            {languages.map((item) => (
+              <button
+                key={item.code}
+                type="button"
+                onClick={() => setLanguage(item.code)}
+                className={`rounded-[8px] border px-3 py-2 text-xs font-bold transition-smooth ${
+                  language === item.code
+                    ? 'border-primary/25 bg-primary-soft text-primary'
+                    : 'border-border bg-surface text-muted-foreground hover:border-primary/25 hover:bg-surface-muted hover:text-foreground'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   );
 };

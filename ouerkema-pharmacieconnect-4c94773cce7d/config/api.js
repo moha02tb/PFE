@@ -53,6 +53,7 @@ export const API_CONFIG = {
   endpoints: {
     // Public endpoints (no authentication required)
     pharmacies: '/api/pharmacies',
+    pharmaciesSearch: '/api/pharmacies/search',
     pharmaciesNearby: '/api/pharmacies/nearby',
     pharmaciesCount: '/api/pharmacies/count',
     pharmacyById: (id) => `/api/pharmacies/${id}`,

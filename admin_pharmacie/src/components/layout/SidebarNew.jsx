@@ -3,7 +3,9 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Bell,
   CalendarDays,
+  ClipboardList,
   Globe2,
+  HeartPulse,
   LayoutDashboard,
   LogOut,
   MapPinned,
@@ -11,12 +13,12 @@ import {
   Settings,
   ShieldAlert,
   Upload,
+  UserRound,
   X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { cn } from '../../lib/utils';
-import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 
 const groups = [
@@ -25,6 +27,7 @@ const groups = [
     items: [
       { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
       { label: 'Pharmacies', path: '/pharmacies', icon: Pill },
+      { label: 'Management', path: '/management', icon: ClipboardList },
       { label: 'Calendar', path: '/calendar', icon: CalendarDays },
       { label: 'Map', path: '/map', icon: MapPinned },
       { label: 'Emergency', path: '/emergency', icon: ShieldAlert },
@@ -44,9 +47,16 @@ const groups = [
       { label: 'Notifications', path: '/notifications', icon: Bell },
       { label: 'Languages', path: '/languages', icon: Globe2 },
       { label: 'Settings', path: '/settings', icon: Settings },
+      { label: 'Profile', path: '/profile', icon: UserRound },
     ],
   },
 ];
+
+const groupLabelKey = {
+  Operations: 'operations',
+  Imports: 'imports',
+  System: 'system',
+};
 
 const SidebarNew = ({ open, onClose }) => {
   const location = useLocation();
@@ -61,46 +71,30 @@ const SidebarNew = ({ open, onClose }) => {
 
   const sidebarBody = (
     <div className="admin-sidebar flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-white/10 px-5 py-5">
-        <div>
+      <div className="flex items-start justify-between px-5 pb-7 pt-5">
+        <div className="min-w-0">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/12 text-white shadow-soft ring-1 ring-white/10">
-              <Pill className="h-5 w-5" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-[8px] bg-primary text-primary-foreground shadow-[0_14px_28px_oklch(var(--primary)/0.22)]">
+              <HeartPulse className="h-5 w-5" />
             </div>
             <div>
-              <p className="font-display text-lg font-semibold text-white">{t('common.appName')}</p>
-              <p className="text-xs text-slate-300">{t('nav.adminWorkspace')}</p>
+              <p className="text-lg font-bold leading-tight text-white">{t('common.appName')}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">{t('nav.controlCenter')}</p>
             </div>
           </div>
         </div>
-        <Button variant="ghost" size="icon" className="text-slate-300 hover:bg-white/10 hover:text-white lg:hidden" onClick={onClose} aria-label="Close sidebar">
+        <Button variant="ghost" size="icon" className="text-slate-400 hover:bg-white/[0.08] hover:text-white lg:hidden" onClick={onClose} aria-label={t('common.closeSidebar')}>
           <X className="h-4 w-4" />
         </Button>
       </div>
 
-      <div className="px-5 py-4">
-        <div className="rounded-3xl border border-white/10 bg-white/6 p-4 shadow-soft backdrop-blur-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-white">{t('nav.controlCenter')}</p>
-              <p className="mt-1 text-xs text-slate-300">{t('nav.controlCenterDesc')}</p>
-            </div>
-            <Badge variant="primary" className="shadow-soft">{t('common.live')}</Badge>
-          </div>
-        </div>
-      </div>
-
-      <nav className="flex-1 space-y-6 overflow-y-auto px-4 pb-4">
+      <nav className="flex-1 space-y-6 overflow-y-auto px-3 pb-4">
         {groups.map((group) => (
           <div key={group.label}>
-            <p className="px-2 text-xs font-medium uppercase tracking-[0.18em] text-slate-400">
-              {group.label === 'Operations'
-                ? t('nav.operations')
-                : group.label === 'Imports'
-                  ? t('nav.imports')
-                  : t('nav.system')}
+            <p className="mb-2 px-3 text-[0.625rem] font-bold uppercase tracking-[0.16em] text-slate-500">
+              {t(`nav.${groupLabelKey[group.label]}`)}
             </p>
-            <div className="mt-3 space-y-1.5">
+            <div className="space-y-1">
               {group.items.map((item) => {
                 const active = location.pathname === item.path;
                 const Icon = item.icon;
@@ -110,35 +104,40 @@ const SidebarNew = ({ open, onClose }) => {
                     to={item.path}
                     onClick={onClose}
                     className={cn(
-                      'group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition',
+                      'admin-nav-link group flex items-center gap-3 rounded-[8px] px-3 py-3 text-sm font-medium tracking-wide transition-normal',
                       active
-                        ? 'bg-white text-slate-950 shadow-card'
-                        : 'text-slate-300 hover:bg-white/7 hover:text-white'
+                        ? 'bg-primary/14 text-white shadow-[inset_0_0_0_1px_oklch(var(--primary)/0.26)]'
+                        : 'text-slate-400 hover:bg-white/[0.055] hover:text-white'
                     )}
+                    data-active={active}
                   >
-                    <Icon className={cn('h-4.5 w-4.5', !active && 'text-slate-400 group-hover:text-white')} />
-                    <span>
+                    <Icon className={cn('h-5 w-5 flex-shrink-0', active ? 'text-primary' : item.path === '/emergency' ? 'text-red-400' : '')} />
+                    <span className="truncate">
                       {item.path === '/dashboard'
                         ? t('nav.dashboard')
                         : item.path === '/pharmacies'
                           ? t('nav.pharmacies')
-                          : item.path === '/calendar'
-                            ? t('nav.calendar')
-                            : item.path === '/map'
-                              ? t('nav.map')
-                              : item.path === '/emergency'
-                                ? t('nav.emergency')
-                                : item.path === '/upload-pharmacies'
-                                  ? t('nav.uploadPharmacies')
-                                  : item.path === '/upload-garde'
-                                    ? t('nav.uploadGarde')
-                                    : item.path === '/upload-medicines'
-                                      ? t('nav.uploadMedicines')
-                                    : item.path === '/notifications'
-                                      ? t('nav.notifications')
-                                      : item.path === '/languages'
-                                        ? t('nav.languages')
-                                        : t('nav.settings')}
+                          : item.path === '/management'
+                            ? t('nav.management')
+                            : item.path === '/calendar'
+                              ? t('nav.calendar')
+                              : item.path === '/map'
+                                ? t('nav.map')
+                                : item.path === '/emergency'
+                                  ? t('nav.emergency')
+                                  : item.path === '/upload-pharmacies'
+                                    ? t('nav.uploadPharmacies')
+                                    : item.path === '/upload-garde'
+                                      ? t('nav.uploadGarde')
+                                      : item.path === '/upload-medicines'
+                                        ? t('nav.uploadMedicines')
+                                        : item.path === '/notifications'
+                                          ? t('nav.notifications')
+                                          : item.path === '/languages'
+                                            ? t('nav.languages')
+                                            : item.path === '/settings'
+                                              ? t('nav.settings')
+                                              : t('nav.profile')}
                     </span>
                   </Link>
                 );
@@ -148,17 +147,33 @@ const SidebarNew = ({ open, onClose }) => {
         ))}
       </nav>
 
-      <div className="border-t border-white/10 p-4">
-        <div className="rounded-3xl border border-white/10 bg-white/6 p-4 shadow-soft backdrop-blur-sm">
+      <div className="mt-auto px-5 pb-5">
+        <div className="mb-3 rounded-[8px] border border-white/10 bg-white/[0.055] p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-[0.625rem] font-bold uppercase tracking-[0.14em] text-slate-500">{t('common.live')}</span>
+            <span className="live-dot h-2 w-2 rounded-full bg-primary shadow-[0_0_0_5px_oklch(var(--primary)/0.13)]" />
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <p className="font-bold text-white">API</p>
+              <p className="text-slate-400">{t('common.active')}</p>
+            </div>
+            <div>
+              <p className="font-bold text-white">Sync</p>
+              <p className="text-slate-400">{t('common.active')}</p>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-[8px] border border-white/10 bg-slate-800/45 p-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/12 font-semibold text-white ring-1 ring-white/10">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border-2 border-slate-700 bg-slate-700 text-sm font-bold text-white">
               {user?.nomUtilisateur?.[0]?.toUpperCase() || 'A'}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-white">{user?.nomUtilisateur || 'Admin User'}</p>
-              <p className="truncate text-xs capitalize text-slate-300">{user?.role || 'admin'}</p>
+              <p className="truncate text-sm font-semibold text-white">{user?.nomUtilisateur || t('profile.adminUser')}</p>
+              <p className="truncate text-xs capitalize text-slate-400">{user?.role || 'admin'}</p>
             </div>
-            <Button variant="ghost" size="icon" className="text-slate-300 hover:bg-white/10 hover:text-white" onClick={handleLogout} aria-label="Logout">
+            <Button variant="ghost" size="icon" className="flex-shrink-0 text-slate-400 hover:bg-white/10 hover:text-white" onClick={handleLogout} aria-label={t('common.signOut')}>
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
@@ -173,14 +188,14 @@ const SidebarNew = ({ open, onClose }) => {
         type="button"
         onClick={onClose}
         className={cn(
-          'fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-sm transition lg:hidden',
+          'fixed inset-0 z-40 bg-slate-950/40 transition lg:hidden',
           open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
         )}
         aria-hidden={!open}
       />
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-[288px] border-r border-white/10 shadow-panel transition-transform lg:static lg:z-auto lg:w-[280px] lg:translate-x-0 lg:bg-transparent lg:shadow-none',
+          'fixed inset-y-0 left-0 z-50 w-[272px] border-r border-white/10 transition-transform lg:static lg:z-auto lg:w-[264px] lg:translate-x-0 lg:bg-transparent',
           open ? 'translate-x-0' : '-translate-x-full'
         )}
       >

@@ -25,6 +25,7 @@ from schema_migrations import run_schema_migrations
 from services import CacheService
 from services.garde_service import GardeService
 from services.medicine_service import MedicineService
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 # Load environment variables
@@ -82,13 +83,16 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://localhost:5173",
+        "http://localhost:5174",
         "http://localhost:8000",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
         "http://127.0.0.1:8000",
         "http://localhost",
         "http://127.0.0.1",
         "http://192.168.1.6:5173",  # Mobile app development
+        "http://192.168.1.6:5174",  # Vite dev server alternate port
         "http://192.168.1.6:8000",  # Mobile app connections
         "http://192.168.1.6:3000",  # Alternative development URL
         os.getenv("FRONTEND_URL", "http://localhost:5173"),
@@ -194,6 +198,103 @@ async def get_all_pharmacies_count(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get pharmacy count: {str(e)}",
+        )
+
+
+@app.get("/api/pharmacies/search")
+async def search_pharmacies(
+    query: str | None = None,
+    governorate: str | None = None,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+):
+    """Search pharmacies by name, address, and governorate."""
+    normalized_query = (query or "").strip()
+    normalized_governorate = (governorate or "").strip()
+
+    if not normalized_query and not normalized_governorate:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provide query or governorate to search pharmacies",
+        )
+
+    if limit <= 0 or limit > 500:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="limit must be between 1 and 500",
+        )
+
+    try:
+        cache_key = (
+            "pharmacies:search:"
+            f"{normalized_query.lower()}:{normalized_governorate.lower()}:{limit}"
+        )
+        cached = cache_service.get_json(cache_key)
+        if cached is not None:
+            analytics.record_search_event(
+                db,
+                event_type="pharmacy_text_search",
+                query_text=normalized_query or None,
+                location_label=normalized_governorate or normalized_query or None,
+                governorate=normalized_governorate or None,
+                result_count=len(cached),
+            )
+            return cached
+
+        search_query = db.query(models.Pharmacie)
+
+        if normalized_query:
+            like_term = f"%{normalized_query}%"
+            search_query = search_query.filter(
+                or_(
+                    models.Pharmacie.name.ilike(like_term),
+                    models.Pharmacie.address.ilike(like_term),
+                    models.Pharmacie.governorate.ilike(like_term),
+                )
+            )
+
+        if normalized_governorate:
+            governorate_like = f"%{normalized_governorate}%"
+            search_query = search_query.filter(
+                models.Pharmacie.governorate.ilike(governorate_like)
+            )
+
+        pharmacies = (
+            search_query.order_by(models.Pharmacie.name.asc(), models.Pharmacie.id.asc())
+            .limit(limit)
+            .all()
+        )
+
+        payload = [
+            {
+                "id": pharmacy.id,
+                "osm_type": pharmacy.osm_type,
+                "osm_id": pharmacy.osm_id,
+                "name": pharmacy.name,
+                "address": pharmacy.address,
+                "phone": pharmacy.phone,
+                "governorate": pharmacy.governorate,
+                "latitude": pharmacy.latitude,
+                "longitude": pharmacy.longitude,
+                "created_at": pharmacy.created_at.isoformat() if pharmacy.created_at else None,
+            }
+            for pharmacy in pharmacies
+        ]
+
+        analytics.record_search_event(
+            db,
+            event_type="pharmacy_text_search",
+            query_text=normalized_query or None,
+            location_label=normalized_governorate or normalized_query or None,
+            governorate=normalized_governorate or None,
+            result_count=len(payload),
+        )
+        cache_service.set_json(cache_key, payload, ttl_seconds=600)
+        return payload
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to search pharmacies: {str(e)}",
         )
 
 

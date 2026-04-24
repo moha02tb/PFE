@@ -1,17 +1,19 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const ProtectedRoute = ({ element, requiredRoles = [] }) => {
     const { isAuthenticated, user, loading } = useAuth();
+    const { t } = useLanguage();
 
     // Still loading
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-screen bg-white">
+            <div className="flex h-screen items-center justify-center bg-background text-foreground">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto mb-6"></div>
-                    <p className="text-gray-600 text-lg font-medium">Loading...</p>
+                    <div className="mx-auto mb-6 h-16 w-16 animate-spin rounded-full border-4 border-primary-soft border-t-primary"></div>
+                    <p className="text-lg font-medium text-muted-foreground">{t('common.loading')}</p>
                 </div>
             </div>
         );

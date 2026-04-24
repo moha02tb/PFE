@@ -83,6 +83,16 @@ export default function PharmacyListItem({
       alignSelf: 'flex-start',
       marginTop: 4,
     },
+    gouvernorateBadge: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+      alignItems: 'center',
+      gap: 6,
+      borderRadius: radius.full,
+      backgroundColor: colors.primaryMuted,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      alignSelf: 'flex-start',
+    },
   });
 
   return (
@@ -109,6 +119,12 @@ export default function PharmacyListItem({
       <View style={styles.metaRow}>
         <StatusBadge status={item.isOpen ? 'open' : 'closed'} />
         {item.emergency ? <StatusBadge status="onDuty">{t('home.onDuty', 'On duty')}</StatusBadge> : null}
+        {item.governorate ? (
+          <View style={styles.gouvernorateBadge}>
+            <MaterialCommunityIcons name="map-marker-radius" size={12} color={colors.primary} />
+            <AppText variant="labelSmall" color={colors.primary}>{item.governorate}</AppText>
+          </View>
+        ) : null}
         {rating > 0 ? (
           <View style={styles.detailPill}>
             <Ionicons name="star" size={14} color="#F59E0B" />

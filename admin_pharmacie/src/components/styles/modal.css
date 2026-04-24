@@ -1,0 +1,11 @@
+.modal-backdrop,
+.modal-content,
+.modal-backdrop-exit,
+.modal-content-exit {
+  animation: none;
+}
+
+.modal-trigger,
+.modal-close {
+  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease;
+}

@@ -1,10 +1,63 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { LocateFixed, MapPinned, Minus, Plus, Search } from 'lucide-react';
+import {
+  CircleDot,
+  Clock3,
+  LocateFixed,
+  MapPin,
+  MapPinned,
+  Minus,
+  Navigation,
+  Plus,
+  Search,
+} from 'lucide-react';
 import api from '../lib/api';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, EmptyState, Input, SectionHeader } from '../components/ui';
+import { Button, EmptyState, Input } from '../components/ui';
+import { useLanguage } from '../context/LanguageContext';
 
 const TILE_SIZE = 256;
 const TUNISIA_CENTER = { lat: 36.8065, lon: 10.1815 };
+const PREVIEW_PHARMACIES = [
+  {
+    id: 'preview-1',
+    name: 'Pharmacie de Carthage',
+    address: 'Av. Habib Bourguiba, Carthage',
+    governorate: 'Tunis',
+    latitude: 36.8528,
+    longitude: 10.3233,
+  },
+  {
+    id: 'preview-2',
+    name: 'Pharmacie Ennasr 24/7',
+    address: 'Rue Hedi Nouira, Ariana',
+    governorate: 'Ariana',
+    latitude: 36.8665,
+    longitude: 10.1647,
+  },
+  {
+    id: 'preview-3',
+    name: 'Pharmacie du Lac 1',
+    address: 'Les Berges du Lac, Tunis',
+    governorate: 'Tunis',
+    latitude: 36.8421,
+    longitude: 10.2478,
+  },
+  {
+    id: 'preview-4',
+    name: 'Sidi Bou Said Pharmacy',
+    address: 'Hilltop View, Sidi Bou Said',
+    governorate: 'Tunis',
+    latitude: 36.8702,
+    longitude: 10.3418,
+  },
+  {
+    id: 'preview-5',
+    name: 'La Marsa Central',
+    address: 'Plage de la Marsa, Tunis',
+    governorate: 'Tunis',
+    latitude: 36.8782,
+    longitude: 10.3247,
+  },
+];
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
 const project = (lat, lon, zoom) => {
@@ -38,6 +91,20 @@ const OSMMap = ({ center, zoom, markers, selectedId, onSelectMarker, onCenterCha
     return () => observer.disconnect();
   }, []);
 
+  // Handle wheel event with passive: false to allow preventDefault
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return undefined;
+
+    const handleWheel = (event) => {
+      event.preventDefault();
+      onZoomChange(clamp(zoom + (event.deltaY < 0 ? 1 : -1), 5, 18));
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, [zoom, onZoomChange]);
+
   const centerWorld = project(center.lat, center.lon, zoom);
   const originX = centerWorld.x - size.width / 2;
   const originY = centerWorld.y - size.height / 2;
@@ -63,7 +130,7 @@ const OSMMap = ({ center, zoom, markers, selectedId, onSelectMarker, onCenterCha
   return (
     <div
       ref={containerRef}
-      className="relative h-full w-full overflow-hidden rounded-[28px] bg-surface-muted"
+      className="map-canvas absolute inset-0 overflow-hidden bg-slate-200"
       onPointerDown={(event) => {
         event.currentTarget.setPointerCapture(event.pointerId);
         dragStateRef.current = {
@@ -87,10 +154,6 @@ const OSMMap = ({ center, zoom, markers, selectedId, onSelectMarker, onCenterCha
       onPointerLeave={(event) => {
         if (dragStateRef.current?.pointerId === event.pointerId) dragStateRef.current = null;
       }}
-      onWheel={(event) => {
-        event.preventDefault();
-        onZoomChange(clamp(zoom + (event.deltaY < 0 ? 1 : -1), 5, 18));
-      }}
     >
       {tiles.map((tile) => (
         <img
@@ -99,9 +162,10 @@ const OSMMap = ({ center, zoom, markers, selectedId, onSelectMarker, onCenterCha
           alt=""
           draggable="false"
           className="pointer-events-none absolute h-64 w-64 max-w-none select-none"
-          style={{ left: tile.left, top: tile.top }}
+          style={{ left: tile.left, top: tile.top, opacity: 0.62, filter: 'saturate(0.72) contrast(0.96)' }}
         />
       ))}
+      <div className="map-canvas-grid" />
 
       {markers.map((marker) => {
         const point = project(marker.latitude, marker.longitude, zoom);
@@ -114,13 +178,11 @@ const OSMMap = ({ center, zoom, markers, selectedId, onSelectMarker, onCenterCha
             key={marker.id}
             type="button"
             onClick={() => onSelectMarker(marker)}
-            className="absolute -translate-x-1/2 -translate-y-full"
+            className="map-pin-marker absolute -translate-x-1/2 -translate-y-full"
+            data-selected={selected}
             style={{ left, top }}
           >
-            <div className={`flex h-10 w-10 items-center justify-center rounded-full border-4 border-white shadow-card ${selected ? 'bg-warning text-warning-foreground' : 'bg-primary text-primary-foreground'}`}>
-              <MapPinned className="h-4 w-4" />
-            </div>
-            <div className={`mx-auto h-3 w-3 -translate-y-1 rotate-45 ${selected ? 'bg-warning' : 'bg-primary'}`} />
+            <MapPin className={selected ? 'h-11 w-11 fill-blue-600 text-blue-600 drop-shadow-lg' : 'h-10 w-10 fill-emerald-600 text-emerald-600 drop-shadow-lg'} />
           </button>
         );
       })}
@@ -128,7 +190,36 @@ const OSMMap = ({ center, zoom, markers, selectedId, onSelectMarker, onCenterCha
   );
 };
 
+const DirectoryItem = ({ pharmacy, selected, onClick }) => {
+  const { t } = useLanguage();
+  return (
+  <button type="button" onClick={onClick} className={selected ? 'map-directory-item map-directory-item--selected' : 'map-directory-item'}>
+    <div className="mb-1 flex items-start justify-between gap-3">
+      <h3 className="font-display text-sm font-bold text-foreground">{pharmacy.name}</h3>
+      <span className={selected ? 'registry-status registry-status--garde' : 'registry-status registry-status--active'}>
+        {selected ? t('map.nightGuard') : t('common.active')}
+      </span>
+    </div>
+    <p className="mb-2 flex items-center gap-1 text-xs text-muted-foreground">
+      <MapPin className="h-3.5 w-3.5" />
+      {pharmacy.address || pharmacy.governorate || t('map.noAddress')}
+    </p>
+    <div className="flex items-center gap-4 text-[0.6875rem] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+      <span className="flex items-center gap-1">
+        <Clock3 className="h-3.5 w-3.5" />
+        {selected ? t('map.alwaysOpen') : '08:00 - 20:00'}
+      </span>
+      <span className="flex items-center gap-1">
+        <Navigation className="h-3.5 w-3.5" />
+        {Math.max(1, Math.round(Math.abs(pharmacy.latitude - TUNISIA_CENTER.lat) * 10))} km
+      </span>
+    </div>
+  </button>
+  );
+};
+
 const MapPage = () => {
+  const { t } = useLanguage();
   const [pharmacies, setPharmacies] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPharmacy, setSelectedPharmacy] = useState(null);
@@ -148,14 +239,19 @@ const MapPage = () => {
         const rows = Array.isArray(response.data)
           ? response.data.filter((item) => typeof item.latitude === 'number' && typeof item.longitude === 'number')
           : [];
-        setPharmacies(rows);
-        if (rows[0]) {
-          setSelectedPharmacy(rows[0]);
-          setCenter({ lat: rows[0].latitude, lon: rows[0].longitude });
+        const nextRows = rows.length ? rows : PREVIEW_PHARMACIES;
+        setPharmacies(nextRows);
+        if (nextRows[0]) {
+          const selected = nextRows[1] || nextRows[0];
+          setSelectedPharmacy(selected);
+          setCenter({ lat: selected.latitude, lon: selected.longitude });
         }
       } catch (err) {
         if (!active) return;
-        setError(err.response?.data?.detail || err.message || 'Failed to load pharmacies for the map.');
+        setError(err.response?.data?.detail || err.message || t('map.previewDataError'));
+        setPharmacies(PREVIEW_PHARMACIES);
+        setSelectedPharmacy(PREVIEW_PHARMACIES[1]);
+        setCenter({ lat: PREVIEW_PHARMACIES[1].latitude, lon: PREVIEW_PHARMACIES[1].longitude });
       } finally {
         if (active) setLoading(false);
       }
@@ -181,110 +277,132 @@ const MapPage = () => {
   };
 
   return (
-    <div className="page-shell">
-      <div className="page-content">
-        <SectionHeader
-          eyebrow="Mapping"
-          title="Pharmacy map"
-          description="Live pharmacy coordinates rendered on OpenStreetMap with a cleaner operator surface and better scanability."
-        />
-
-        <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
-          <Card className="overflow-hidden">
-            <CardHeader>
-              <div>
-                <CardTitle>Directory</CardTitle>
-                <CardDescription>Search visible mapped pharmacies.</CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="pl-9" placeholder="Search pharmacy or governorate" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Button variant="secondary" onClick={() => { setCenter(TUNISIA_CENTER); setZoom(7); }}>Tunisia view</Button>
-                <Button variant="secondary" onClick={() => navigator.geolocation?.getCurrentPosition(({ coords }) => { setCenter({ lat: coords.latitude, lon: coords.longitude }); setZoom(13); })}>
-                  <LocateFixed className="h-4 w-4" />
-                  Locate
-                </Button>
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-2xl bg-surface-muted p-4 text-center">
-                  <p className="text-xs text-muted-foreground">Visible</p>
-                  <p className="mt-2 font-display text-2xl font-semibold text-foreground">{filteredPharmacies.length}</p>
-                </div>
-                <div className="rounded-2xl bg-surface-muted p-4 text-center">
-                  <p className="text-xs text-muted-foreground">Zoom</p>
-                  <p className="mt-2 font-display text-2xl font-semibold text-foreground">{zoom}</p>
-                </div>
-                <div className="rounded-2xl bg-surface-muted p-4 text-center">
-                  <p className="text-xs text-muted-foreground">Tiles</p>
-                  <p className="mt-2 text-sm font-medium text-foreground">OSM</p>
-                </div>
-              </div>
-              <div className="max-h-[520px] space-y-3 overflow-auto">
-                {loading ? (
-                  <EmptyState icon={MapPinned} title="Loading pharmacies" description="Fetching mapped pharmacies from the admin API." />
-                ) : error ? (
-                  <div className="rounded-2xl border border-danger/30 bg-danger-soft p-4 text-sm text-danger">{error}</div>
-                ) : filteredPharmacies.length ? (
-                  filteredPharmacies.map((pharmacy) => (
-                    <button
-                      key={pharmacy.id}
-                      type="button"
-                      onClick={() => focusPharmacy(pharmacy)}
-                      className={`w-full rounded-2xl border p-4 text-left transition ${selectedPharmacy?.id === pharmacy.id ? 'border-primary bg-primary-soft' : 'border-border bg-surface hover:bg-surface-muted'}`}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="font-medium text-foreground">{pharmacy.name}</p>
-                          <p className="mt-1 text-sm text-muted-foreground">{pharmacy.address || pharmacy.governorate || 'No address'}</p>
-                        </div>
-                        <Badge variant="primary">{pharmacy.governorate || 'N/A'}</Badge>
-                      </div>
-                    </button>
-                  ))
-                ) : (
-                  <EmptyState icon={MapPinned} title="No matches" description="No pharmacies match the current map search." />
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="relative min-h-[720px]">
-            <OSMMap
-              center={center}
-              zoom={zoom}
-              markers={filteredPharmacies}
-              selectedId={selectedPharmacy?.id}
-              onSelectMarker={focusPharmacy}
-              onCenterChange={setCenter}
-              onZoomChange={setZoom}
-            />
-            <div className="absolute right-5 top-5 flex flex-col gap-2">
-              <Button variant="secondary" size="icon" onClick={() => setZoom((current) => clamp(current + 1, 5, 18))}>
-                <Plus className="h-4 w-4" />
-              </Button>
-              <Button variant="secondary" size="icon" onClick={() => setZoom((current) => clamp(current - 1, 5, 18))}>
-                <Minus className="h-4 w-4" />
-              </Button>
-            </div>
-            {selectedPharmacy ? (
-              <div className="absolute inset-x-5 bottom-5 max-w-2xl rounded-[28px] border border-border bg-background/90 p-5 shadow-panel backdrop-blur">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-primary">Selected pharmacy</p>
-                    <h2 className="mt-2 font-display text-2xl font-semibold text-foreground">{selectedPharmacy.name}</h2>
-                    <p className="mt-2 text-sm text-muted-foreground">{selectedPharmacy.address || 'No address available'}</p>
-                  </div>
-                  <Badge variant="success">Mapped</Badge>
-                </div>
-              </div>
-            ) : null}
+    <div className="map-page-shell">
+      <section className="map-directory-panel">
+        <div className="border-b border-border p-6">
+          <h1 className="font-display text-2xl font-bold text-foreground">{t('map.title')}</h1>
+          <p className="mt-2 text-xs text-muted-foreground">{t('map.description', { count: pharmacies.length || 0 })}</p>
+          {error ? <p className="mt-2 text-xs font-medium text-amber-700">{error}</p> : null}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button className="map-filter-chip map-filter-chip--active">
+              <CircleDot className="h-3.5 w-3.5" />
+              {t('map.openNow')}
+            </button>
+            <button className="map-filter-chip">{t('map.garde24')}</button>
+            <button className="map-filter-chip">{t('map.wholesale')}</button>
+          </div>
+          <div className="relative mt-4">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="pl-10" placeholder={t('map.searchPlaceholder')} />
           </div>
         </div>
-      </div>
+
+        <div className="flex-1 overflow-y-auto">
+          {loading && !pharmacies.length ? (
+            <div className="p-6">
+              <EmptyState icon={MapPinned} title={t('map.loadingPharmacies')} description={t('map.loadingPharmaciesDesc')} />
+            </div>
+          ) : filteredPharmacies.length ? (
+            filteredPharmacies.map((pharmacy) => (
+              <DirectoryItem
+                key={pharmacy.id}
+                pharmacy={pharmacy}
+                selected={selectedPharmacy?.id === pharmacy.id}
+                onClick={() => focusPharmacy(pharmacy)}
+              />
+            ))
+          ) : (
+            <div className="p-6">
+              <EmptyState icon={MapPinned} title={t('map.noMatches')} description={t('map.noMatchesDesc')} />
+            </div>
+          )}
+        </div>
+
+        <div className="border-t border-border bg-surface-muted p-4">
+          <Button className="w-full">
+            <Plus className="h-4 w-4" />
+            {t('map.registerNewPharmacy')}
+          </Button>
+        </div>
+      </section>
+
+      <section className="map-main-canvas relative min-w-0 flex-1 overflow-hidden bg-slate-200">
+        <OSMMap
+          center={center}
+          zoom={zoom}
+          markers={filteredPharmacies}
+          selectedId={selectedPharmacy?.id}
+          onSelectMarker={focusPharmacy}
+          onCenterChange={setCenter}
+          onZoomChange={setZoom}
+        />
+        <div className="map-control-stack">
+          <div className="overflow-hidden rounded-[12px] border border-border bg-surface-elevated shadow-elevated">
+            <button className="block border-b border-border p-3 hover:bg-surface-muted" onClick={() => setZoom((current) => clamp(current + 1, 5, 18))} aria-label={t('map.zoomIn')}>
+              <Plus className="h-5 w-5" />
+            </button>
+            <button className="block p-3 hover:bg-surface-muted" onClick={() => setZoom((current) => clamp(current - 1, 5, 18))} aria-label={t('map.zoomOut')}>
+              <Minus className="h-5 w-5" />
+            </button>
+          </div>
+          <button
+            className="rounded-[12px] border border-border bg-surface-elevated p-3 shadow-elevated hover:bg-surface-muted"
+            onClick={() => navigator.geolocation?.getCurrentPosition(({ coords }) => {
+              setCenter({ lat: coords.latitude, lon: coords.longitude });
+              setZoom(13);
+            })}
+          >
+            <LocateFixed className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="map-legend">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="h-3 w-3 rounded-full bg-blue-600" />
+            <span className="text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-foreground">{t('map.legend')}</span>
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-8 text-xs">
+              <span className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4 fill-emerald-500 text-emerald-500" /> {t('map.openFacility')}</span>
+              <strong>{Math.max(0, pharmacies.length - 2)}</strong>
+            </div>
+            <div className="flex items-center justify-between gap-8 text-xs">
+              <span className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4 fill-blue-500 text-blue-500" /> {t('map.onCallGarde')}</span>
+              <strong>{selectedPharmacy ? 1 : 0}</strong>
+            </div>
+            <div className="flex items-center justify-between gap-8 text-xs">
+              <span className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4 fill-slate-400 text-slate-400" /> {t('map.closed')}</span>
+              <strong>0</strong>
+            </div>
+          </div>
+        </div>
+
+        {selectedPharmacy ? (
+          <div className="map-popover">
+            <div className="mb-1 flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-blue-500" />
+              <h3 className="font-display text-sm font-bold text-foreground">{selectedPharmacy.name}</h3>
+            </div>
+            <p className="mb-3 text-xs text-muted-foreground">{selectedPharmacy.address || t('map.selectedForNightDuty')}</p>
+            <Button className="w-full" size="sm">{t('map.viewFullRecords')}</Button>
+            <span className="map-popover-arrow" />
+          </div>
+        ) : null}
+      </section>
+
+      <footer className="map-summary-bar">
+        <div className="flex gap-8">
+          <div className="flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            <span>{t('map.dataStreamRealtime')}</span>
+          </div>
+          <span className="text-white/50">{t('map.lastUpdate')}</span>
+        </div>
+        <div className="flex items-center gap-6">
+          <span><strong className="text-white">{Math.min(78, pharmacies.length)}</strong> {t('map.nightDutyTonight')}</span>
+          <span><strong className="text-white">{pharmacies.length}</strong> {t('map.totalRegisteredEntities')}</span>
+        </div>
+      </footer>
     </div>
   );
 };

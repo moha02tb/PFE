@@ -18,8 +18,10 @@ import {
   TableHeaderCell,
   TableRow,
 } from '../components/ui';
+import { useLanguage } from '../context/LanguageContext';
 
 const UploadMedicinesPage = () => {
+  const { t } = useLanguage();
   const inputRef = useRef(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -56,7 +58,7 @@ const UploadMedicinesPage = () => {
 
     if (!file.name.toLowerCase().endsWith('.csv')) {
       setSelectedFile(null);
-      setError('Only CSV files are supported for medicine imports.');
+      setError(t('uploadMedicines.csvOnlyError'));
       return;
     }
 
@@ -65,7 +67,7 @@ const UploadMedicinesPage = () => {
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      setError('Choose a medicine CSV before uploading.');
+      setError(t('uploadMedicines.chooseFileError'));
       return;
     }
 
@@ -83,9 +85,9 @@ const UploadMedicinesPage = () => {
       await loadRecentMedicines();
     } catch (err) {
       setError(
-        err.response?.data?.detail ||
+          err.response?.data?.detail ||
           err.message ||
-          'Medicine upload failed. Check that you are logged in and the CSV columns are valid.'
+          t('uploadMedicines.uploadFailed')
       );
     } finally {
       setIsUploading(false);
@@ -96,18 +98,18 @@ const UploadMedicinesPage = () => {
     <div className="page-shell">
       <div className="page-content">
         <SectionHeader
-          eyebrow="Medicine import"
-          title="Upload medicines"
-          description="Import medicine catalog CSV files, upsert rows by code_pct, and review validation output before exposing the catalog to mobile users."
+          eyebrow={t('uploadMedicines.eyebrow')}
+          title={t('uploadMedicines.title')}
+          description={t('uploadMedicines.description')}
           actions={
             <>
               <Button variant="secondary" onClick={() => inputRef.current?.click()}>
                 <FileSpreadsheet className="h-4 w-4" />
-                Choose CSV
+                {t('upload.chooseCsv')}
               </Button>
               <Button onClick={handleUpload} disabled={!selectedFile || isUploading}>
                 <UploadCloud className="h-4 w-4" />
-                {isUploading ? 'Uploading...' : 'Upload medicines'}
+                {isUploading ? t('upload.uploading') : t('uploadMedicines.uploadMedicines')}
               </Button>
             </>
           }
@@ -144,33 +146,34 @@ const UploadMedicinesPage = () => {
                   setIsDragging(false);
                   selectFile(event.dataTransfer.files?.[0]);
                 }}
-                className={`flex min-h-[320px] w-full flex-col items-center justify-center rounded-3xl border border-dashed px-8 text-center transition ${
+                data-dragging={isDragging}
+                className={`upload-zone flex min-h-[300px] w-full flex-col items-center justify-center rounded-[8px] border border-dashed px-8 text-center ${
                   isDragging
                     ? 'border-primary bg-primary-soft'
                     : 'border-border bg-surface hover:border-primary/40 hover:bg-surface-muted'
                 }`}
               >
-                <div className="mb-5 rounded-3xl bg-primary-soft p-4 text-primary">
+                <div className="mb-5 rounded-[8px] bg-primary-soft p-4 text-primary">
                   <Pill className="h-8 w-8" />
                 </div>
-                <h2 className="font-display text-2xl font-semibold text-foreground">Drop a medicine CSV here</h2>
+                <h2 className="font-display text-2xl font-semibold text-foreground">{t('uploadMedicines.dropTitle')}</h2>
                 <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
-                  Required columns: <code>code_pct</code>, <code>nom_commercial</code>, <code>prix_public_DT</code>, <code>tarif_reference_DT</code>, <code>categorie_remboursement</code>, <code>dci</code>, <code>ap</code>.
+                  {t('uploadMedicines.requiredColumns')} <code>code_pct</code>, <code>nom_commercial</code>, <code>prix_public_DT</code>, <code>tarif_reference_DT</code>, <code>categorie_remboursement</code>, <code>dci</code>, <code>ap</code>.
                 </p>
               </button>
 
-              <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-surface p-4">
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-[8px] border border-border bg-surface p-4">
                 <div>
-                  <p className="text-sm font-medium text-foreground">{selectedFile ? selectedFile.name : 'No file selected'}</p>
+                  <p className="text-sm font-medium text-foreground">{selectedFile ? selectedFile.name : t('upload.noFileSelected')}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {selectedFile ? `${(selectedFile.size / 1024).toFixed(1)} KB` : 'Upload size limit: 5 MB'}
+                    {selectedFile ? `${(selectedFile.size / 1024).toFixed(1)} KB` : t('upload.sizeLimit')}
                   </p>
                 </div>
-                {selectedFile ? <Badge variant="primary">Ready to upload</Badge> : <Badge>Waiting for file</Badge>}
+                {selectedFile ? <Badge variant="primary">{t('upload.readyToUpload')}</Badge> : <Badge>{t('upload.waitingForFile')}</Badge>}
               </div>
 
               {error ? (
-                <div className="mt-5 rounded-2xl border border-danger/30 bg-danger-soft p-4 text-sm text-danger">{error}</div>
+                <div className="mt-5 rounded-[8px] border border-border bg-surface-muted p-4 text-sm text-foreground">{error}</div>
               ) : null}
             </CardContent>
           </Card>
@@ -179,54 +182,54 @@ const UploadMedicinesPage = () => {
             <Card>
               <CardHeader>
                 <div>
-                  <CardTitle>Upload policy</CardTitle>
-                  <CardDescription>Rules enforced by the medicine import API.</CardDescription>
+                  <CardTitle>{t('upload.policyTitle')}</CardTitle>
+                  <CardDescription>{t('uploadMedicines.policyDesc')}</CardDescription>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
-                <div className="rounded-2xl bg-surface-muted p-4">Only CSV files are accepted.</div>
-                <div className="rounded-2xl bg-surface-muted p-4">Rows are upserted by code_pct.</div>
-                <div className="rounded-2xl bg-surface-muted p-4">Maximum upload size: 5 MB and 5,000 rows.</div>
-                <div className="rounded-2xl bg-surface-muted p-4">Duplicate code_pct values in one file keep the last row and return a warning.</div>
+                <div className="rounded-[8px] border border-border/45 bg-surface-muted p-4">{t('upload.csvOnly')}</div>
+                <div className="rounded-[8px] border border-border/45 bg-surface-muted p-4">{t('uploadMedicines.upsertRule')}</div>
+                <div className="rounded-[8px] border border-border/45 bg-surface-muted p-4">{t('upload.maxSizeRows')}</div>
+                <div className="rounded-[8px] border border-border/45 bg-surface-muted p-4">{t('uploadMedicines.duplicateRule')}</div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
                 <div>
-                  <CardTitle>Import result</CardTitle>
-                  <CardDescription>Live API response after processing the uploaded CSV.</CardDescription>
+                  <CardTitle>{t('upload.importResult')}</CardTitle>
+                  <CardDescription>{t('uploadMedicines.importResultDesc')}</CardDescription>
                 </div>
               </CardHeader>
               <CardContent>
                 {result ? (
                   <div className="space-y-5">
                     <div className="grid gap-3 sm:grid-cols-4">
-                      <div className="rounded-2xl bg-surface-muted p-4">
-                        <p className="text-sm text-muted-foreground">Rows</p>
+                      <div className="rounded-[6px] bg-surface-muted p-4">
+                        <p className="text-sm text-muted-foreground">{t('upload.rows')}</p>
                         <p className="mt-2 font-display text-2xl font-semibold text-foreground">{result.total_rows}</p>
                       </div>
-                      <div className="rounded-2xl bg-success-soft p-4">
-                        <p className="text-sm text-success">Saved</p>
-                        <p className="mt-2 font-display text-2xl font-semibold text-success">{result.successful}</p>
+                      <div className="rounded-[6px] bg-surface-muted p-4">
+                        <p className="text-sm text-foreground">{t('upload.saved')}</p>
+                        <p className="mt-2 font-display text-2xl font-semibold text-foreground">{result.successful}</p>
                       </div>
-                      <div className="rounded-2xl bg-danger-soft p-4">
-                        <p className="text-sm text-danger">Failed</p>
-                        <p className="mt-2 font-display text-2xl font-semibold text-danger">{result.failed}</p>
+                      <div className="rounded-[6px] bg-surface-muted p-4">
+                        <p className="text-sm text-foreground">{t('upload.failed')}</p>
+                        <p className="mt-2 font-display text-2xl font-semibold text-foreground">{result.failed}</p>
                       </div>
-                      <div className="rounded-2xl bg-warning-soft p-4">
-                        <p className="text-sm text-warning">Warnings</p>
-                        <p className="mt-2 font-display text-2xl font-semibold text-warning">{result.warnings?.length || 0}</p>
+                      <div className="rounded-[6px] bg-surface-muted p-4">
+                        <p className="text-sm text-foreground">{t('upload.warnings')}</p>
+                        <p className="mt-2 font-display text-2xl font-semibold text-foreground">{result.warnings?.length || 0}</p>
                       </div>
                     </div>
 
-                    <div className="rounded-2xl border border-border">
-                      <div className="border-b border-border px-4 py-3 text-sm font-medium text-foreground">Validation errors</div>
+                    <div className="rounded-[6px] border border-border">
+                      <div className="border-b border-border px-4 py-3 text-sm font-medium text-foreground">{t('upload.validationErrors')}</div>
                       <div className="max-h-52 overflow-auto">
                         {result.errors?.length ? (
                           result.errors.map((item, index) => (
                             <div key={`${item.row_number}-${index}`} className="border-b border-border px-4 py-3 last:border-b-0">
-                              <p className="text-sm font-medium text-foreground">Row {item.row_number}</p>
+                              <p className="text-sm font-medium text-foreground">{t('upload.row', { number: item.row_number })}</p>
                               <p className="mt-1 text-sm text-muted-foreground">{item.error_message}</p>
                             </div>
                           ))
@@ -234,21 +237,21 @@ const UploadMedicinesPage = () => {
                           <div className="px-4 py-8">
                             <EmptyState
                               icon={AlertTriangle}
-                              title="No validation errors"
-                              description="The backend accepted the uploaded rows without returning blocking errors."
+                              title={t('upload.noValidationErrors')}
+                              description={t('uploadMedicines.noValidationErrorsDesc')}
                             />
                           </div>
                         )}
                       </div>
                     </div>
 
-                    <div className="rounded-2xl border border-border">
-                      <div className="border-b border-border px-4 py-3 text-sm font-medium text-foreground">Warnings</div>
+                    <div className="rounded-[6px] border border-border">
+                      <div className="border-b border-border px-4 py-3 text-sm font-medium text-foreground">{t('upload.warnings')}</div>
                       <div className="max-h-52 overflow-auto">
                         {result.warnings?.length ? (
                           result.warnings.map((item, index) => (
                             <div key={`${item.row_number}-warning-${index}`} className="border-b border-border px-4 py-3 last:border-b-0">
-                              <p className="text-sm font-medium text-foreground">Row {item.row_number}</p>
+                              <p className="text-sm font-medium text-foreground">{t('upload.row', { number: item.row_number })}</p>
                               <p className="mt-1 text-sm text-muted-foreground">{item.error_message}</p>
                             </div>
                           ))
@@ -256,8 +259,8 @@ const UploadMedicinesPage = () => {
                           <div className="px-4 py-8">
                             <EmptyState
                               icon={AlertTriangle}
-                              title="No warnings"
-                              description="No duplicate code_pct rows or non-blocking issues were returned."
+                              title={t('upload.noWarnings')}
+                              description={t('uploadMedicines.noWarningsDesc')}
                             />
                           </div>
                         )}
@@ -267,8 +270,8 @@ const UploadMedicinesPage = () => {
                 ) : (
                   <EmptyState
                     icon={FileSpreadsheet}
-                    title="No upload result yet"
-                    description="Choose a medicine CSV and run the import to view processing details here."
+                    title={t('upload.noResultTitle')}
+                    description={t('uploadMedicines.noResultDesc')}
                   />
                 )}
               </CardContent>
@@ -279,8 +282,8 @@ const UploadMedicinesPage = () => {
         <Card className="mt-6">
           <CardHeader>
             <div>
-              <CardTitle>Recent medicines</CardTitle>
-              <CardDescription>Latest medicine rows available from the admin API.</CardDescription>
+              <CardTitle>{t('uploadMedicines.recentMedicines')}</CardTitle>
+              <CardDescription>{t('uploadMedicines.recentMedicinesDesc')}</CardDescription>
             </div>
           </CardHeader>
           <CardContent>
@@ -288,10 +291,10 @@ const UploadMedicinesPage = () => {
               <Table>
                 <TableHead>
                   <tr>
-                    <TableHeaderCell>Code</TableHeaderCell>
-                    <TableHeaderCell>Commercial name</TableHeaderCell>
+                    <TableHeaderCell>{t('uploadMedicines.code')}</TableHeaderCell>
+                    <TableHeaderCell>{t('uploadMedicines.commercialName')}</TableHeaderCell>
                     <TableHeaderCell>DCI</TableHeaderCell>
-                    <TableHeaderCell>Public price</TableHeaderCell>
+                    <TableHeaderCell>{t('uploadMedicines.publicPrice')}</TableHeaderCell>
                   </tr>
                 </TableHead>
                 <TableBody>
@@ -308,11 +311,11 @@ const UploadMedicinesPage = () => {
             ) : (
               <EmptyState
                 icon={Pill}
-                title={loadingRecent ? 'Loading medicines' : 'No medicines yet'}
+                title={loadingRecent ? t('uploadMedicines.loadingMedicines') : t('uploadMedicines.noMedicines')}
                 description={
                   loadingRecent
-                    ? 'Fetching recent medicine rows from the backend.'
-                    : 'Upload a medicine CSV to populate the medicine catalog.'
+                    ? t('uploadMedicines.loadingMedicinesDesc')
+                    : t('uploadMedicines.noMedicinesDesc')
                 }
               />
             )}

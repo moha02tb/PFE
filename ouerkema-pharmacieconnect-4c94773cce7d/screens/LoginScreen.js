@@ -10,7 +10,7 @@ import { useAppTheme } from '../utils/theme';
 export default function LoginScreen({ navigation }) {
   const { t } = useTranslation();
   const { colors, radius, isRTL } = useAppTheme();
-  const { login, beginEmailVerification, loading, error } = useAuth();
+  const { login, loginAsGuest, beginEmailVerification, loading, error } = useAuth();
   const styles = useMemo(() => createStyles(colors, radius, isRTL), [colors, radius, isRTL]);
 
   const [email, setEmail] = useState('');
@@ -51,6 +51,13 @@ export default function LoginScreen({ navigation }) {
         return;
       }
       Alert.alert(t('Login Failed', 'Login Failed'), result.error);
+    }
+  };
+
+  const handleLoginAsGuest = async () => {
+    const result = await loginAsGuest();
+    if (!result.success) {
+      Alert.alert(t('Error', 'Error'), result.error);
     }
   };
 
@@ -137,6 +144,26 @@ export default function LoginScreen({ navigation }) {
         </View>
       </View>
 
+      <View style={styles.dividerRow}>
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        <AppText variant="bodySmall" color={colors.textSecondary}>
+          {t('OR', 'OR')}
+        </AppText>
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+      </View>
+
+      <AppButton
+        title={t('Continue as Guest', 'Continue as Guest')}
+        onPress={handleLoginAsGuest}
+        loading={loading}
+        size="large"
+        fullWidth
+        variant="secondary"
+        icon={<Feather name={isRTL ? 'arrow-left' : 'arrow-right'} size={16} />}
+        iconPosition="trailing"
+        style={{ marginTop: 6 }}
+      />
+
       <View style={styles.footer}>
         <AppText variant="bodySmall" color={colors.textSecondary}>
           {t('New here?', 'New here?')}
@@ -174,6 +201,16 @@ const createStyles = (colors, radius, isRTL) =>
       borderWidth: 1,
       borderColor: colors.border,
       paddingHorizontal: 12,
+    },
+    dividerRow: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+      alignItems: 'center',
+      gap: 12,
+      marginVertical: 16,
+    },
+    divider: {
+      flex: 1,
+      height: 1,
     },
     footer: {
       marginTop: 8,

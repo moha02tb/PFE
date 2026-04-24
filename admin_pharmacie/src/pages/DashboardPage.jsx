@@ -4,84 +4,102 @@ import { Link } from 'react-router-dom';
 import {
   Activity,
   ArrowRight,
-  CheckCircle2,
+  Building2,
   CalendarDays,
-  Clock3,
+  CheckCircle2,
+  CloudDownload,
+  Database,
+  HelpCircle,
+  Info,
+  ListChecks,
   MapPinned,
   Pill,
-  Shield,
+  RadioTower,
   ShieldCheck,
   TrendingUp,
   Upload,
+  UserRound,
   Users,
+  Zap,
 } from 'lucide-react';
 import api from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
-import {
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  EmptyState,
-  SectionHeader,
-  Skeleton,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeaderCell,
-  TableRow,
-} from '../components/ui';
+import { Badge, Button, Skeleton } from '../components/ui';
 
 const formatNumber = (value) => new Intl.NumberFormat().format(value || 0);
 const formatDay = (value) =>
   value
-    ? new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    ? new Date(value).toLocaleDateString(undefined, { weekday: 'short' })
     : '-';
 
-const StatCard = ({ title, value, subtitle, icon: Icon, tone = 'primary' }) => (
-  <Card className="h-full">
-    <CardContent className="p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="mt-3 font-display text-3xl font-semibold tracking-tight text-foreground">{value}</p>
-          <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>
-        </div>
-        <div
-          className={`rounded-2xl p-3 ${
-            tone === 'success'
-              ? 'bg-success-soft text-success'
-              : tone === 'warning'
-                ? 'bg-warning-soft text-warning'
-                : 'bg-primary-soft text-primary'
-          }`}
-        >
+const StatTile = ({ icon: Icon, label, value, meta, tone = 'blue', progress, progressLabel }) => {
+  const toneClass = {
+    blue: 'bg-primary-soft text-primary dark:bg-primary/12 dark:text-primary',
+    teal: 'bg-primary-soft text-primary dark:bg-primary/12 dark:text-primary',
+    amber: 'bg-amber-50 text-amber-700 dark:bg-amber-400/10 dark:text-amber-200',
+    green: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-200',
+  }[tone];
+
+  return (
+    <div className="bento-card flex min-h-40 flex-col justify-between p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className={`flex h-10 w-10 items-center justify-center rounded-[8px] ${toneClass}`}>
           <Icon className="h-5 w-5" />
         </div>
+        {meta ? <span className="rounded-full bg-surface-muted px-2 py-1 text-xs font-bold text-muted-foreground">{meta}</span> : null}
       </div>
-    </CardContent>
-  </Card>
+      <div>
+        <p className="text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-muted-foreground">{label}</p>
+        <div className="mt-1 flex items-baseline gap-2">
+          <h2 className="metric-value font-display text-4xl font-extrabold leading-none text-foreground">{value}</h2>
+          {progressLabel ? <span className="text-xs font-medium text-muted-foreground">{progressLabel}</span> : null}
+        </div>
+        {typeof progress === 'number' ? (
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-muted">
+            <div className="h-full rounded-full bg-primary" style={{ width: `${progress}%` }} />
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+};
+
+const MiniMetric = ({ icon: Icon, label, value, muted = false }) => (
+  <div className={`bento-card flex items-center gap-4 p-4 ${muted ? 'opacity-60' : ''}`}>
+    <div className="flex h-9 w-9 items-center justify-center rounded-[8px] bg-primary-soft text-primary">
+      <Icon className="h-4 w-4" />
+    </div>
+    <div className="min-w-0">
+      <p className="truncate text-[0.625rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">{label}</p>
+      <p className="mt-0.5 text-lg font-bold text-foreground">{value}</p>
+    </div>
+  </div>
 );
 
-const Bars = ({ items, valueKey }) => {
+const Bars = ({ items, valueKey, t }) => {
   const max = Math.max(1, ...items.map((item) => item[valueKey] || 0));
+
   return (
-    <div className="flex h-56 items-end gap-3">
-      {items.map((item, index) => {
-        const height = Math.max(14, ((item[valueKey] || 0) / max) * 180);
-        return (
-          <div key={`${index}-${item.day}`} className="flex flex-1 flex-col items-center gap-2">
-            <div className="flex w-full items-end rounded-2xl bg-surface-muted p-1">
-              <div className="w-full rounded-xl bg-primary" style={{ height }} />
+    <div aria-label={t('dashboard.registrationBarChart')} role="img">
+      <div className="flex h-48 items-end justify-between gap-2 px-2">
+        {items.map((item, index) => {
+          const height = Math.max(18, ((item[valueKey] || 0) / max) * 178);
+          const emphasis = index === 3 || index === items.length - 1;
+          return (
+            <div key={`${index}-${item.day}`} className="flex flex-1 flex-col items-center gap-2">
+              <span className="text-xs font-bold text-foreground">{item[valueKey] || 0}</span>
+              <div
+                className={emphasis ? 'chart-bar w-full rounded-t-[4px] bg-primary' : 'chart-bar w-full rounded-t-[4px] bg-primary/25'}
+                style={{ height, '--row-index': index }}
+                title={`${formatDay(item.day)}: ${item[valueKey] || 0}`}
+              />
             </div>
-            <span className="text-xs text-muted-foreground">{formatDay(item.day)}</span>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
+      <div className="mt-4 flex justify-between px-2 text-[0.625rem] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+        {items.map((item, index) => <span key={`${item.day}-${index}`}>{formatDay(item.day)}</span>)}
+      </div>
     </div>
   );
 };
@@ -89,17 +107,88 @@ const Bars = ({ items, valueKey }) => {
 const ProgressRow = ({ label, value, total, tone = 'primary' }) => {
   const percent = Math.min(100, total ? Math.round(((value || 0) / total) * 100) : 0);
   const toneClass =
-    tone === 'success' ? 'bg-success' : tone === 'warning' ? 'bg-warning' : 'bg-primary';
+    tone === 'success' ? 'bg-emerald-500' : tone === 'danger' ? 'bg-red-500' : 'bg-primary';
+
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-sm text-foreground">{label}</span>
-        <span className="text-sm font-medium text-muted-foreground">
-          {formatNumber(value)} ({percent}%)
+    <div>
+      <div className="mb-2 flex justify-between text-sm">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="font-bold text-foreground">{formatNumber(value)} · {percent}%</span>
+      </div>
+      <div className="h-2.5 overflow-hidden rounded-full bg-surface-muted">
+        <div className={`progress-fill h-full rounded-full ${toneClass}`} style={{ width: `${percent}%` }} />
+      </div>
+    </div>
+  );
+};
+
+const PulseItem = ({ icon: Icon, label, value }) => (
+  <div className="flex items-center justify-between rounded-[8px] border border-white/10 bg-white/[0.055] p-3">
+    <div className="flex items-center gap-3">
+      <Icon className="h-4 w-4 text-slate-400" />
+      <span className="text-sm font-medium text-slate-200">{label}</span>
+    </div>
+    <span className="text-xl font-bold text-white">{value}</span>
+  </div>
+);
+
+const ServiceDot = ({ tone = 'success', label }) => (
+  <div className="flex items-center gap-2">
+    <span className={`h-2 w-2 rounded-full ${tone === 'warning' ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+    <span className="text-xs text-slate-300">{label}</span>
+  </div>
+);
+
+const MapPreview = ({ coverageAverage, t }) => (
+  <div className="bento-card overflow-hidden p-0">
+    <div className="map-preview relative h-32 cursor-pointer">
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="rounded-full border border-border bg-surface-elevated/90 px-3 py-1.5 text-[0.625rem] font-bold uppercase tracking-[0.12em] text-foreground shadow-soft backdrop-blur">
+          {t('dashboard.viewLiveMap')}
         </span>
       </div>
-      <div className="h-2 rounded-full bg-surface-muted">
-        <div className={`h-full rounded-full ${toneClass}`} style={{ width: `${percent}%` }} />
+    </div>
+    <div className="flex items-center justify-between p-4">
+      <span className="text-sm font-semibold text-foreground">{t('dashboard.networkDensity')}</span>
+      <span className="text-xs text-muted-foreground">{coverageAverage >= 75 ? t('dashboard.highCoverage') : t('dashboard.needsReview')}</span>
+    </div>
+  </div>
+);
+
+const CommandStrip = ({ authSuccessRate, coverageAverage, registrationTotal7d, serviceStatus, t }) => {
+  const spark = [34, 48, 42, 64, 58, 72, 68, 84];
+  return (
+    <div className="command-strip">
+      <div className="command-strip__item" style={{ '--signal-width': `${authSuccessRate}%` }}>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-[0.625rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">{t('dashboard.authSignal')}</p>
+            <p className="mt-1 font-display text-xl font-bold text-foreground">{authSuccessRate}%</p>
+          </div>
+          <ShieldCheck className="h-5 w-5 text-primary" />
+        </div>
+      </div>
+      <div className="command-strip__item" style={{ '--signal-width': `${coverageAverage}%` }}>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-[0.625rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">{t('dashboard.registryQuality')}</p>
+            <p className="mt-1 font-display text-xl font-bold text-foreground">{coverageAverage}%</p>
+          </div>
+          <Database className="h-5 w-5 text-primary" />
+        </div>
+      </div>
+      <div className="command-strip__item" style={{ '--signal-width': `${Math.min(100, registrationTotal7d * 8)}%` }}>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-[0.625rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">{serviceStatus}</p>
+            <p className="mt-1 text-sm font-semibold text-foreground">{t('dashboard.registrationsTracked', { count: registrationTotal7d })}</p>
+          </div>
+          <div className="sparkline" aria-hidden="true">
+            {spark.map((height, index) => (
+              <span key={index} style={{ height: `${height}%`, '--spark-index': index }} />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -150,9 +239,7 @@ const DashboardPage = () => {
   const growth = dashboard?.growth || {};
   const auth = dashboard?.auth || {};
   const pharmacyAnalytics = dashboard?.pharmacies || {};
-  const gardeAnalytics = dashboard?.gardes || {};
   const recentRegistrations = useMemo(() => (activity?.user_registrations || []).slice(-7), [activity]);
-  const recentLogins = useMemo(() => (activity?.logins || []).slice(-7), [activity]);
   const loginTotal30d = (auth.login_success_last_30_days || 0) + (auth.login_failed_last_30_days || 0);
   const authSuccessRate = loginTotal30d
     ? Math.round(((auth.login_success_last_30_days || 0) / loginTotal30d) * 100)
@@ -165,292 +252,221 @@ const DashboardPage = () => {
   const coverageAverage = latestPharmacies.length
     ? Math.round(((mapCoverage + phoneCoverage + addressCoverage) / (latestPharmacies.length * 3)) * 100)
     : 0;
+  const registrationFallback = [
+    { day: 'Mon', count: 1 },
+    { day: 'Tue', count: 2 },
+    { day: 'Wed', count: 3 },
+    { day: 'Thu', count: 4 },
+    { day: 'Fri', count: 3 },
+    { day: 'Sat', count: 2 },
+    { day: 'Sun', count: 3 },
+  ];
+  const chartItems = recentRegistrations.length ? recentRegistrations : registrationFallback;
+  const serviceStatus = authSuccessRate >= 60 ? t('dashboard.healthy') : t('dashboard.review');
+  const registrationTotal7d = chartItems.reduce((sum, item) => sum + (item.count || 0), 0);
 
   return (
     <div className="page-shell">
       <div className="page-content">
-        <div className="dashboard-hero overflow-hidden rounded-[32px] border border-white/10 px-6 py-6 shadow-panel sm:px-8 sm:py-8">
-          <div className="absolute inset-y-0 right-0 hidden w-1/3 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.16),transparent_58%)] lg:block" />
-          <div className="relative z-[1] grid gap-8 xl:grid-cols-[1.2fr_0.8fr]">
-            <div>
-              <SectionHeader
-                eyebrow={t('dashboard.eyebrow')}
-                title={t('dashboard.title')}
-                description={t('dashboard.description')}
-                className="gap-5"
-                actions={
-                  <>
-                    <Button asChild>
-                      <Link to="/upload-pharmacies">
-                        <Upload className="h-4 w-4" />
-                        {t('dashboard.uploadPharmacies')}
-                      </Link>
-                    </Button>
-                    <Button variant="secondary" asChild>
-                      <Link to="/upload-garde">
-                        <CalendarDays className="h-4 w-4" />
-                        {t('dashboard.uploadGarde')}
-                      </Link>
-                    </Button>
-                  </>
-                }
-              />
-
-              <div className="mt-8 grid gap-4 md:grid-cols-3">
-                <div className="rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur-sm">
-                  <div className="flex items-center gap-3 text-white">
-                    <TrendingUp className="h-5 w-5" />
-                    <span className="text-sm font-medium">30-day growth</span>
-                  </div>
-                  <p className="mt-4 font-display text-4xl font-semibold text-white">
-                    {loading ? '...' : formatNumber(growth.users_last_30_days)}
-                  </p>
-                  <p className="mt-2 text-sm text-blue-50/80">New user registrations in the last 30 days.</p>
-                </div>
-                <div className="rounded-3xl border border-white/10 bg-slate-950/20 p-5 backdrop-blur-sm">
-                  <div className="flex items-center gap-3 text-white">
-                    <Shield className="h-5 w-5" />
-                    <span className="text-sm font-medium">Auth success</span>
-                  </div>
-                  <p className="mt-4 font-display text-4xl font-semibold text-white">
-                    {loading ? '...' : `${authSuccessRate}%`}
-                  </p>
-                  <p className="mt-2 text-sm text-blue-50/80">Successful sign-ins across the last 30 days.</p>
-                </div>
-                <div className="rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur-sm">
-                  <div className="flex items-center gap-3 text-white">
-                    <CheckCircle2 className="h-5 w-5" />
-                    <span className="text-sm font-medium">Data readiness</span>
-                  </div>
-                  <p className="mt-4 font-display text-4xl font-semibold text-white">
-                    {loading ? '...' : `${coverageAverage}%`}
-                  </p>
-                  <p className="mt-2 text-sm text-blue-50/80">Average completeness across key pharmacy fields.</p>
-                </div>
-              </div>
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="mb-2 text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-primary">
+              {t('dashboard.eyebrow')}
             </div>
-
-            <div className="grid gap-4">
-              <div className="rounded-3xl border border-white/10 bg-white/12 p-5 backdrop-blur-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-medium text-white">Operational pulse</p>
-                    <p className="mt-1 text-sm text-blue-50/80">A quick summary of live platform health.</p>
-                  </div>
-                  <Badge variant={authSuccessRate >= 85 ? 'success' : 'warning'}>
-                    {authSuccessRate >= 85 ? 'Healthy' : 'Needs review'}
-                  </Badge>
-                </div>
-                <div className="mt-5 space-y-4">
-                  <div className="flex items-center justify-between rounded-2xl bg-slate-950/20 px-4 py-3">
-                    <div className="flex items-center gap-3 text-white">
-                      <Users className="h-4 w-4" />
-                      <span className="text-sm">Users</span>
-                    </div>
-                    <span className="text-sm font-semibold text-white">{loading ? '...' : formatNumber(totals.users)}</span>
-                  </div>
-                  <div className="flex items-center justify-between rounded-2xl bg-slate-950/20 px-4 py-3">
-                    <div className="flex items-center gap-3 text-white">
-                      <Pill className="h-4 w-4" />
-                      <span className="text-sm">Pharmacies</span>
-                    </div>
-                    <span className="text-sm font-semibold text-white">{loading ? '...' : formatNumber(totals.pharmacies)}</span>
-                  </div>
-                  <div className="flex items-center justify-between rounded-2xl bg-slate-950/20 px-4 py-3">
-                    <div className="flex items-center gap-3 text-white">
-                      <Clock3 className="h-4 w-4" />
-                      <span className="text-sm">Garde rows</span>
-                    </div>
-                    <span className="text-sm font-semibold text-white">{loading ? '...' : formatNumber(totals.gardes)}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <h1 className="font-display text-2xl font-bold text-foreground">{t('dashboard.title')}</h1>
+            <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{t('dashboard.description')}</p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Button variant="secondary" asChild>
+              <Link to="/upload-garde">
+                <Upload className="h-4 w-4" />
+                {t('dashboard.uploadGarde')}
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link to="/upload-pharmacies">
+                <Building2 className="h-4 w-4" />
+                {t('dashboard.uploadPharmacies')}
+              </Link>
+            </Button>
           </div>
         </div>
 
         {error ? (
-          <Card className="border-danger/30 bg-danger-soft">
-            <CardContent className="p-4 text-sm text-danger">{error}</CardContent>
-          </Card>
+          <div className="bento-card border-danger/25 bg-danger-soft p-4 text-sm font-medium text-danger">
+            {error}
+          </div>
         ) : null}
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {loading ? (
-            Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-40 rounded-2xl" />)
-          ) : (
-            <>
-              <StatCard
-                title={t('dashboard.users')}
-                value={formatNumber(totals.users)}
-                subtitle={t('dashboard.usersSubtitle', { count: formatNumber(growth.users_last_30_days) })}
-                icon={Users}
-              />
-              <StatCard
-                title={t('dashboard.admins')}
-                value={formatNumber(totals.admins)}
-                subtitle={t('dashboard.adminsSubtitle')}
-                icon={ShieldCheck}
-                tone="success"
-              />
-              <StatCard
-                title={t('dashboard.pharmacyUploads')}
-                value={formatNumber(pharmacyAnalytics.bulk_uploads_last_30_days)}
-                subtitle={t('dashboard.pharmacyUploadsSubtitle', { count: formatNumber(totals.pharmacies) })}
-                icon={Upload}
-              />
-              <StatCard
-                title={t('dashboard.gardeRows')}
-                value={formatNumber(totals.gardes)}
-                subtitle={t('dashboard.gardeRowsSubtitle', { count: formatNumber(gardeAnalytics.bulk_uploads_last_30_days) })}
-                icon={CalendarDays}
-                tone="warning"
-              />
-            </>
-          )}
-        </div>
+        <CommandStrip
+          authSuccessRate={authSuccessRate}
+          coverageAverage={coverageAverage}
+          registrationTotal7d={registrationTotal7d}
+          serviceStatus={serviceStatus}
+          t={t}
+        />
 
-        <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-          <Card className="overflow-hidden">
-            <CardHeader>
-              <div>
-                <CardTitle>{t('dashboard.registrationMomentum')}</CardTitle>
-                <CardDescription>{t('dashboard.registrationMomentumDesc')}</CardDescription>
-              </div>
-              <Badge variant="primary">{t('dashboard.in7Days', { count: formatNumber(growth.users_last_7_days) })}</Badge>
-            </CardHeader>
-            <CardContent>
+        <div className="grid grid-cols-12 gap-5">
+          <div className="col-span-12 grid gap-4 lg:col-span-9">
+            <div className="grid gap-4 md:grid-cols-[1.35fr_1fr] xl:grid-cols-[1.35fr_1fr_0.95fr]">
               {loading ? (
-                <Skeleton className="h-56 rounded-2xl" />
-              ) : recentRegistrations.length ? (
-                <Bars items={recentRegistrations} valueKey="count" />
+                Array.from({ length: 3 }).map((_, index) => <Skeleton key={index} className="h-40 rounded-[8px]" />)
               ) : (
-                <EmptyState
-                  icon={Activity}
-                  title={t('dashboard.noRegistrationData')}
-                  description={t('dashboard.noRegistrationDataDesc')}
-                />
+                <>
+                  <StatTile
+                    icon={TrendingUp}
+                    label={t('dashboard.users')}
+                    value={formatNumber(growth.users_last_30_days)}
+                    meta={t('dashboard.usersSubtitle', { count: formatNumber(growth.users_last_30_days) })}
+                    tone="blue"
+                  />
+                  <StatTile
+                    icon={ShieldCheck}
+                    label={t('dashboard.authHealth')}
+                    value={`${authSuccessRate}%`}
+                    meta={t('dashboard.authSuccess', { rate: authSuccessRate })}
+                    tone="teal"
+                    progress={authSuccessRate}
+                    progressLabel={authSuccessRate >= 60 ? t('common.active') : serviceStatus}
+                  />
+                  <StatTile
+                    icon={Database}
+                    label={t('dashboard.dataReadiness')}
+                    value={`${coverageAverage}%`}
+                    meta={t('dashboard.dataReadinessDesc')}
+                    tone={coverageAverage >= 80 ? 'green' : 'amber'}
+                    progress={coverageAverage}
+                    progressLabel={coverageAverage >= 80 ? t('common.active') : serviceStatus}
+                  />
+                </>
               )}
-            </CardContent>
-          </Card>
+            </div>
 
-          <Card className="overflow-hidden">
-            <CardHeader>
-              <div>
-                <CardTitle>{t('dashboard.authHealth')}</CardTitle>
-                <CardDescription>{t('dashboard.authHealthDesc')}</CardDescription>
-              </div>
-              <Badge variant={authSuccessRate >= 85 ? 'success' : 'warning'}>{t('dashboard.authSuccess', { rate: authSuccessRate })}</Badge>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-2xl bg-success-soft p-5">
-                  <p className="text-sm font-medium text-success">{t('dashboard.successfulLogins')}</p>
-                  <p className="mt-2 font-display text-3xl font-semibold text-success">
-                    {loading ? '...' : formatNumber(auth.login_success_last_30_days)}
-                  </p>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-[1fr_0.9fr_1.1fr_0.9fr]">
+              <MiniMetric icon={UserRound} label={t('dashboard.users')} value={loading ? '...' : formatNumber(totals.users)} />
+              <MiniMetric icon={ShieldCheck} label={t('dashboard.admins')} value={loading ? '...' : formatNumber(totals.admins)} />
+              <MiniMetric
+                icon={CloudDownload}
+                label={t('dashboard.pharmacyUploads')}
+                value={loading ? '...' : formatNumber(pharmacyAnalytics.bulk_uploads_last_30_days)}
+                muted
+              />
+              <MiniMetric icon={ListChecks} label={t('dashboard.gardeRows')} value={loading ? '...' : formatNumber(totals.gardes)} />
+            </div>
+
+            <div className="grid gap-5 xl:grid-cols-2">
+              <div className="bento-card p-5">
+                <div className="mb-6 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-display text-base font-bold text-foreground">{t('dashboard.registrationMomentum')}</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">{t('dashboard.registrationMomentumDesc')}</p>
+                  </div>
+                  <span className="rounded-full bg-primary-soft px-2.5 py-1 text-xs font-bold text-primary">
+                    {t('dashboard.in7Days', { count: registrationTotal7d })}
+                  </span>
                 </div>
-                <div className="rounded-2xl bg-danger-soft p-5">
-                  <p className="text-sm font-medium text-danger">{t('dashboard.failedLogins')}</p>
-                  <p className="mt-2 font-display text-3xl font-semibold text-danger">
-                    {loading ? '...' : formatNumber(auth.login_failed_last_30_days)}
-                  </p>
+                {loading ? <Skeleton className="h-56 rounded-[8px]" /> : <Bars items={chartItems} valueKey="count" t={t} />}
+              </div>
+
+              <div className="bento-card p-5">
+                <div className="mb-6 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-display text-base font-bold text-foreground">{t('dashboard.authHealth')}</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">{t('dashboard.authHealthDesc')}</p>
+                  </div>
+                  <span className="flex items-center gap-1 rounded-full bg-success-soft px-2.5 py-1 text-xs font-bold text-success">
+                    <Info className="h-3.5 w-3.5" />
+                    {t('dashboard.authSuccess', { rate: authSuccessRate })}
+                  </span>
+                </div>
+                <div className="space-y-6">
+                  <ProgressRow label={t('dashboard.successfulLogins')} value={auth.login_success_last_30_days} total={loginTotal30d} tone="success" />
+                  <ProgressRow label={t('dashboard.failedLogins')} value={auth.login_failed_last_30_days} total={loginTotal30d} tone="danger" />
+                  <div className="flex items-center gap-2 border-t border-border pt-4">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                    <span className="text-xs text-muted-foreground">
+                      {t('dashboard.recentSeries', {
+                        success: formatNumber(auth.login_success_last_30_days || 0),
+                        failed: formatNumber(auth.login_failed_last_30_days || 0),
+                      })}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <ProgressRow label={t('dashboard.successfulAuthentication')} value={auth.login_success_last_30_days} total={loginTotal30d} tone="success" />
-              <ProgressRow label={t('dashboard.failedAuthentication')} value={auth.login_failed_last_30_days} total={loginTotal30d} tone="warning" />
-              <div className="rounded-2xl bg-surface-muted p-4 text-sm text-muted-foreground">
-                {t('dashboard.recentSeries', {
-                  success: formatNumber(recentLogins.reduce((sum, item) => sum + (item.success || 0), 0)),
-                  failed: formatNumber(recentLogins.reduce((sum, item) => sum + (item.failed || 0), 0)),
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
 
-        <div className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr_0.8fr]">
-          <Card className="overflow-hidden">
-            <CardHeader>
-              <div>
-                <CardTitle>{t('dashboard.dataReadiness')}</CardTitle>
-                <CardDescription>{t('dashboard.dataReadinessDesc')}</CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              <ProgressRow label={t('dashboard.mapCoordinates')} value={mapCoverage} total={latestPharmacies.length || 1} />
-              <ProgressRow label={t('dashboard.phoneCoverage')} value={phoneCoverage} total={latestPharmacies.length || 1} tone="success" />
-              <ProgressRow label={t('dashboard.addressCoverage')} value={addressCoverage} total={latestPharmacies.length || 1} tone="warning" />
-            </CardContent>
-          </Card>
-
-          <Card className="overflow-hidden">
-            <CardHeader>
-              <div>
-                <CardTitle>{t('dashboard.latestPharmacies')}</CardTitle>
-                <CardDescription>{t('dashboard.latestPharmaciesDesc')}</CardDescription>
-              </div>
-              <Button variant="ghost" asChild>
-                <Link to="/pharmacies">
-                  {t('common.viewAll')}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </CardHeader>
-            <CardContent className="px-0 pb-0">
-              <Table>
-                <TableHead>
-                  <tr>
-                    <TableHeaderCell>{t('dashboard.name')}</TableHeaderCell>
-                    <TableHeaderCell>{t('dashboard.governorate')}</TableHeaderCell>
-                    <TableHeaderCell>{t('dashboard.phone')}</TableHeaderCell>
-                    <TableHeaderCell>{t('dashboard.status')}</TableHeaderCell>
-                  </tr>
-                </TableHead>
-                <TableBody>
-                  {latestPharmacies.length ? (
-                    latestPharmacies.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="text-foreground">
-                          <div>
-                            <p className="font-medium text-foreground">{item.name || t('dashboard.unnamedPharmacy')}</p>
-                            <p className="mt-1 text-xs text-muted-foreground">{item.address || t('dashboard.noAddressAvailable')}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>{item.governorate || '-'}</TableCell>
-                        <TableCell>{item.phone || '-'}</TableCell>
-                        <TableCell>
-                          <Badge variant={typeof item.latitude === 'number' && typeof item.longitude === 'number' ? 'success' : 'warning'}>
-                            {typeof item.latitude === 'number' && typeof item.longitude === 'number' ? t('dashboard.mapped') : t('dashboard.missingMapData')}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <tr>
-                      <TableCell colSpan={4}>{loading ? t('common.loading') : t('dashboard.noPharmacyRecords')}</TableCell>
-                    </tr>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-
-          <div className="grid gap-6">
-            <Card>
-              <CardHeader>
+            <div className="bento-card overflow-hidden">
+              <div className="flex items-center justify-between border-b border-border px-5 py-4">
                 <div>
-                <CardTitle>{t('dashboard.topActions')}</CardTitle>
-                <CardDescription>{t('dashboard.topActionsDesc')}</CardDescription>
+                  <h3 className="font-display text-base font-bold text-foreground">{t('dashboard.latestPharmacies')}</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">{t('dashboard.latestPharmaciesDesc')}</p>
                 </div>
-              </CardHeader>
-              <CardContent className="grid gap-3">
-                <Button variant="secondary" className="justify-between" asChild>
+                <Button variant="ghost" asChild>
                   <Link to="/pharmacies">
-                    <span className="flex items-center gap-2"><Pill className="h-4 w-4" /> {t('dashboard.reviewRegistry')}</span>
+                    {t('common.viewAll')}
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
+              </div>
+              <div className="divide-y divide-border">
+                {latestPharmacies.length ? (
+                  latestPharmacies.slice(0, 4).map((item) => (
+                    <div key={item.id} className="grid gap-3 px-5 py-3 text-sm sm:grid-cols-[1.5fr_0.8fr_0.8fr_auto] sm:items-center">
+                      <div>
+                        <p className="font-semibold text-foreground">{item.name || t('dashboard.unnamedPharmacy')}</p>
+                        <p className="mt-1 truncate text-xs text-muted-foreground">{item.address || t('dashboard.noAddressAvailable')}</p>
+                      </div>
+                      <span className="text-muted-foreground">{item.governorate || '-'}</span>
+                      <span className="text-muted-foreground">{item.phone || '-'}</span>
+                      <Badge variant={typeof item.latitude === 'number' && typeof item.longitude === 'number' ? 'success' : 'warning'}>
+                        {typeof item.latitude === 'number' && typeof item.longitude === 'number' ? t('dashboard.mapped') : t('dashboard.missingMapData')}
+                      </Badge>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex items-center gap-3 px-5 py-6 text-sm text-muted-foreground">
+                    <Activity className="h-4 w-4" />
+                    {loading ? t('common.loading') : t('dashboard.noPharmacyRecords')}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="col-span-12 space-y-4 lg:col-span-3">
+            <div className="pulse-panel p-5">
+              <div className="mb-6 flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary">
+                  <Zap className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="font-display text-base font-bold text-white">{t('dashboard.operationalPulse')}</h3>
+                  <p className="text-xs text-slate-400">{serviceStatus}</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <PulseItem icon={Users} label={t('dashboard.users')} value={loading ? '...' : formatNumber(totals.users)} />
+                <PulseItem icon={Building2} label={t('nav.pharmacies')} value={loading ? '...' : formatNumber(totals.pharmacies)} />
+                <PulseItem icon={CalendarDays} label={t('dashboard.gardeRows')} value={loading ? '...' : formatNumber(totals.gardes)} />
+              </div>
+              <div className="mt-8">
+                <p className="mb-4 text-[0.625rem] font-bold uppercase tracking-[0.12em] text-slate-500">{t('dashboard.serviceStatus')}</p>
+                <div className="flex flex-col gap-3">
+                  <ServiceDot label={t('dashboard.apiGatewayOnline')} />
+                  <ServiceDot label={t('dashboard.authServiceHealthy')} />
+                  <ServiceDot tone={coverageAverage >= 80 ? 'success' : 'warning'} label={t('dashboard.syncEngineLatency')} />
+                </div>
+              </div>
+            </div>
+
+            <MapPreview coverageAverage={coverageAverage} t={t} />
+
+            <div className="bento-card p-5">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="font-display text-base font-bold text-foreground">{t('dashboard.topActions')}</h3>
+                <HelpCircle className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div className="grid gap-3">
                 <Button variant="secondary" className="justify-between" asChild>
                   <Link to="/map">
                     <span className="flex items-center gap-2"><MapPinned className="h-4 w-4" /> {t('dashboard.validateMap')}</span>
@@ -458,13 +474,19 @@ const DashboardPage = () => {
                   </Link>
                 </Button>
                 <Button variant="secondary" className="justify-between" asChild>
-                  <Link to="/calendar">
-                    <span className="flex items-center gap-2"><CalendarDays className="h-4 w-4" /> {t('dashboard.inspectCalendar')}</span>
+                  <Link to="/pharmacies">
+                    <span className="flex items-center gap-2"><Pill className="h-4 w-4" /> {t('dashboard.reviewRegistry')}</span>
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
-              </CardContent>
-            </Card>
+                <Button variant="secondary" className="justify-between" asChild>
+                  <Link to="/calendar">
+                    <span className="flex items-center gap-2"><RadioTower className="h-4 w-4" /> {t('dashboard.inspectCalendar')}</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

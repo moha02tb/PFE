@@ -1,53 +1,76 @@
 import React from 'react';
-import { Ambulance, ShieldAlert, Siren } from 'lucide-react';
-import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle, SectionHeader } from '../components/ui';
+import { Ambulance, BellRing, PhoneCall, RadioTower, ShieldAlert, Siren, Users } from 'lucide-react';
+import { Badge, Button, SectionHeader } from '../components/ui';
+import { useLanguage } from '../context/LanguageContext';
 
-const EmergencyPage = () => (
-  <div className="page-shell">
-    <div className="page-content">
-      <SectionHeader
-        eyebrow="Emergency"
-        title="Emergency coordination"
-        description="A cleaner surface for incident response, critical communications, and escalation ownership."
-      />
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>Response status</CardTitle>
-            <CardDescription>Current readiness posture.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-3xl bg-danger-soft p-6">
-              <ShieldAlert className="h-6 w-6 text-danger" />
-              <p className="mt-4 font-display text-xl font-semibold text-foreground">Standby</p>
-              <p className="mt-2 text-sm text-muted-foreground">No active incidents detected in the current admin interface.</p>
+const EmergencyPage = () => {
+  const { t } = useLanguage();
+  const responseStats = [
+    [t('emergency.responseLead'), t('emergency.operationsDesk'), Users],
+    [t('emergency.hotline'), '+216 71 000 000', PhoneCall],
+    [t('emergency.broadcast'), t('emergency.inAppEmail'), RadioTower],
+  ];
+  const channels = [
+    [t('emergency.immediateAlerts'), t('emergency.ready'), BellRing, 'success'],
+    [t('emergency.regionalResponse'), t('emergency.standby'), Ambulance, 'warning'],
+    [t('emergency.sirenProtocol'), t('emergency.manual'), Siren, 'neutral'],
+  ];
+
+  return (
+    <div className="page-shell">
+      <div className="page-content">
+        <SectionHeader
+          eyebrow={t('emergency.eyebrow')}
+          title={t('emergency.title')}
+          description={t('emergency.description')}
+          actions={
+            <Button>
+              <Siren className="h-4 w-4" />
+              {t('emergency.createAlert')}
+            </Button>
+          }
+        />
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="pulse-panel p-6 lg:col-span-2">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <Badge variant="danger" className="border-red-300/20 bg-red-400/10 text-red-100">{t('emergency.standby')}</Badge>
+                <h2 className="mt-5 font-display text-3xl font-bold text-white">{t('emergency.noIncidents')}</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+                  {t('emergency.noIncidentsDesc')}
+                </p>
+              </div>
+              <div className="hidden h-14 w-14 items-center justify-center rounded-[12px] bg-red-500/15 text-red-200 lg:flex">
+                <ShieldAlert className="h-7 w-7" />
+              </div>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Escalation chain</CardTitle>
-            <CardDescription>Visible stakeholders for urgent events.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="rounded-2xl bg-surface-muted p-4 text-sm text-foreground">Operations lead</div>
-            <div className="rounded-2xl bg-surface-muted p-4 text-sm text-foreground">Regional support</div>
-            <div className="rounded-2xl bg-surface-muted p-4 text-sm text-foreground">Emergency hotline owner</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Critical channels</CardTitle>
-            <CardDescription>Primary alert surfaces.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Badge variant="danger"><Siren className="h-3.5 w-3.5" /> Immediate alerts</Badge>
-            <Badge variant="warning"><Ambulance className="h-3.5 w-3.5" /> Coordination updates</Badge>
-          </CardContent>
-        </Card>
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              {responseStats.map(([label, value, Icon]) => (
+                <div key={label} className="rounded-[8px] border border-white/10 bg-white/[0.055] p-4">
+                  <Icon className="h-5 w-5 text-blue-300" />
+                  <p className="mt-3 text-xs font-bold uppercase tracking-[0.08em] text-slate-500">{label}</p>
+                  <p className="mt-1 text-sm font-bold text-white">{value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bento-card p-6">
+            <h3 className="font-display text-base font-bold text-foreground">{t('emergency.criticalChannels')}</h3>
+            <div className="mt-5 space-y-3">
+              {channels.map(([label, status, Icon, variant]) => (
+                <div key={label} className="flex items-center justify-between rounded-[8px] bg-surface-muted p-4">
+                  <span className="flex items-center gap-2 text-sm font-semibold text-foreground"><Icon className="h-4 w-4 text-primary" /> {label}</span>
+                  <Badge variant={variant}>{status}</Badge>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default EmergencyPage;

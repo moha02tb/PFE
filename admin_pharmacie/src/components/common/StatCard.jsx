@@ -15,7 +15,7 @@ const StatCard = ({ icon, label, value, change, changeColor }) => {
       : 'text-slate-600 bg-slate-50 border-slate-200';
 
   return (
-    <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
+    <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-[var(--duration-medium)] ease-out hover:-translate-y-0.5">
       <CardHeader className="flex flex-row items-start justify-between pb-4 space-y-0 p-0">
         <div className="space-y-2 flex-1">
           <CardTitle className="text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400 font-semibold">
@@ -47,7 +47,7 @@ const StatCard = ({ icon, label, value, change, changeColor }) => {
           <div
             className={`h-full rounded-full ${
               isPositive ? 'bg-green-500' : isNegative ? 'bg-red-500' : 'bg-blue-500'
-            } transition-all duration-500`}
+            } transition-all duration-[var(--duration-slow)] ease-out`}
             style={{ width: isPositive ? '75%' : isNegative ? '45%' : '60%' }}
           />
         </div>

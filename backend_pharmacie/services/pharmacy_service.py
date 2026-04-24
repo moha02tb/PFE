@@ -420,3 +420,125 @@ class PharmacyService:
 
         except Exception as e:
             return [], f"Error searching nearby pharmacies: {str(e)}"
+
+    def get_pharmacy_by_id(self, pharmacy_id: int) -> Optional[dict]:
+        """Get a single pharmacy by ID.
+        
+        Returns: pharmacy dict or None if not found
+        """
+        pharmacy = self.db.query(models.Pharmacie).filter(models.Pharmacie.id == pharmacy_id).first()
+        
+        if not pharmacy:
+            return None
+        
+        return {
+            "id": pharmacy.id,
+            "osm_type": pharmacy.osm_type,
+            "osm_id": pharmacy.osm_id,
+            "name": pharmacy.name,
+            "address": pharmacy.address,
+            "phone": pharmacy.phone,
+            "governorate": pharmacy.governorate,
+            "latitude": pharmacy.latitude,
+            "longitude": pharmacy.longitude,
+            "created_by": pharmacy.created_by,
+            "created_at": pharmacy.created_at.isoformat() if pharmacy.created_at else None,
+            "updated_at": pharmacy.updated_at.isoformat() if pharmacy.updated_at else None,
+        }
+
+    def create_pharmacy(self, pharmacy_data: dict, admin_id: int) -> Tuple[Optional[dict], Optional[str]]:
+        """Create a new pharmacy.
+        
+        Returns: (pharmacy_dict, error_message)
+        """
+        try:
+            # Check for duplicate osm_id if provided
+            if pharmacy_data.get("osm_id"):
+                existing = (
+                    self.db.query(models.Pharmacie)
+                    .filter(models.Pharmacie.osm_id == pharmacy_data["osm_id"])
+                    .first()
+                )
+                if existing:
+                    return None, f"Pharmacy with osm_id {pharmacy_data['osm_id']} already exists"
+            
+            # Create new pharmacy
+            pharmacy = models.Pharmacie(
+                osm_type=pharmacy_data.get("osm_type", "node"),
+                osm_id=pharmacy_data.get("osm_id"),
+                name=pharmacy_data["name"],
+                address=pharmacy_data.get("address"),
+                phone=pharmacy_data.get("phone"),
+                governorate=pharmacy_data.get("governorate"),
+                latitude=pharmacy_data["latitude"],
+                longitude=pharmacy_data["longitude"],
+                created_by=admin_id,
+            )
+            
+            self.db.add(pharmacy)
+            self.db.commit()
+            self.db.refresh(pharmacy)
+            
+            return self.get_pharmacy_by_id(pharmacy.id), None
+        
+        except Exception as e:
+            self.db.rollback()
+            return None, f"Failed to create pharmacy: {str(e)}"
+
+    def update_pharmacy(self, pharmacy_id: int, updates: dict, admin_id: int) -> Tuple[Optional[dict], Optional[str]]:
+        """Update a pharmacy with the provided fields.
+        
+        Returns: (pharmacy_dict, error_message)
+        """
+        try:
+            pharmacy = self.db.query(models.Pharmacie).filter(models.Pharmacie.id == pharmacy_id).first()
+            
+            if not pharmacy:
+                return None, "Pharmacy not found"
+            
+            # Check for duplicate osm_id if being updated
+            if "osm_id" in updates and updates["osm_id"] != pharmacy.osm_id:
+                existing = (
+                    self.db.query(models.Pharmacie)
+                    .filter(
+                        models.Pharmacie.osm_id == updates["osm_id"],
+                        models.Pharmacie.id != pharmacy_id
+                    )
+                    .first()
+                )
+                if existing:
+                    return None, f"Another pharmacy with osm_id {updates['osm_id']} already exists"
+            
+            # Update only provided fields
+            for key, value in updates.items():
+                if value is not None and hasattr(pharmacy, key):
+                    setattr(pharmacy, key, value)
+            
+            self.db.commit()
+            self.db.refresh(pharmacy)
+            
+            return self.get_pharmacy_by_id(pharmacy.id), None
+        
+        except Exception as e:
+            self.db.rollback()
+            return None, f"Failed to update pharmacy: {str(e)}"
+
+    def delete_pharmacy(self, pharmacy_id: int) -> Optional[str]:
+        """Delete a pharmacy by ID.
+        
+        Returns: error_message (None if successful)
+        """
+        try:
+            pharmacy = self.db.query(models.Pharmacie).filter(models.Pharmacie.id == pharmacy_id).first()
+            
+            if not pharmacy:
+                return "Pharmacy not found"
+            
+            self.db.delete(pharmacy)
+            self.db.commit()
+            
+            return None
+        
+        except Exception as e:
+            self.db.rollback()
+            return f"Failed to delete pharmacy: {str(e)}"

@@ -9,6 +9,7 @@ import SidebarNew from './components/layout/SidebarNew';
 import TopBarNew from './components/layout/TopBarNew';
 import DashboardPage from './pages/DashboardPage';
 import PharmaciesPage from './pages/PharmaciesPage';
+import ManagementPage from './pages/ManagementPage';
 import CalendarPage from './pages/CalendarPage';
 import UploadPharmaciesPage from './pages/UploadPharmaciesPage';
 import UploadGardePage from './pages/UploadGardePage';
@@ -18,6 +19,7 @@ import EmergencyPage from './pages/EmergencyPage';
 import NotificationsPage from './pages/NotificationsPage';
 import LanguagesPage from './pages/LanguagesPage';
 import SettingsPage from './pages/SettingsPage';
+import ProfilePage from './pages/ProfilePage';
 
 // Main layout component with sidebar and header
 const DashboardLayout = () => {
@@ -31,7 +33,7 @@ const DashboardLayout = () => {
   }, [theme]);
 
   return (
-    <div className="app-shell admin-shell flex h-screen w-full overflow-hidden">
+    <div className="app-shell admin-shell flex min-h-[100dvh] w-full overflow-hidden">
       <div className="admin-shell__backdrop" aria-hidden="true" />
       <SidebarNew open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="relative z-[1] flex min-w-0 flex-1 flex-col overflow-hidden">
@@ -79,6 +81,7 @@ const App = () => {
           >
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/pharmacies" element={<PharmaciesPage />} />
+            <Route path="/management" element={<ManagementPage />} />
             <Route path="/upload-pharmacies" element={<UploadPharmaciesPage />} />
             <Route path="/upload-garde" element={<UploadGardePage />} />
             <Route path="/upload-medicines" element={<UploadMedicinesPage />} />
@@ -88,6 +91,7 @@ const App = () => {
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/languages" element={<LanguagesPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
           </Route>
           
           {/* Redirect root to dashboard */}

@@ -2,16 +2,16 @@ import React from 'react';
 import Button from './Button';
 
 const EmptyState = ({ icon: Icon, title, description, actionLabel, onAction }) => (
-  <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-surface p-10 text-center">
+  <div className="empty-state flex flex-col items-center justify-center rounded-[8px] border border-dashed border-border bg-surface/80 p-8 text-center">
     {Icon ? (
-      <div className="mb-4 rounded-2xl bg-surface-muted p-4 text-muted-foreground">
+      <div className="empty-state__icon mb-3 rounded-[8px] border border-border bg-surface-muted p-3 text-primary">
         <Icon className="h-6 w-6" />
       </div>
     ) : null}
-    <h3 className="font-display text-lg font-semibold text-foreground">{title}</h3>
-    <p className="mt-2 max-w-md text-sm text-muted-foreground">{description}</p>
+    <h3 className="font-display text-sm font-semibold text-foreground">{title}</h3>
+    <p className="mt-1 max-w-md text-xs leading-5 text-muted-foreground">{description}</p>
     {actionLabel && onAction ? (
-      <Button className="mt-5" onClick={onAction}>
+      <Button className="mt-3" onClick={onAction}>
         {actionLabel}
       </Button>
     ) : null}

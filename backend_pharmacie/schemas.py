@@ -338,6 +338,30 @@ class PharmacieCreate(BaseModel):
         }
 
 
+class PharmacieUpdate(BaseModel):
+    """Pharmacy update input (all fields optional)"""
+
+    name: Optional[str] = Field(None, min_length=1, description="Pharmacy name")
+    address: Optional[str] = Field(None, description="Street address")
+    phone: Optional[str] = Field(None, description="Phone number")
+    governorate: Optional[str] = Field(None, description="Governorate/Region")
+    latitude: Optional[float] = Field(None, ge=-90, le=90, description="Latitude coordinate")
+    longitude: Optional[float] = Field(None, ge=-180, le=180, description="Longitude coordinate")
+    osm_type: Optional[str] = Field(None, description="OSM object type")
+    osm_id: Optional[int] = Field(None, description="OpenStreetMap ID")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "name": "Updated Pharmacy Name",
+                "phone": "+21674266389",
+                "governorate": "Tunis",
+                "latitude": 36.8334563,
+                "longitude": 10.1809179,
+            }
+        }
+
+
 class PharmacieResponse(BaseModel):
     """Pharmacy response (full data)"""
 
@@ -432,3 +456,73 @@ class MedicineUploadResponse(BaseModel):
     failed: int
     errors: List[MedicineUploadIssueDetail] = Field(default_factory=list)
     warnings: List[MedicineUploadIssueDetail] = Field(default_factory=list)
+
+
+# ---- GARDE SCHEDULE SCHEMAS ----
+
+
+class GardeScheduleCreate(BaseModel):
+    """Garde schedule creation input"""
+
+    date: str = Field(..., description="Date in YYYY-MM-DD format")
+    pharmacy_name: str = Field(..., min_length=1, description="Pharmacy name")
+    start_time: str = Field(..., description="Start time in HH:MM format")
+    end_time: str = Field(..., description="End time in HH:MM format")
+    city: Optional[str] = Field(None, description="City")
+    governorate: Optional[str] = Field(None, description="Governorate/Region")
+    shift_type: Optional[str] = Field(None, description="Shift type")
+    notes: Optional[str] = Field(None, description="Additional notes")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "date": "2025-01-15",
+                "pharmacy_name": "الصيدلية المركزية",
+                "start_time": "08:00",
+                "end_time": "20:00",
+                "city": "Tunis",
+                "governorate": "Tunis",
+                "shift_type": "day_shift",
+                "notes": "Regular shift",
+            }
+        }
+
+
+class GardeScheduleUpdate(BaseModel):
+    """Garde schedule update input (all fields optional)"""
+
+    date: Optional[str] = Field(None, description="Date in YYYY-MM-DD format")
+    pharmacy_name: Optional[str] = Field(None, min_length=1, description="Pharmacy name")
+    start_time: Optional[str] = Field(None, description="Start time in HH:MM format")
+    end_time: Optional[str] = Field(None, description="End time in HH:MM format")
+    city: Optional[str] = Field(None, description="City")
+    governorate: Optional[str] = Field(None, description="Governorate/Region")
+    shift_type: Optional[str] = Field(None, description="Shift type")
+    notes: Optional[str] = Field(None, description="Additional notes")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "pharmacy_name": "Updated Pharmacy Name",
+                "shift_type": "night_shift",
+            }
+        }
+
+
+class GardeScheduleResponse(BaseModel):
+    """Garde schedule response (full data)"""
+
+    id: int
+    date: str
+    pharmacy_name: str
+    start_time: str
+    end_time: str
+    city: Optional[str]
+    governorate: Optional[str]
+    shift_type: Optional[str]
+    notes: Optional[str]
+    created_by: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

@@ -1,0 +1,10 @@
+.drawer-backdrop,
+.drawer-content,
+.drawer-left,
+.drawer-right,
+.drawer-exit,
+.drawer-exit-left,
+.drawer-exit-right,
+.drawer-backdrop-exit {
+  animation: none;
+}

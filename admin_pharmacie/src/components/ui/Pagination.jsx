@@ -8,7 +8,7 @@ const Pagination = ({ page, totalPages, onPrevious, onNext }) => (
       <ChevronLeft className="h-4 w-4" />
       Previous
     </Button>
-    <div className="rounded-xl border border-border bg-surface px-3 py-2 text-sm text-muted-foreground">
+    <div className="rounded-[6px] border border-border bg-surface px-3 py-1.5 text-xs text-muted-foreground">
       Page <span className="font-semibold text-foreground">{page}</span> of{' '}
       <span className="font-semibold text-foreground">{totalPages}</span>
     </div>

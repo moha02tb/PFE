@@ -16,6 +16,7 @@ from services import CacheService, MedicineService, PharmacyService
 from services.admin_service import AdminService
 from services.garde_service import GardeService
 from sqlalchemy.orm import Session
+from schemas import PharmacieCreate, PharmacieUpdate, GardeScheduleCreate, GardeScheduleUpdate
 
 router = APIRouter(prefix="/api/admin", tags=["Administration"])
 
@@ -214,3 +215,254 @@ async def get_medicine_count(
 ):
     medicine_service = MedicineService(db)
     return {"total": medicine_service.get_medicine_count()}
+
+
+# ---- PHARMACY CRUD ENDPOINTS ----
+
+
+@router.post("/pharmacies", tags=["Admin - Pharmacy Management"])
+async def create_pharmacy(
+    pharmacy: PharmacieCreate,
+    current_admin: Administrateur = Depends(admin_required),
+    db: Session = Depends(get_db),
+):
+    """Create a new pharmacy record.
+    
+    **Description:**
+    Allows admin to manually create a pharmacy entry without file upload.
+    Validates pharmacy data and prevents duplicate osm_id entries.
+    
+    **Parameters:**
+    - name: Required, pharmacy name
+    - latitude/longitude: Required, coordinates between -90/90 and -180/180
+    - address, phone, governorate: Optional fields
+    - osm_type, osm_id: Optional OpenStreetMap references
+    
+    **Returns:** Created pharmacy with ID and timestamps
+    
+    **Error Codes:**
+    - `400`: Validation error or duplicate osm_id
+    - `401`: Not authenticated or not admin
+    - `500`: Database error
+    """
+    pharmacy_service = PharmacyService(db)
+    result, error = pharmacy_service.create_pharmacy(pharmacy.model_dump(), current_admin.id)
+    
+    if error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+    
+    cache = CacheService()
+    cache.invalidate_prefix("pharmacies:")
+    
+    return result
+
+
+@router.get("/pharmacies/{pharmacy_id}", tags=["Admin - Pharmacy Management"])
+async def get_pharmacy(
+    pharmacy_id: int,
+    current_admin: Administrateur = Depends(admin_required),
+    db: Session = Depends(get_db),
+):
+    """Get a pharmacy by ID.
+    
+    **Returns:** Pharmacy details with all fields and timestamps
+    """
+    pharmacy_service = PharmacyService(db)
+    pharmacy = pharmacy_service.get_pharmacy_by_id(pharmacy_id)
+    
+    if not pharmacy:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pharmacy not found")
+    
+    return pharmacy
+
+
+@router.put("/pharmacies/{pharmacy_id}", tags=["Admin - Pharmacy Management"])
+async def update_pharmacy(
+    pharmacy_id: int,
+    updates: PharmacieUpdate,
+    current_admin: Administrateur = Depends(admin_required),
+    db: Session = Depends(get_db),
+):
+    """Update a pharmacy record.
+    
+    **Description:**
+    Allows admin to update pharmacy fields. All fields are optional.
+    Only provided fields will be updated.
+    
+    **Parameters:**
+    All fields from PharmacieCreate are optional
+    
+    **Returns:** Updated pharmacy data
+    
+    **Error Codes:**
+    - `400`: Validation error or duplicate osm_id
+    - `401`: Not authenticated or not admin
+    - `404`: Pharmacy not found
+    - `500`: Database error
+    """
+    pharmacy_service = PharmacyService(db)
+    result, error = pharmacy_service.update_pharmacy(
+        pharmacy_id,
+        {k: v for k, v in updates.model_dump().items() if v is not None},
+        current_admin.id
+    )
+    
+    if error:
+        if "not found" in error.lower():
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+    
+    cache = CacheService()
+    cache.invalidate_prefix("pharmacies:")
+    
+    return result
+
+
+@router.delete("/pharmacies/{pharmacy_id}", tags=["Admin - Pharmacy Management"])
+async def delete_pharmacy(
+    pharmacy_id: int,
+    current_admin: Administrateur = Depends(admin_required),
+    db: Session = Depends(get_db),
+):
+    """Delete a pharmacy record.
+    
+    **Returns:** Success message
+    
+    **Error Codes:**
+    - `401`: Not authenticated or not admin
+    - `404`: Pharmacy not found
+    - `500`: Database error
+    """
+    pharmacy_service = PharmacyService(db)
+    error = pharmacy_service.delete_pharmacy(pharmacy_id)
+    
+    if error:
+        if "not found" in error.lower():
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error)
+    
+    cache = CacheService()
+    cache.invalidate_prefix("pharmacies:")
+    
+    return {"message": "Pharmacy deleted successfully"}
+
+
+# ---- GARDE SCHEDULE CRUD ENDPOINTS ----
+
+
+@router.post("/gardes", tags=["Admin - Garde Management"])
+async def create_garde(
+    garde: GardeScheduleCreate,
+    current_admin: Administrateur = Depends(admin_required),
+    db: Session = Depends(get_db),
+):
+    """Create a new garde schedule entry.
+    
+    **Description:**
+    Allows admin to manually create a garde schedule without file upload.
+    Validates date/time format and prevents duplicate schedules.
+    
+    **Parameters:**
+    - date: Required, YYYY-MM-DD format
+    - pharmacy_name: Required
+    - start_time, end_time: Required, HH:MM format
+    - city, governorate, shift_type, notes: Optional
+    
+    **Returns:** Created garde schedule with ID and timestamps
+    
+    **Error Codes:**
+    - `400`: Validation error or duplicate entry
+    - `401`: Not authenticated or not admin
+    - `500`: Database error
+    """
+    garde_service = GardeService(db)
+    result, error = garde_service.create_garde(garde.model_dump(), current_admin.id)
+    
+    if error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+    
+    return result
+
+
+@router.get("/gardes/{garde_id}", tags=["Admin - Garde Management"])
+async def get_garde(
+    garde_id: int,
+    current_admin: Administrateur = Depends(admin_required),
+    db: Session = Depends(get_db),
+):
+    """Get a garde schedule by ID.
+    
+    **Returns:** Garde schedule details with all fields and timestamps
+    """
+    garde_service = GardeService(db)
+    garde = garde_service.get_garde_by_id(garde_id)
+    
+    if not garde:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Garde schedule not found")
+    
+    return garde
+
+
+@router.put("/gardes/{garde_id}", tags=["Admin - Garde Management"])
+async def update_garde(
+    garde_id: int,
+    updates: GardeScheduleUpdate,
+    current_admin: Administrateur = Depends(admin_required),
+    db: Session = Depends(get_db),
+):
+    """Update a garde schedule.
+    
+    **Description:**
+    Allows admin to update garde schedule fields. All fields are optional.
+    Only provided fields will be updated.
+    
+    **Parameters:**
+    All fields from GardeScheduleCreate are optional
+    
+    **Returns:** Updated garde schedule data
+    
+    **Error Codes:**
+    - `400`: Validation error
+    - `401`: Not authenticated or not admin
+    - `404`: Garde schedule not found
+    - `500`: Database error
+    """
+    garde_service = GardeService(db)
+    result, error = garde_service.update_garde(
+        garde_id,
+        {k: v for k, v in updates.model_dump().items() if v is not None},
+        current_admin.id
+    )
+    
+    if error:
+        if "not found" in error.lower():
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+    
+    return result
+
+
+@router.delete("/gardes/{garde_id}", tags=["Admin - Garde Management"])
+async def delete_garde(
+    garde_id: int,
+    current_admin: Administrateur = Depends(admin_required),
+    db: Session = Depends(get_db),
+):
+    """Delete a garde schedule.
+    
+    **Returns:** Success message
+    
+    **Error Codes:**
+    - `401`: Not authenticated or not admin
+    - `404`: Garde schedule not found
+    - `500`: Database error
+    """
+    garde_service = GardeService(db)
+    error = garde_service.delete_garde(garde_id)
+    
+    if error:
+        if "not found" in error.lower():
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error)
+    
+    return {"message": "Garde schedule deleted successfully"}

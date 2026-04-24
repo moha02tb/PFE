@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 import models
 import schemas
+from main import search_pharmacies
 from routers import analytics
 
 
@@ -24,6 +25,55 @@ def test_create_search_event_public_endpoint(test_db):
     assert stored.event_type == "place_search"
     assert stored.query_text == "Sfax"
     assert stored.location_label == "Sfax, Tunisia"
+
+
+def test_search_pharmacies_endpoint_filters_by_query_and_governorate(test_db, test_admin):
+    test_db.add_all(
+        [
+            models.Pharmacie(
+                name="Pharmacie Centrale Tunis",
+                address="Centre Ville",
+                latitude=36.8,
+                longitude=10.1,
+                governorate="Tunis",
+                created_by=test_admin.id,
+            ),
+            models.Pharmacie(
+                name="Pharmacie Centrale Sfax",
+                address="Route Gremda",
+                latitude=34.7,
+                longitude=10.7,
+                governorate="Sfax",
+                created_by=test_admin.id,
+            ),
+            models.Pharmacie(
+                name="Pharmacie Lafayette",
+                address="Lafayette",
+                latitude=36.81,
+                longitude=10.17,
+                governorate="Tunis",
+                created_by=test_admin.id,
+            ),
+        ]
+    )
+    test_db.commit()
+
+    payload = asyncio.run(
+        search_pharmacies(
+            query="centrale",
+            governorate="Tunis",
+            limit=10,
+            db=test_db,
+        )
+    )
+    assert len(payload) == 1
+    assert payload[0]["name"] == "Pharmacie Centrale Tunis"
+
+    events = test_db.query(models.SearchEvent).all()
+    assert len(events) == 1
+    assert events[0].event_type == "pharmacy_text_search"
+    assert events[0].query_text == "centrale"
+    assert events[0].governorate == "Tunis"
 
 
 def test_admin_dashboard_exposes_operational_metrics(test_db, test_admin):

@@ -424,3 +424,134 @@ class GardeService:
             "longitude": pharmacy.longitude,
             "created_at": pharmacy.created_at.isoformat() if pharmacy.created_at else None,
         }
+
+    def get_garde_by_id(self, garde_id: int) -> Optional[dict]:
+        """Get a single garde schedule by ID.
+        
+        Returns: garde dict or None if not found
+        """
+        garde = self.db.query(models.GardeSchedule).filter(models.GardeSchedule.id == garde_id).first()
+        
+        if not garde:
+            return None
+        
+        return {
+            "id": garde.id,
+            "date": garde.date.isoformat() if garde.date else None,
+            "pharmacy_name": garde.pharmacy_name,
+            "start_time": garde.start_time,
+            "end_time": garde.end_time,
+            "city": garde.city,
+            "governorate": garde.governorate,
+            "shift_type": garde.shift_type,
+            "notes": garde.notes,
+            "created_by": garde.created_by,
+            "created_at": garde.created_at.isoformat() if garde.created_at else None,
+            "updated_at": garde.updated_at.isoformat() if garde.updated_at else None,
+        }
+
+    def create_garde(self, garde_data: dict, admin_id: int) -> Tuple[Optional[dict], Optional[str]]:
+        """Create a new garde schedule.
+        
+        Returns: (garde_dict, error_message)
+        """
+        try:
+            # Parse date if provided as string
+            garde_date = garde_data.get("date")
+            if isinstance(garde_date, str):
+                from datetime import datetime as dt
+                try:
+                    garde_date = dt.fromisoformat(garde_date).date()
+                except:
+                    return None, "Invalid date format. Use YYYY-MM-DD"
+            
+            # Check for duplicate schedule
+            existing = (
+                self.db.query(models.GardeSchedule)
+                .filter(
+                    models.GardeSchedule.date == garde_date,
+                    models.GardeSchedule.pharmacy_name == garde_data["pharmacy_name"],
+                    models.GardeSchedule.start_time == garde_data["start_time"],
+                    models.GardeSchedule.end_time == garde_data["end_time"],
+                )
+                .first()
+            )
+            
+            if existing:
+                return None, "This garde schedule already exists"
+            
+            # Create new garde schedule
+            garde = models.GardeSchedule(
+                date=garde_date,
+                pharmacy_name=garde_data["pharmacy_name"],
+                start_time=garde_data["start_time"],
+                end_time=garde_data["end_time"],
+                city=garde_data.get("city"),
+                governorate=garde_data.get("governorate"),
+                shift_type=garde_data.get("shift_type"),
+                notes=garde_data.get("notes"),
+                created_by=admin_id,
+            )
+            
+            self.db.add(garde)
+            self.db.commit()
+            self.db.refresh(garde)
+            
+            return self.get_garde_by_id(garde.id), None
+        
+        except Exception as e:
+            self.db.rollback()
+            return None, f"Failed to create garde schedule: {str(e)}"
+
+    def update_garde(self, garde_id: int, updates: dict, admin_id: int) -> Tuple[Optional[dict], Optional[str]]:
+        """Update a garde schedule with the provided fields.
+        
+        Returns: (garde_dict, error_message)
+        """
+        try:
+            garde = self.db.query(models.GardeSchedule).filter(models.GardeSchedule.id == garde_id).first()
+            
+            if not garde:
+                return None, "Garde schedule not found"
+            
+            # Parse date if provided as string
+            if "date" in updates and isinstance(updates["date"], str):
+                from datetime import datetime as dt
+                try:
+                    updates["date"] = dt.fromisoformat(updates["date"]).date()
+                except:
+                    return None, "Invalid date format. Use YYYY-MM-DD"
+            
+            # Update only provided fields
+            for key, value in updates.items():
+                if value is not None and hasattr(garde, key):
+                    setattr(garde, key, value)
+            
+            self.db.commit()
+            self.db.refresh(garde)
+            
+            return self.get_garde_by_id(garde.id), None
+        
+        except Exception as e:
+            self.db.rollback()
+            return None, f"Failed to update garde schedule: {str(e)}"
+
+    def delete_garde(self, garde_id: int) -> Optional[str]:
+        """Delete a garde schedule by ID.
+        
+        Returns: error_message (None if successful)
+        """
+        try:
+            garde = self.db.query(models.GardeSchedule).filter(models.GardeSchedule.id == garde_id).first()
+            
+            if not garde:
+                return "Garde schedule not found"
+            
+            self.db.delete(garde)
+            self.db.commit()
+            
+            return None
+        
+        except Exception as e:
+            self.db.rollback()
+            return f"Failed to delete garde schedule: {str(e)}"

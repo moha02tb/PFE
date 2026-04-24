@@ -14,6 +14,7 @@ const BACKEND_URL = API_CONFIG.baseURL;
 const ACCESS_TOKEN_KEY = 'access_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
 const USER_DATA_KEY = 'user_data';
+const GUEST_MODE_KEY = 'guest_mode';
 
 // Create axios instance with auth
 const createApiClient = (accessToken) => {
@@ -55,15 +56,18 @@ export const AuthProvider = ({ children }) => {
   const [refreshToken, setRefreshToken] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isGuest, setIsGuest] = useState(false);
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState(null);
 
   const clearAuthState = useCallback(async () => {
     await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
     await AsyncStorage.removeItem(REFRESH_TOKEN_KEY);
     await AsyncStorage.removeItem(USER_DATA_KEY);
+    await AsyncStorage.removeItem(GUEST_MODE_KEY);
     setAccessToken(null);
     setRefreshToken(null);
     setUser(null);
+    setIsGuest(false);
     setPendingVerificationEmail(null);
   }, []);
 
@@ -74,8 +78,15 @@ export const AuthProvider = ({ children }) => {
         const storedAccessToken = await AsyncStorage.getItem(ACCESS_TOKEN_KEY);
         const storedRefreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
         const storedUserData = await AsyncStorage.getItem(USER_DATA_KEY);
+        const storedGuestMode = await AsyncStorage.getItem(GUEST_MODE_KEY);
 
-        if (storedAccessToken && storedRefreshToken) {
+        if (storedGuestMode === 'true') {
+          // Restore guest session
+          if (storedUserData) {
+            setUser(JSON.parse(storedUserData));
+          }
+          setIsGuest(true);
+        } else if (storedAccessToken && storedRefreshToken) {
           setAccessToken(storedAccessToken);
           setRefreshToken(storedRefreshToken);
           if (storedUserData) {
@@ -181,6 +192,42 @@ export const AuthProvider = ({ children }) => {
       ) {
         setPendingVerificationEmail(email);
       }
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Guest Login handler
+  const loginAsGuest = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Create guest user object
+      const guestUser = {
+        id: `guest_${Date.now()}`,
+        email: null,
+        username: 'Guest User',
+        is_guest: true,
+        created_at: new Date().toISOString(),
+      };
+
+      // Store guest mode and user data
+      await AsyncStorage.setItem(GUEST_MODE_KEY, 'true');
+      await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(guestUser));
+
+      // Update state
+      setIsGuest(true);
+      setUser(guestUser);
+      setAccessToken(null);
+      setRefreshToken(null);
+      setPendingVerificationEmail(null);
+
+      return { success: true, user: guestUser };
+    } catch (err) {
+      const errorMessage = err.message || 'Failed to login as guest';
       setError(errorMessage);
       return { success: false, error: errorMessage };
     } finally {
@@ -357,11 +404,13 @@ export const AuthProvider = ({ children }) => {
     refreshToken,
     loading,
     error,
+    isGuest,
     pendingVerificationEmail,
-    isAuthenticated: !!user && !!accessToken,
+    isAuthenticated: !!(user && (accessToken || isGuest)),
 
     // Methods
     login,
+    loginAsGuest,
     register,
     verifyEmailCode,
     resendVerificationEmail,

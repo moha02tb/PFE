@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useCallback } from 'react';
 import api from '../lib/api';
 
 export const AuthContext = createContext();
@@ -17,6 +17,37 @@ export const AuthProvider = ({ children }) => {
     const [error, setError] = useState(null);
 
     // No initial auth check - rely on stored tokens
+
+    const persistUser = useCallback((userData) => {
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+        return userData;
+    }, []);
+
+    const refreshUser = useCallback(async () => {
+        const response = await api.get('/api/auth/me');
+        return persistUser(response.data);
+    }, [persistUser]);
+
+    const updateProfile = useCallback(async (profileData) => {
+        setError(null);
+        setLoading(true);
+
+        try {
+            const response = await api.put('/api/auth/me', profileData);
+            return { success: true, user: persistUser(response.data) };
+        } catch (err) {
+            const message =
+                err.response?.data?.detail ||
+                err.response?.data?.message ||
+                err.message ||
+                'Unable to update profile. Please try again.';
+            setError(message);
+            return { success: false, error: message };
+        } finally {
+            setLoading(false);
+        }
+    }, [persistUser]);
 
     // Login function
     const login = useCallback(async (email, password) => {
@@ -40,8 +71,7 @@ export const AuthProvider = ({ children }) => {
             const userData = meResponse.data;
 
             // Store user data
-            localStorage.setItem('user', JSON.stringify(userData));
-            setUser(userData);
+            persistUser(userData);
             setIsAuthenticated(true);
 
             return { success: true };
@@ -71,7 +101,7 @@ export const AuthProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [persistUser]);
 
     // Logout function
     const logout = useCallback(async () => {
@@ -105,6 +135,8 @@ export const AuthProvider = ({ children }) => {
                 error,
                 login,
                 logout,
+                refreshUser,
+                updateProfile,
             }}
         >
             {children}

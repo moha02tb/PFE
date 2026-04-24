@@ -18,6 +18,7 @@ import {
   TableHeaderCell,
   TableRow,
 } from '../components/ui';
+import { useLanguage } from '../context/LanguageContext';
 
 const REQUIRED_COLUMNS = ['date', 'pharmacy_name', 'start_time', 'end_time'];
 const PLANNER_COLUMNS = ['Category', 'Month/Holiday', 'Date', 'Pharmacist_1', 'Pharmacist_2'];
@@ -43,6 +44,7 @@ const hasPlannerFormat = (headers) =>
   PLANNER_COLUMNS.every((column) => headers.some((header) => header.toLowerCase() === column.toLowerCase()));
 
 const UploadGardePage = () => {
+  const { t } = useLanguage();
   const inputRef = useRef(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [headers, setHeaders] = useState([]);
@@ -82,7 +84,7 @@ const UploadGardePage = () => {
 
     if (!file.name.toLowerCase().endsWith('.csv')) {
       setSelectedFile(null);
-      setError('Use a CSV file for garde uploads.');
+      setError(t('uploadGarde.csvOnlyError'));
       return;
     }
 
@@ -95,7 +97,7 @@ const UploadGardePage = () => {
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      setError('Choose a garde CSV before uploading.');
+      setError(t('uploadGarde.chooseFileError'));
       return;
     }
 
@@ -113,9 +115,9 @@ const UploadGardePage = () => {
       await loadRecentGardes();
     } catch (err) {
       setError(
-        err.response?.data?.detail ||
+          err.response?.data?.detail ||
           err.message ||
-          'Garde upload failed. Check the CSV columns and admin session.'
+          t('uploadGarde.uploadFailed')
       );
     } finally {
       setIsUploading(false);
@@ -129,18 +131,18 @@ const UploadGardePage = () => {
     <div className="page-shell">
       <div className="page-content">
         <SectionHeader
-          eyebrow="Planner import"
-          title="Upload garde planning"
-          description="Validate canonical and planner-format CSV files before pushing garde rows into the live scheduling backend."
+          eyebrow={t('uploadGarde.eyebrow')}
+          title={t('uploadGarde.title')}
+          description={t('uploadGarde.description')}
           actions={
             <>
               <Button variant="secondary" onClick={() => inputRef.current?.click()}>
                 <FileSpreadsheet className="h-4 w-4" />
-                Choose CSV
+                {t('upload.chooseCsv')}
               </Button>
               <Button onClick={handleUpload} disabled={!selectedFile || isUploading}>
                 <UploadCloud className="h-4 w-4" />
-                {isUploading ? 'Uploading...' : 'Upload garde'}
+                {isUploading ? t('upload.uploading') : t('uploadGarde.uploadGarde')}
               </Button>
             </>
           }
@@ -160,52 +162,52 @@ const UploadGardePage = () => {
               <button
                 type="button"
                 onClick={() => inputRef.current?.click()}
-                className="flex min-h-[280px] w-full flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-surface px-8 text-center transition hover:border-primary/40 hover:bg-surface-muted"
+                className="upload-zone flex min-h-[280px] w-full flex-col items-center justify-center rounded-[8px] border border-dashed border-border bg-surface px-8 text-center hover:border-primary/40 hover:bg-surface-muted"
               >
-                <div className="mb-5 rounded-3xl bg-warning-soft p-4 text-warning">
+                <div className="mb-5 rounded-[8px] bg-surface-muted p-4 text-foreground">
                   <CalendarDays className="h-8 w-8" />
                 </div>
-                <h2 className="font-display text-2xl font-semibold text-foreground">Load a garde CSV</h2>
+                <h2 className="font-display text-2xl font-semibold text-foreground">{t('uploadGarde.dropTitle')}</h2>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-                  Required canonical columns: <code>date</code>, <code>pharmacy_name</code>, <code>start_time</code>, <code>end_time</code>.
-                  Planner format is also accepted with <code>Category</code>, <code>Month/Holiday</code>, <code>Date</code>, <code>Pharmacist_1</code>, and <code>Pharmacist_2</code>.
+                  {t('uploadGarde.requiredCanonical')} <code>date</code>, <code>pharmacy_name</code>, <code>start_time</code>, <code>end_time</code>.
+                  {' '}{t('uploadGarde.plannerAccepted')} <code>Category</code>, <code>Month/Holiday</code>, <code>Date</code>, <code>Pharmacist_1</code>, {t('upload.and')} <code>Pharmacist_2</code>.
                 </p>
               </button>
 
               <div className="mt-5 grid gap-4 md:grid-cols-3">
-                <div className="rounded-2xl border border-border bg-surface p-4">
-                  <p className="text-sm text-muted-foreground">Selected file</p>
-                  <p className="mt-2 text-sm font-medium text-foreground">{selectedFile ? selectedFile.name : 'No file selected'}</p>
+                <div className="rounded-[8px] border border-border bg-surface p-4">
+                  <p className="text-sm text-muted-foreground">{t('upload.selectedFile')}</p>
+                  <p className="mt-2 text-sm font-medium text-foreground">{selectedFile ? selectedFile.name : t('upload.noFileSelected')}</p>
                 </div>
-                <div className="rounded-2xl border border-border bg-surface p-4">
-                  <p className="text-sm text-muted-foreground">Preview rows</p>
+                <div className="rounded-[8px] border border-border bg-surface p-4">
+                  <p className="text-sm text-muted-foreground">{t('uploadGarde.previewRows')}</p>
                   <p className="mt-2 font-display text-2xl font-semibold text-foreground">{rows.length}</p>
                 </div>
-                <div className="rounded-2xl border border-border bg-surface p-4">
-                  <p className="text-sm text-muted-foreground">Detected format</p>
+                <div className="rounded-[8px] border border-border bg-surface p-4">
+                  <p className="text-sm text-muted-foreground">{t('uploadGarde.detectedFormat')}</p>
                   <p className="mt-2 text-sm font-medium text-foreground">
-                    {canonicalReady ? 'Canonical' : plannerReady ? 'Planner' : headers.length ? 'Incomplete' : 'Waiting for file'}
+                    {canonicalReady ? t('uploadGarde.canonical') : plannerReady ? t('uploadGarde.planner') : headers.length ? t('uploadGarde.incomplete') : t('upload.waitingForFile')}
                   </p>
                 </div>
               </div>
 
               {error ? (
-                <div className="mt-5 rounded-2xl border border-danger/30 bg-danger-soft p-4 text-sm text-danger">{error}</div>
+                <div className="mt-5 rounded-[8px] border border-border bg-surface-muted p-4 text-sm text-foreground">{error}</div>
               ) : null}
 
               {result ? (
                 <div className="mt-5 grid gap-4 md:grid-cols-3">
-                  <div className="rounded-2xl bg-surface-muted p-4">
-                    <p className="text-sm text-muted-foreground">Rows</p>
+                  <div className="rounded-[6px] bg-surface-muted p-4">
+                    <p className="text-sm text-muted-foreground">{t('upload.rows')}</p>
                     <p className="mt-2 font-display text-2xl font-semibold text-foreground">{result.total_rows}</p>
                   </div>
-                  <div className="rounded-2xl bg-success-soft p-4">
-                    <p className="text-sm text-success">Saved</p>
-                    <p className="mt-2 font-display text-2xl font-semibold text-success">{result.successful}</p>
+                  <div className="rounded-[6px] bg-surface-muted p-4">
+                    <p className="text-sm text-foreground">{t('upload.saved')}</p>
+                    <p className="mt-2 font-display text-2xl font-semibold text-foreground">{result.successful}</p>
                   </div>
-                  <div className="rounded-2xl bg-danger-soft p-4">
-                    <p className="text-sm text-danger">Failed</p>
-                    <p className="mt-2 font-display text-2xl font-semibold text-danger">{result.failed}</p>
+                  <div className="rounded-[6px] bg-surface-muted p-4">
+                    <p className="text-sm text-foreground">{t('upload.failed')}</p>
+                    <p className="mt-2 font-display text-2xl font-semibold text-foreground">{result.failed}</p>
                   </div>
                 </div>
               ) : null}
@@ -216,17 +218,17 @@ const UploadGardePage = () => {
             <Card>
               <CardHeader>
                 <div>
-                  <CardTitle>Validation summary</CardTitle>
-                  <CardDescription>Column readiness before upload.</CardDescription>
+                  <CardTitle>{t('uploadGarde.validationSummary')}</CardTitle>
+                  <CardDescription>{t('uploadGarde.validationSummaryDesc')}</CardDescription>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 {REQUIRED_COLUMNS.map((column) => {
                   const present = plannerReady || headers.includes(column);
                   return (
-                    <div key={column} className="flex items-center justify-between rounded-2xl bg-surface-muted px-4 py-3">
+                    <div key={column} className="flex items-center justify-between rounded-[8px] border border-border/45 bg-surface-muted px-4 py-3">
                       <span className="text-sm text-foreground">{column}</span>
-                      <Badge variant={present ? 'success' : 'warning'}>{present ? 'Ready' : 'Missing'}</Badge>
+                      <Badge variant={present ? 'success' : 'warning'}>{present ? t('upload.ready') : t('upload.missing')}</Badge>
                     </div>
                   );
                 })}
@@ -236,8 +238,8 @@ const UploadGardePage = () => {
             <Card>
               <CardHeader>
                 <div>
-                  <CardTitle>Recent garde rows</CardTitle>
-                  <CardDescription>Latest entries returned from the scheduling API.</CardDescription>
+                  <CardTitle>{t('uploadGarde.recentRows')}</CardTitle>
+                  <CardDescription>{t('uploadGarde.recentRowsDesc')}</CardDescription>
                 </div>
               </CardHeader>
               <CardContent>
@@ -245,9 +247,9 @@ const UploadGardePage = () => {
                   <Table>
                     <TableHead>
                       <tr>
-                        <TableHeaderCell>Date</TableHeaderCell>
-                        <TableHeaderCell>Pharmacy</TableHeaderCell>
-                        <TableHeaderCell>Shift</TableHeaderCell>
+                        <TableHeaderCell>{t('management.date')}</TableHeaderCell>
+                        <TableHeaderCell>{t('management.pharmacy')}</TableHeaderCell>
+                        <TableHeaderCell>{t('calendar.shift')}</TableHeaderCell>
                       </tr>
                     </TableHead>
                     <TableBody>
@@ -263,11 +265,11 @@ const UploadGardePage = () => {
                 ) : (
                   <EmptyState
                     icon={CheckCircle2}
-                    title={loadingRecent ? 'Loading garde rows' : 'No garde rows yet'}
+                    title={loadingRecent ? t('uploadGarde.loadingRows') : t('uploadGarde.noRows')}
                     description={
                       loadingRecent
-                        ? 'Fetching recent saved rows from the backend.'
-                        : 'Upload a garde file to populate recent scheduling activity.'
+                        ? t('uploadGarde.loadingRowsDesc')
+                        : t('uploadGarde.noRowsDesc')
                     }
                   />
                 )}
