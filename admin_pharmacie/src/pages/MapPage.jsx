@@ -16,6 +16,9 @@ import { useLanguage } from '../context/LanguageContext';
 
 const TILE_SIZE = 256;
 const TUNISIA_CENTER = { lat: 36.8065, lon: 10.1815 };
+const TUNISIA_DEFAULT_ZOOM = 6;
+const MIN_ZOOM = 5;
+const MAX_ZOOM = 18;
 const PREVIEW_PHARMACIES = [
   {
     id: 'preview-1',
@@ -59,6 +62,26 @@ const PREVIEW_PHARMACIES = [
   },
 ];
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+const parseCoordinate = (value) => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+};
+
+const normalizePharmacy = (item) => {
+  const latitude = parseCoordinate(item?.latitude);
+  const longitude = parseCoordinate(item?.longitude);
+  if (latitude === null || longitude === null) return null;
+
+  return {
+    ...item,
+    latitude,
+    longitude,
+  };
+};
 
 const project = (lat, lon, zoom) => {
   const scale = TILE_SIZE * 2 ** zoom;
@@ -84,11 +107,36 @@ const OSMMap = ({ center, zoom, markers, selectedId, onSelectMarker, onCenterCha
 
   useEffect(() => {
     if (!containerRef.current) return undefined;
-    const observer = new ResizeObserver(([entry]) => {
-      setSize({ width: entry.contentRect.width, height: entry.contentRect.height });
-    });
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
+
+    const container = containerRef.current;
+    let frameId = 0;
+
+    const measure = () => {
+      const rect = container.getBoundingClientRect();
+      setSize((current) => {
+        const width = Math.round(rect.width);
+        const height = Math.round(rect.height);
+        if (current.width === width && current.height === height) return current;
+        return { width, height };
+      });
+    };
+
+    frameId = window.requestAnimationFrame(measure);
+
+    if (typeof ResizeObserver === 'function') {
+      const observer = new ResizeObserver(measure);
+      observer.observe(container);
+      return () => {
+        window.cancelAnimationFrame(frameId);
+        observer.disconnect();
+      };
+    }
+
+    window.addEventListener('resize', measure);
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      window.removeEventListener('resize', measure);
+    };
   }, []);
 
   // Handle wheel event with passive: false to allow preventDefault
@@ -98,7 +146,7 @@ const OSMMap = ({ center, zoom, markers, selectedId, onSelectMarker, onCenterCha
 
     const handleWheel = (event) => {
       event.preventDefault();
-      onZoomChange(clamp(zoom + (event.deltaY < 0 ? 1 : -1), 5, 18));
+      onZoomChange(clamp(zoom + (event.deltaY < 0 ? 1 : -1), MIN_ZOOM, MAX_ZOOM));
     };
 
     container.addEventListener('wheel', handleWheel, { passive: false });
@@ -161,11 +209,10 @@ const OSMMap = ({ center, zoom, markers, selectedId, onSelectMarker, onCenterCha
           src={tile.src}
           alt=""
           draggable="false"
-          className="pointer-events-none absolute h-64 w-64 max-w-none select-none"
-          style={{ left: tile.left, top: tile.top, opacity: 0.62, filter: 'saturate(0.72) contrast(0.96)' }}
+          className="map-tile pointer-events-none absolute h-64 w-64 max-w-none select-none"
+          style={{ left: tile.left, top: tile.top }}
         />
       ))}
-      <div className="map-canvas-grid" />
 
       {markers.map((marker) => {
         const point = project(marker.latitude, marker.longitude, zoom);
@@ -186,6 +233,14 @@ const OSMMap = ({ center, zoom, markers, selectedId, onSelectMarker, onCenterCha
           </button>
         );
       })}
+      <a
+        className="map-attribution"
+        href="https://www.openstreetmap.org/copyright"
+        target="_blank"
+        rel="noreferrer"
+      >
+        OpenStreetMap contributors
+      </a>
     </div>
   );
 };
@@ -226,7 +281,7 @@ const MapPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [center, setCenter] = useState(TUNISIA_CENTER);
-  const [zoom, setZoom] = useState(11);
+  const [zoom, setZoom] = useState(TUNISIA_DEFAULT_ZOOM);
 
   useEffect(() => {
     let active = true;
@@ -237,21 +292,22 @@ const MapPage = () => {
         const response = await api.get('/api/admin/pharmacies', { params: { skip: 0, limit: 300 } });
         if (!active) return;
         const rows = Array.isArray(response.data)
-          ? response.data.filter((item) => typeof item.latitude === 'number' && typeof item.longitude === 'number')
+          ? response.data.map(normalizePharmacy).filter(Boolean)
           : [];
         const nextRows = rows.length ? rows : PREVIEW_PHARMACIES;
         setPharmacies(nextRows);
         if (nextRows[0]) {
-          const selected = nextRows[1] || nextRows[0];
-          setSelectedPharmacy(selected);
-          setCenter({ lat: selected.latitude, lon: selected.longitude });
+          setSelectedPharmacy(nextRows[0]);
+          setCenter(TUNISIA_CENTER);
+          setZoom(TUNISIA_DEFAULT_ZOOM);
         }
       } catch (err) {
         if (!active) return;
         setError(err.response?.data?.detail || err.message || t('map.previewDataError'));
         setPharmacies(PREVIEW_PHARMACIES);
-        setSelectedPharmacy(PREVIEW_PHARMACIES[1]);
-        setCenter({ lat: PREVIEW_PHARMACIES[1].latitude, lon: PREVIEW_PHARMACIES[1].longitude });
+        setSelectedPharmacy(PREVIEW_PHARMACIES[0]);
+        setCenter(TUNISIA_CENTER);
+        setZoom(TUNISIA_DEFAULT_ZOOM);
       } finally {
         if (active) setLoading(false);
       }
@@ -274,6 +330,11 @@ const MapPage = () => {
     setSelectedPharmacy(pharmacy);
     setCenter({ lat: pharmacy.latitude, lon: pharmacy.longitude });
     setZoom(14);
+  };
+
+  const resetToTunisiaView = () => {
+    setCenter(TUNISIA_CENTER);
+    setZoom(TUNISIA_DEFAULT_ZOOM);
   };
 
   return (
@@ -338,10 +399,10 @@ const MapPage = () => {
         />
         <div className="map-control-stack">
           <div className="overflow-hidden rounded-[12px] border border-border bg-surface-elevated shadow-elevated">
-            <button className="block border-b border-border p-3 hover:bg-surface-muted" onClick={() => setZoom((current) => clamp(current + 1, 5, 18))} aria-label={t('map.zoomIn')}>
+            <button className="block border-b border-border p-3 hover:bg-surface-muted" onClick={() => setZoom((current) => clamp(current + 1, MIN_ZOOM, MAX_ZOOM))} aria-label={t('map.zoomIn')}>
               <Plus className="h-5 w-5" />
             </button>
-            <button className="block p-3 hover:bg-surface-muted" onClick={() => setZoom((current) => clamp(current - 1, 5, 18))} aria-label={t('map.zoomOut')}>
+            <button className="block p-3 hover:bg-surface-muted" onClick={() => setZoom((current) => clamp(current - 1, MIN_ZOOM, MAX_ZOOM))} aria-label={t('map.zoomOut')}>
               <Minus className="h-5 w-5" />
             </button>
           </div>
@@ -350,7 +411,8 @@ const MapPage = () => {
             onClick={() => navigator.geolocation?.getCurrentPosition(({ coords }) => {
               setCenter({ lat: coords.latitude, lon: coords.longitude });
               setZoom(13);
-            })}
+            }, resetToTunisiaView)}
+            aria-label={t('map.centerTunisia')}
           >
             <LocateFixed className="h-5 w-5" />
           </button>

@@ -12,21 +12,24 @@ export const RatingProvider = ({ children }) => {
 
   // Load ratings on mount
   useEffect(() => {
-    loadRatings();
+    let isMounted = true;
+    const loadRatingsAsync = async () => {
+      try {
+        const saved = await AsyncStorage.getItem(RATINGS_KEY);
+        if (isMounted && saved) {
+          setRatings(JSON.parse(saved));
+        }
+        if (isMounted) setIsLoading(false);
+      } catch (error) {
+        logger.error('RatingContext', 'Error loading ratings', error);
+        if (isMounted) setIsLoading(false);
+      }
+    };
+    loadRatingsAsync();
+    return () => { isMounted = false; };
   }, []);
 
-  const loadRatings = async () => {
-    try {
-      const saved = await AsyncStorage.getItem(RATINGS_KEY);
-      if (saved) {
-        setRatings(JSON.parse(saved));
-      }
-      setIsLoading(false);
-    } catch (error) {
-      logger.error('RatingContext', 'Error loading ratings', error);
-      setIsLoading(false);
-    }
-  };
+
 
   const setRating = useCallback(
     async (pharmacyId, rating, comment = '') => {
@@ -36,42 +39,50 @@ export const RatingProvider = ({ children }) => {
       }
 
       try {
-        const updated = {
-          ...ratings,
-          [pharmacyId]: {
-            rating,
-            comment,
-            timestamp: new Date().toISOString(),
-          },
-        };
-        setRatings(updated);
-        await AsyncStorage.setItem(RATINGS_KEY, JSON.stringify(updated));
+        setRatings((prev) => {
+          const updated = {
+            ...prev,
+            [pharmacyId]: {
+              rating,
+              comment,
+              timestamp: new Date().toISOString(),
+            },
+          };
+          AsyncStorage.setItem(RATINGS_KEY, JSON.stringify(updated)).catch((error) =>
+            logger.error('RatingContext', 'Error saving rating', error)
+          );
+          return updated;
+        });
       } catch (error) {
         logger.error('RatingContext', 'Error setting rating', error);
       }
     },
-    [ratings]
+    []
   );
 
   const getRating = useCallback(
     (pharmacyId) => {
       return ratings[pharmacyId] || null;
     },
-    [ratings]
+    []
   );
 
   const removeRating = useCallback(
     async (pharmacyId) => {
       try {
-        const updated = { ...ratings };
-        delete updated[pharmacyId];
-        setRatings(updated);
-        await AsyncStorage.setItem(RATINGS_KEY, JSON.stringify(updated));
+        setRatings((prev) => {
+          const updated = { ...prev };
+          delete updated[pharmacyId];
+          AsyncStorage.setItem(RATINGS_KEY, JSON.stringify(updated)).catch((error) =>
+            logger.error('RatingContext', 'Error saving rating', error)
+          );
+          return updated;
+        });
       } catch (error) {
         logger.error('RatingContext', 'Error removing rating', error);
       }
     },
-    [ratings]
+    []
   );
 
   const value = {

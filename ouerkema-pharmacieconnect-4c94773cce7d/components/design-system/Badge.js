@@ -4,7 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { getBadgeColors } from '../../utils/colors';
 import { useAppTheme } from '../../utils/theme';
 
-export default function StatusBadge({ status = 'open', children, style, size = 'medium', isDarkMode }) {
+export default function StatusBadge({
+  status = 'open',
+  children,
+  style,
+  size = 'medium',
+  isDarkMode,
+}) {
   const appTheme = useAppTheme();
   const darkMode = typeof isDarkMode === 'boolean' ? isDarkMode : appTheme.isDarkMode;
   const { radius, textStyles } = appTheme;
@@ -27,7 +33,7 @@ export default function StatusBadge({ status = 'open', children, style, size = '
   const styles = StyleSheet.create({
     badge: {
       alignSelf: 'flex-start',
-      borderRadius: radius.full,
+      borderRadius: radius.lg,
       backgroundColor: background,
       borderWidth: 1,
       borderColor: border,
@@ -37,7 +43,7 @@ export default function StatusBadge({ status = 'open', children, style, size = '
     text: {
       ...config.textStyle,
       color: text,
-      fontWeight: '700',
+      fontWeight: '600',
     },
   });
 

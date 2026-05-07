@@ -20,46 +20,46 @@ export const SHADOWS = {
   // Elevation 1 (subtle hover/interactive state)
   elevation1: {
     elevation: 1,
-    shadowColor: '#000000',
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
+    shadowColor: '#10233A',
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
     shadowOffset: { width: 0, height: 1 },
   },
 
   // Elevation 2 (standard cards, buttons)
   elevation2: {
     elevation: 2,
-    shadowColor: '#000000',
+    shadowColor: '#10233A',
     shadowOpacity: 0.08,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
   },
 
   // Elevation 3 (pressed cards, medium depth)
   elevation3: {
     elevation: 3,
-    shadowColor: '#000000',
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
+    shadowColor: '#10233A',
+    shadowOpacity: 0.11,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
   },
 
   // Elevation 4 (floating buttons, overlays)
   elevation4: {
     elevation: 4,
-    shadowColor: '#000000',
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
+    shadowColor: '#0C1B2A',
+    shadowOpacity: 0.14,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 12 },
   },
 
   // Elevation 5 (modals, dialogs)
   elevation5: {
     elevation: 5,
-    shadowColor: '#000000',
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
+    shadowColor: '#07111F',
+    shadowOpacity: 0.18,
+    shadowRadius: 30,
+    shadowOffset: { width: 0, height: 16 },
   },
 };
 
@@ -123,42 +123,42 @@ export const SHADOW_PRESETS = {
 export const DARK_SHADOWS = {
   elevation1: {
     elevation: 1,
-    shadowColor: '#FFFFFF',
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowColor: '#020814',
+    shadowOpacity: 0.24,
+    shadowRadius: 3,
     shadowOffset: { width: 0, height: 1 },
   },
 
   elevation2: {
     elevation: 2,
-    shadowColor: '#FFFFFF',
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-  },
-
-  elevation3: {
-    elevation: 3,
-    shadowColor: '#FFFFFF',
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-  },
-
-  elevation4: {
-    elevation: 4,
-    shadowColor: '#FFFFFF',
-    shadowOpacity: 0.15,
+    shadowColor: '#020814',
+    shadowOpacity: 0.3,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
   },
 
+  elevation3: {
+    elevation: 3,
+    shadowColor: '#020814',
+    shadowOpacity: 0.36,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+  },
+
+  elevation4: {
+    elevation: 4,
+    shadowColor: '#020814',
+    shadowOpacity: 0.42,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 12 },
+  },
+
   elevation5: {
     elevation: 5,
-    shadowColor: '#FFFFFF',
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
+    shadowColor: '#020814',
+    shadowOpacity: 0.48,
+    shadowRadius: 30,
+    shadowOffset: { width: 0, height: 16 },
   },
 };
 

@@ -25,22 +25,17 @@ export default function AppCard({
 
   const styles = StyleSheet.create({
     shell: {
-      backgroundColor: colors.surface,
-      borderRadius: radius.xxl,
+      backgroundColor: borderAccent ? colors.primaryMuted : colors.surfaceElevated,
+      borderRadius: radius.xl,
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: borderAccent ? colors.borderStrong : colors.border,
       marginHorizontal: margin ?? 0,
       marginBottom,
       overflow: 'hidden',
     },
-    accent: {
-      height: 4,
-      backgroundColor: borderAccent ? colors.primary : colors.surfaceSecondary,
-      opacity: borderAccent ? 1 : 0.9,
-    },
     content: {
       padding,
-      backgroundColor: colors.surface,
+      backgroundColor: 'transparent',
     },
     pressed: {
       opacity: 0.92,
@@ -48,18 +43,18 @@ export default function AppCard({
     },
   });
 
-  const body = (
-    <>
-      <View style={styles.accent} />
-      <View style={[styles.content, contentStyle]}>{children}</View>
-    </>
-  );
+  const body = <View style={[styles.content, contentStyle]}>{children}</View>;
 
   if (pressable || onPress) {
     return (
       <Pressable
         onPress={onPress}
-        style={({ pressed }) => [styles.shell, shadowMap[elevation] || shadows.card, pressed && styles.pressed, style]}
+        style={({ pressed }) => [
+          styles.shell,
+          shadowMap[elevation] || shadows.card,
+          pressed && styles.pressed,
+          style,
+        ]}
       >
         {body}
       </Pressable>

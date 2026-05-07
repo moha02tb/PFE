@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { I18nManager } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -29,12 +29,7 @@ export const LanguageProvider = ({ children }) => {
   const [isRTL, setIsRTL] = useState(I18nManager.isRTL);
   const { i18n: i18nInstance } = useTranslation();
 
-  // Load saved language on app start
-  useEffect(() => {
-    loadSavedLanguage();
-  }, []);
-
-  const loadSavedLanguage = async () => {
+  const loadSavedLanguage = useCallback(async () => {
     try {
       const savedLanguage = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
       if (savedLanguage) {
@@ -54,9 +49,14 @@ export const LanguageProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [i18nInstance]);
 
-  const setLanguage = async (displayName) => {
+  // Load saved language on app start
+  useEffect(() => {
+    loadSavedLanguage();
+  }, [loadSavedLanguage]);
+
+  const setLanguage = useCallback(async (displayName) => {
     try {
       setIsChangingLanguage(true);
       const languageKey = LANGUAGE_KEYS[displayName];
@@ -79,26 +79,27 @@ export const LanguageProvider = ({ children }) => {
     } finally {
       setIsChangingLanguage(false);
     }
-  };
+  }, [i18nInstance]);
 
-  const getCurrentLanguageKey = () => {
+  const getCurrentLanguageKey = useCallback(() => {
     return LANGUAGE_KEYS[language] || 'fr';
-  };
+  }, [language]);
+
+  const value = useMemo(
+    () => ({
+      language,
+      setLanguage,
+      isLoading,
+      isChangingLanguage,
+      getCurrentLanguageKey,
+      availableLanguages: Object.keys(LANGUAGE_KEYS),
+      isRTL,
+    }),
+    [getCurrentLanguageKey, isChangingLanguage, isLoading, isRTL, language, setLanguage]
+  );
 
   return (
-    <LanguageContext.Provider
-      value={{
-        language,
-        setLanguage,
-        isLoading,
-        isChangingLanguage,
-        getCurrentLanguageKey,
-        availableLanguages: Object.keys(LANGUAGE_KEYS),
-        isRTL,
-      }}
-    >
-      {children}
-    </LanguageContext.Provider>
+    <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>
   );
 };
 

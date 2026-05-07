@@ -32,8 +32,8 @@ export default function AppButton({
   const palette = {
     contained: {
       backgroundColor: disabled ? colors.disabledSurface : tone,
-      borderColor: disabled ? 'transparent' : colors.borderStrong,
-      textColor: colors.primaryForeground,
+      borderColor: 'transparent',
+      textColor: disabled ? colors.disabled : colors.primaryForeground,
       shadow: shadows.raised,
     },
     outlined: {
@@ -43,7 +43,11 @@ export default function AppButton({
       shadow: undefined,
     },
     tonal: {
-      backgroundColor: disabled ? colors.disabledSurface : color === 'secondary' ? colors.secondaryMuted : colors.primaryMuted,
+      backgroundColor: disabled
+        ? colors.disabledSurface
+        : color === 'secondary'
+          ? colors.secondaryMuted
+          : colors.primaryMuted,
       borderColor: 'transparent',
       textColor: disabled ? colors.disabled : tone,
       shadow: undefined,
@@ -72,7 +76,7 @@ export default function AppButton({
       minHeight: config.minHeight,
       minWidth: fullWidth ? undefined : 110,
       width: fullWidth ? '100%' : undefined,
-      borderRadius: radius.xl,
+      borderRadius: size === 'small' ? radius.lg : radius.xl,
       paddingHorizontal: config.paddingHorizontal,
       borderWidth: variant === 'outlined' || variant === 'contained' ? 1 : 0,
       borderColor: palette.borderColor,
@@ -85,7 +89,7 @@ export default function AppButton({
       overflow: 'hidden',
     },
     pressed: {
-      transform: [{ scale: 0.985 }],
+      transform: [{ translateY: 1 }, { scale: 0.985 }],
       opacity: 0.92,
     },
     sheen: {
@@ -96,9 +100,7 @@ export default function AppButton({
       height: '52%',
       borderTopLeftRadius: radius.xl,
       borderTopRightRadius: radius.xl,
-      backgroundColor: variant === 'contained'
-        ? 'rgba(255,255,255,0.12)'
-        : 'transparent',
+      backgroundColor: variant === 'contained' ? 'rgba(251,253,255,0.12)' : 'transparent',
     },
     content: {
       flexDirection: isRTL ? 'row-reverse' : 'row',

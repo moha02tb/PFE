@@ -30,32 +30,36 @@ export const NotificationProvider = ({ children }) => {
   const [permissionStatus, setPermissionStatus] = useState(null);
 
   useEffect(() => {
-    loadNotificationSettings();
+    let isMounted = true;
+    const loadSettingsAsync = async () => {
+      try {
+        const saved = await AsyncStorage.getItem(NOTIFICATION_STORAGE_KEY);
+        if (isMounted && saved !== null) {
+          const enabled = JSON.parse(saved);
+          setNotificationsEnabled(enabled);
+          if (enabled) {
+            await registerForPushNotificationsAsync();
+          }
+        }
+
+        // Check current permission status
+        const { status } = await Notifications.getPermissionsAsync();
+        if (isMounted) setPermissionStatus(status);
+      } catch (error) {
+        logger.error('NotificationContext', 'Error loading notification settings', error);
+        if (isMounted) {
+          setNotificationsEnabled(false);
+          setPermissionStatus('undetermined');
+        }
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+    loadSettingsAsync();
+    return () => { isMounted = false; };
   }, []);
 
-  const loadNotificationSettings = async () => {
-    try {
-      const saved = await AsyncStorage.getItem(NOTIFICATION_STORAGE_KEY);
-      if (saved !== null) {
-        const enabled = JSON.parse(saved);
-        setNotificationsEnabled(enabled);
-        if (enabled) {
-          await registerForPushNotificationsAsync();
-        }
-      }
 
-      // Check current permission status
-      const { status } = await Notifications.getPermissionsAsync();
-      setPermissionStatus(status);
-    } catch (error) {
-      logger.error('NotificationContext', 'Error loading notification settings', error);
-      // Set default values on error
-      setNotificationsEnabled(false);
-      setPermissionStatus('undetermined');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const registerForPushNotificationsAsync = async () => {
     if (Platform.OS === 'android') {

@@ -13,56 +13,69 @@ export const SearchHistoryProvider = ({ children }) => {
 
   // Load search history on mount
   useEffect(() => {
-    loadSearchHistory();
+    let isMounted = true;
+    const loadSearchHistoryAsync = async () => {
+      try {
+        const saved = await AsyncStorage.getItem(SEARCH_HISTORY_KEY);
+        if (isMounted && saved) {
+          setSearchHistory(JSON.parse(saved));
+        }
+        if (isMounted) setIsLoading(false);
+      } catch (error) {
+        logger.error('SearchHistoryContext', 'Error loading search history', error);
+        if (isMounted) setIsLoading(false);
+      }
+    };
+    loadSearchHistoryAsync();
+    return () => { isMounted = false; };
   }, []);
 
-  const loadSearchHistory = async () => {
-    try {
-      const saved = await AsyncStorage.getItem(SEARCH_HISTORY_KEY);
-      if (saved) {
-        setSearchHistory(JSON.parse(saved));
-      }
-      setIsLoading(false);
-    } catch (error) {
-      logger.error('SearchHistoryContext', 'Error loading search history', error);
-      setIsLoading(false);
-    }
-  };
+
 
   const addToHistory = useCallback(
     async (searchTerm) => {
       if (!searchTerm || searchTerm.trim().length === 0) return;
 
       try {
-        // Remove duplicate if exists
-        let updated = searchHistory.filter((item) => item !== searchTerm.trim());
+        setSearchHistory((prev) => {
+          // Remove duplicate if exists
+          let updated = prev.filter((item) => item !== searchTerm.trim());
 
-        // Add to beginning
-        updated.unshift(searchTerm.trim());
+          // Add to beginning
+          updated.unshift(searchTerm.trim());
 
-        // Keep only recent searches
-        updated = updated.slice(0, MAX_SEARCH_HISTORY);
+          // Keep only recent searches
+          updated = updated.slice(0, MAX_SEARCH_HISTORY);
 
-        setSearchHistory(updated);
-        await AsyncStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updated));
+          // Save to storage
+          AsyncStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updated)).catch((error) =>
+            logger.error('SearchHistoryContext', 'Error saving to history', error)
+          );
+
+          return updated;
+        });
       } catch (error) {
         logger.error('SearchHistoryContext', 'Error adding to history', error);
       }
     },
-    [searchHistory]
+    []
   );
 
   const removeFromHistory = useCallback(
     async (searchTerm) => {
       try {
-        const updated = searchHistory.filter((item) => item !== searchTerm);
-        setSearchHistory(updated);
-        await AsyncStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updated));
+        setSearchHistory((prev) => {
+          const updated = prev.filter((item) => item !== searchTerm);
+          AsyncStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updated)).catch((error) =>
+            logger.error('SearchHistoryContext', 'Error saving to history', error)
+          );
+          return updated;
+        });
       } catch (error) {
         logger.error('SearchHistoryContext', 'Error removing from history', error);
       }
     },
-    [searchHistory]
+    []
   );
 
   const clearHistory = useCallback(async () => {

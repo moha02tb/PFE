@@ -1,36 +1,83 @@
 import React from 'react';
-import { View, Text, StyleSheet, Button, Linking } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { AppButton, AppCard, AppText } from './design-system';
+import { useAppTheme } from '../utils/theme';
 
 export default function PharmacyCard({ pharmacie }) {
   const { t } = useTranslation();
+  const { colors, radius } = useAppTheme();
+  const styles = createStyles(colors, radius);
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.nom}>{pharmacie.nom}</Text>
-      <Text style={styles.adresse}>📍 {pharmacie.adresse}</Text>
-      <Text style={styles.tel}>☎️ {pharmacie.telephone}</Text>
-      <Button
+    <AppCard style={styles.card}>
+      <View style={styles.header}>
+        <View style={styles.iconWrap}>
+          <MaterialCommunityIcons name="medical-bag" size={20} color={colors.primary} />
+        </View>
+        <View style={styles.titleWrap}>
+          <AppText variant="headerSmall" numberOfLines={2}>
+            {pharmacie.nom}
+          </AppText>
+          <AppText variant="bodySmall" color={colors.textSecondary} style={styles.address}>
+            {pharmacie.adresse}
+          </AppText>
+        </View>
+      </View>
+
+      <View style={styles.phoneRow}>
+        <Feather name="phone" size={15} color={colors.iconMuted} />
+        <AppText variant="bodySmall" color={colors.textSecondary}>
+          {pharmacie.telephone}
+        </AppText>
+      </View>
+
+      <AppButton
         title={t('home.call')}
-        color="#2196f3"
         onPress={() => Linking.openURL(`tel:${pharmacie.telephone}`)}
+        color="secondary"
+        fullWidth
+        icon={<Feather name="phone" size={15} color={colors.textInverse} />}
       />
-    </View>
+    </AppCard>
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    padding: 20,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  nom: { fontSize: 20, fontWeight: 'bold', marginBottom: 8, color: '#333' },
-  adresse: { marginBottom: 5, color: '#555' },
-  tel: { marginBottom: 10, color: '#555' },
-});
+const createStyles = (colors, radius) =>
+  StyleSheet.create({
+    card: {
+      marginBottom: 12,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      marginBottom: 12,
+    },
+    iconWrap: {
+      width: 48,
+      height: 48,
+      borderRadius: radius.lg,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.primaryMuted,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    titleWrap: {
+      flex: 1,
+    },
+    address: {
+      marginTop: 4,
+    },
+    phoneRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      padding: 12,
+      borderRadius: radius.lg,
+      backgroundColor: colors.surfaceSecondary,
+      marginBottom: 12,
+    },
+  });

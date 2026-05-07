@@ -19,5 +19,6 @@ export { default as FormErrorText } from './FormErrorText';
 export { default as PharmacyListItem } from './PharmacyListItem';
 export { default as LoadingSpinner } from './LoadingSpinner';
 export { default as EmptyState } from './EmptyState';
+export { default as EntranceView } from './EntranceView';
 export { default as LoadingSkeleton } from './SkeletonLoader';
 export { default as SkeletonLoader } from './SkeletonLoader';

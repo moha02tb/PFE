@@ -471,12 +471,12 @@ const ManagementPage = () => {
 
             <Card>
               <CardHeader className="border-b border-border">
-                <div className="flex items-center justify-between">
-                  <div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
                     <CardTitle>{t('management.pharmacies')}</CardTitle>
                     <p className="mt-1 text-sm text-muted-foreground">{t('management.managePharmacyRecords')}</p>
                   </div>
-                  <Button onClick={openPharmacyCreateModal}>
+                  <Button onClick={openPharmacyCreateModal} className="w-full sm:w-auto sm:flex-shrink-0">
                     <Plus className="h-4 w-4" />
                     {t('management.addPharmacy')}
                   </Button>
@@ -617,12 +617,12 @@ const ManagementPage = () => {
 
             <Card>
               <CardHeader className="border-b border-border">
-                <div className="flex items-center justify-between">
-                  <div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
                     <CardTitle>{t('management.gardeSchedules')}</CardTitle>
                     <p className="mt-1 text-sm text-muted-foreground">{t('management.manageGardeSchedules')}</p>
                   </div>
-                  <Button onClick={openGardeCreateModal}>
+                  <Button onClick={openGardeCreateModal} className="w-full sm:w-auto sm:flex-shrink-0">
                     <Plus className="h-4 w-4" />
                     {t('management.addSchedule')}
                   </Button>

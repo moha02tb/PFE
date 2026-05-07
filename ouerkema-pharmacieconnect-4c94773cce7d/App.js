@@ -3,7 +3,14 @@ import './i18n';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { ActivityIndicator, I18nManager, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  I18nManager,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -53,7 +60,7 @@ function AuthStackNavigator() {
       screenOptions={{
         headerShown: false,
         animation: 'fade',
-        contentStyle: { backgroundColor: theme.colors.backgroundAccent },
+        contentStyle: { backgroundColor: theme.colors.background },
       }}
     >
       <AuthStack.Screen name="LoginScreen" component={LoginScreen} />
@@ -84,8 +91,17 @@ function AppNavigator() {
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: theme.colors.backgroundAccent }]}>
-        <View style={[styles.loadingShell, { backgroundColor: theme.colors.surface }]}>
+      <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
+        <View
+          style={[
+            styles.loadingShell,
+            {
+              backgroundColor: theme.colors.surfaceElevated,
+              borderColor: theme.colors.border,
+              shadowColor: theme.colors.shadow,
+            },
+          ]}
+        >
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={[styles.loadingText, { color: theme.colors.text }]}>
             {t('common.loading', 'Loading your workspace')}
@@ -101,7 +117,7 @@ function AppNavigator() {
         colors: {
           ...DarkTheme.colors,
           primary: theme.colors.primary,
-          background: theme.colors.backgroundAccent,
+          background: theme.colors.background,
           card: theme.colors.surface,
           border: theme.colors.border,
           text: theme.colors.text,
@@ -112,7 +128,7 @@ function AppNavigator() {
         colors: {
           ...DefaultTheme.colors,
           primary: theme.colors.primary,
-          background: theme.colors.backgroundAccent,
+          background: theme.colors.background,
           card: theme.colors.surface,
           border: theme.colors.border,
           text: theme.colors.text,
@@ -123,10 +139,18 @@ function AppNavigator() {
     <NavigationContainer theme={navigationTheme}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!isAuthenticated ? (
-          <Stack.Screen name="AuthStack" component={AuthStackNavigator} options={{ animation: 'none' }} />
+          <Stack.Screen
+            name="AuthStack"
+            component={AuthStackNavigator}
+            options={{ animation: 'none' }}
+          />
         ) : (
           <>
-            <Stack.Screen name="MainApp" component={MainAppNavigator} options={{ animation: 'none' }} />
+            <Stack.Screen
+              name="MainApp"
+              component={MainAppNavigator}
+              options={{ animation: 'none' }}
+            />
             <Stack.Screen
               name="Chatbot"
               component={ChatbotScreen}
@@ -143,7 +167,7 @@ function AppNavigator() {
                   fontWeight: '700',
                   color: theme.colors.text,
                 },
-                contentStyle: { backgroundColor: theme.colors.backgroundAccent },
+                contentStyle: { backgroundColor: theme.colors.background },
               }}
             />
             <Stack.Screen
@@ -162,7 +186,7 @@ function AppNavigator() {
                   fontWeight: '700',
                   color: theme.colors.text,
                 },
-                contentStyle: { backgroundColor: theme.colors.backgroundAccent },
+                contentStyle: { backgroundColor: theme.colors.background },
               }}
             />
           </>
@@ -186,20 +210,24 @@ function MainAppNavigator({ navigation }) {
       <View
         style={[
           styles.tabIconShell,
-          { backgroundColor: focused ? theme.colors.primaryMuted : 'transparent' },
+          {
+            backgroundColor: focused ? theme.colors.primary : 'transparent',
+            borderColor: focused ? theme.colors.primary : theme.colors.border,
+          },
+          focused ? styles.tabIconShellActive : null,
         ]}
       >
         <IconComponent
           name={focused ? config.active : config.inactive}
-          size={20}
-          color={focused ? theme.colors.primary : theme.colors.iconMuted}
+          size={focused ? 21 : 20}
+          color={focused ? theme.colors.textInverse : theme.colors.iconMuted}
         />
       </View>
     );
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.backgroundAccent }}>
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Tab.Navigator
         screenOptions={({ route }) => ({
           headerTransparent: true,
@@ -210,16 +238,16 @@ function MainAppNavigator({ navigation }) {
             fontWeight: '700',
             color: theme.colors.text,
           },
-          headerStyle: { backgroundColor: theme.colors.backgroundAccent },
+          headerStyle: { backgroundColor: theme.colors.background },
           headerTintColor: theme.colors.text,
-          sceneStyle: { backgroundColor: theme.colors.backgroundAccent },
+          sceneStyle: { backgroundColor: theme.colors.background },
           tabBarShowLabel: true,
           tabBarActiveTintColor: theme.colors.primary,
           tabBarInactiveTintColor: theme.colors.textSecondary,
           tabBarLabelStyle: {
             fontSize: 11,
-            fontWeight: '700',
-            marginBottom: 4,
+            fontWeight: '600',
+            marginBottom: 3,
           },
           tabBarIcon: ({ focused }) => renderTabIcon(route.name, focused),
           tabBarStyle: {
@@ -227,27 +255,52 @@ function MainAppNavigator({ navigation }) {
             left: 16,
             right: 16,
             bottom: 12 + insets.bottom,
-            height: 76,
-            borderRadius: 28,
-            borderTopWidth: 0,
+            height: 74,
+            borderRadius: 24,
+            borderTopWidth: 1,
+            borderWidth: 1,
+            borderColor: theme.colors.tabBarBorder,
             backgroundColor: theme.colors.tabBar,
             paddingTop: 10,
             paddingBottom: 8,
             paddingHorizontal: 8,
             shadowColor: theme.colors.shadow,
-            shadowOpacity: isDarkMode ? 0.32 : 0.12,
-            shadowOffset: { width: 0, height: 12 },
-            shadowRadius: 24,
+            shadowOpacity: isDarkMode ? 0.28 : 0.1,
+            shadowOffset: { width: 0, height: 10 },
+            shadowRadius: 22,
             elevation: 14,
           },
-          tabBarItemStyle: { borderRadius: 18 },
+          tabBarItemStyle: { borderRadius: 16, paddingVertical: 2 },
         })}
       >
-        <Tab.Screen name="Accueil" component={HomeScreen} options={{ title: t('navigation.home'), tabBarLabel: t('navigation.home') }} />
-        <Tab.Screen name="Carte" component={MapboxMapScreen} options={{ title: t('navigation.map'), tabBarLabel: t('navigation.map') }} />
-        <Tab.Screen name="Calendrier" component={CalendarScreen} options={{ title: t('navigation.calendar'), tabBarLabel: t('navigation.calendar') }} />
-        <Tab.Screen name="Medicaments" component={MedicinesScreen} options={{ title: t('navigation.medicines', 'Medicines'), tabBarLabel: t('navigation.medicines', 'Medicines') }} />
-        <Tab.Screen name="Parametres" component={SettingsScreen} options={{ title: t('navigation.settings'), tabBarLabel: t('navigation.settings') }} />
+        <Tab.Screen
+          name="Accueil"
+          component={HomeScreen}
+          options={{ title: t('navigation.home'), tabBarLabel: t('navigation.home') }}
+        />
+        <Tab.Screen
+          name="Carte"
+          component={MapboxMapScreen}
+          options={{ title: t('navigation.map'), tabBarLabel: t('navigation.map') }}
+        />
+        <Tab.Screen
+          name="Calendrier"
+          component={CalendarScreen}
+          options={{ title: t('navigation.calendar'), tabBarLabel: t('navigation.calendar') }}
+        />
+        <Tab.Screen
+          name="Medicaments"
+          component={MedicinesScreen}
+          options={{
+            title: t('navigation.medicines', 'Medicines'),
+            tabBarLabel: t('navigation.medicines', 'Medicines'),
+          }}
+        />
+        <Tab.Screen
+          name="Parametres"
+          component={SettingsScreen}
+          options={{ title: t('navigation.settings'), tabBarLabel: t('navigation.settings') }}
+        />
       </Tab.Navigator>
 
       <TouchableOpacity
@@ -265,7 +318,7 @@ function MainAppNavigator({ navigation }) {
       >
         <View style={[styles.chatOuter, { backgroundColor: theme.colors.primary }]}>
           <View style={styles.chatInner}>
-            <Feather name="message-circle" size={22} color="#FFFFFF" />
+            <Feather name="message-circle" size={22} color={theme.colors.textInverse} />
           </View>
         </View>
       </TouchableOpacity>
@@ -316,17 +369,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 24,
     borderRadius: 24,
+    borderWidth: 1,
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 18,
+    elevation: 8,
   },
   loadingText: {
     fontSize: 15,
     fontWeight: '600',
   },
   tabIconShell: {
-    width: 42,
-    height: 32,
-    borderRadius: 16,
+    width: 44,
+    height: 34,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+  },
+  tabIconShellActive: {
+    shadowColor: '#10233A',
+    shadowOpacity: 0.16,
+    shadowOffset: { width: 0, height: 5 },
+    shadowRadius: 10,
+    elevation: 5,
   },
   chatBubble: {
     position: 'absolute',
@@ -338,9 +404,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 4,
-    borderColor: 'rgba(255,255,255,0.24)',
-    shadowColor: '#0C1B2A',
-    shadowOpacity: 0.24,
+    borderColor: 'rgba(247,251,255,0.24)',
+    shadowColor: '#10233A',
+    shadowOpacity: 0.22,
     shadowOffset: { width: 0, height: 10 },
     shadowRadius: 20,
     elevation: 14,
@@ -349,7 +415,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.14)',
+    backgroundColor: 'rgba(247,251,255,0.14)',
     alignItems: 'center',
     justifyContent: 'center',
   },

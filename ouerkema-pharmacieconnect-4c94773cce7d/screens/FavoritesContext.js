@@ -32,21 +32,24 @@ export const FavoritesProvider = ({ children }) => {
 
   // Load favorites from AsyncStorage on mount
   useEffect(() => {
-    loadFavorites();
+    let isMounted = true;
+    const loadFavoritesAsync = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(FAVORITES_STORAGE_KEY);
+        if (isMounted && stored) {
+          setFavorites(JSON.parse(stored));
+        }
+        if (isMounted) setIsLoading(false);
+      } catch (error) {
+        logger.error('FavoritesContext', 'Error loading favorites', error);
+        if (isMounted) setIsLoading(false);
+      }
+    };
+    loadFavoritesAsync();
+    return () => { isMounted = false; };
   }, []);
 
-  const loadFavorites = async () => {
-    try {
-      const stored = await AsyncStorage.getItem(FAVORITES_STORAGE_KEY);
-      if (stored) {
-        setFavorites(JSON.parse(stored));
-      }
-      setIsLoading(false);
-    } catch (error) {
-      logger.error('FavoritesContext', 'Error loading favorites', error);
-      setIsLoading(false);
-    }
-  };
+
 
   const saveFavorites = async (favs) => {
     try {

@@ -6,9 +6,9 @@ export default function IconButton({ icon, onPress, active = false, style, acces
   const { colors, radius } = useAppTheme();
   const styles = StyleSheet.create({
     button: {
-      width: 42,
-      height: 42,
-      borderRadius: radius.xl,
+      width: 44,
+      height: 44,
+      borderRadius: radius.lg,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: active ? colors.primaryMuted : colors.surfaceSecondary,
@@ -17,7 +17,7 @@ export default function IconButton({ icon, onPress, active = false, style, acces
     },
     pressed: {
       opacity: 0.86,
-      transform: [{ scale: 0.98 }],
+      transform: [{ translateY: 1 }, { scale: 0.98 }],
     },
   });
 

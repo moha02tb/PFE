@@ -1017,47 +1017,33 @@ a {
   .map-canvas {
     position: absolute;
     inset: 0;
-    background:
-      linear-gradient(135deg, oklch(0.80 0.05 235 / 0.35), transparent 38%),
-      linear-gradient(45deg, oklch(0.74 0.12 168 / 0.20), transparent 42%),
-      oklch(0.78 0.026 230);
+    cursor: grab;
+    background: #d8dee6;
+    touch-action: none;
+    user-select: none;
   }
 
-  .map-canvas::before {
-    position: absolute;
-    inset: 0;
+  .map-canvas:active {
+    cursor: grabbing;
+  }
+
+  .map-tile {
     z-index: 1;
-    pointer-events: none;
-    background:
-      linear-gradient(28deg, transparent 47%, oklch(0.55 0.07 240 / 0.20) 48%, transparent 49%),
-      linear-gradient(145deg, transparent 47%, oklch(0.65 0.10 170 / 0.18) 48%, transparent 49%),
-      linear-gradient(90deg, oklch(1 0 0 / 0.16) 1px, transparent 1px),
-      linear-gradient(oklch(1 0 0 / 0.16) 1px, transparent 1px);
-    background-size: 150px 150px, 190px 190px, 48px 48px, 48px 48px;
-    content: "";
-    mix-blend-mode: soft-light;
   }
 
-  .map-canvas::after {
+  .map-attribution {
     position: absolute;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-    background:
-      linear-gradient(180deg, oklch(1 0 0 / 0.08), transparent 32%),
-      linear-gradient(90deg, transparent, oklch(0.18 0.045 258 / 0.08));
-    content: "";
-  }
-
-  .map-canvas-grid {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    pointer-events: none;
-    background-image:
-      linear-gradient(90deg, rgba(15, 23, 42, 0.06) 1px, transparent 1px),
-      linear-gradient(rgba(15, 23, 42, 0.06) 1px, transparent 1px);
-    background-size: 48px 48px;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    z-index: 7;
+    border-radius: 6px;
+    background: oklch(var(--surface-elevated) / 0.86);
+    color: oklch(var(--muted-foreground));
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0.375rem 0.5rem;
+    backdrop-filter: blur(10px);
   }
 
   .map-directory-item {
@@ -1075,7 +1061,7 @@ a {
   }
 
   .map-pin-marker {
-    z-index: 4;
+    z-index: 6;
     transition: transform var(--duration-normal) var(--ease-out);
   }
 

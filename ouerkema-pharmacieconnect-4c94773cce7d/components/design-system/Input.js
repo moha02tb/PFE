@@ -25,7 +25,11 @@ export default function AppInput({
   const theme = useMemo(
     () =>
       typeof isDarkMode === 'boolean' || typeof isRTL === 'boolean'
-        ? { ...appTheme, isDarkMode: isDarkMode ?? appTheme.isDarkMode, isRTL: isRTL ?? appTheme.isRTL }
+        ? {
+            ...appTheme,
+            isDarkMode: isDarkMode ?? appTheme.isDarkMode,
+            isRTL: isRTL ?? appTheme.isRTL,
+          }
         : appTheme,
     [appTheme, isDarkMode, isRTL]
   );
@@ -37,7 +41,7 @@ export default function AppInput({
 
   const styles = StyleSheet.create({
     wrapper: {
-      marginBottom: 16,
+      marginBottom: 14,
     },
     label: {
       ...textStyles.labelLarge,
@@ -47,16 +51,16 @@ export default function AppInput({
       fontWeight: '600',
     },
     field: {
-      minHeight: 54,
-      borderRadius: radius.xl,
-      borderWidth: 1,
-      borderColor: hasError
-        ? colors.error
-        : focused
-          ? colors.primary
-          : colors.border,
-      backgroundColor: editable ? (focused ? colors.inputFocused : colors.input) : colors.disabledSurface,
-      paddingHorizontal: 14,
+      minHeight: 52,
+      borderRadius: radius.lg,
+      borderWidth: focused || hasError ? 1.5 : 1,
+      borderColor: hasError ? colors.error : focused ? colors.primary : colors.border,
+      backgroundColor: editable
+        ? focused
+          ? colors.inputFocused
+          : colors.input
+        : colors.disabledSurface,
+      paddingHorizontal: 15,
       flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: 10,
@@ -81,16 +85,17 @@ export default function AppInput({
       textAlign: theme.isRTL ? 'right' : 'left',
     },
     action: {
-      minWidth: 24,
+      minWidth: 36,
+      minHeight: 44,
       alignItems: 'center',
       justifyContent: 'center',
     },
     focusLine: {
       position: 'absolute',
-      left: 14,
-      right: 14,
+      left: 16,
+      right: 16,
       bottom: 0,
-      height: 3,
+      height: 2,
       borderRadius: radius.full,
       backgroundColor: hasError ? colors.error : colors.primary,
       opacity: focused ? 1 : 0,

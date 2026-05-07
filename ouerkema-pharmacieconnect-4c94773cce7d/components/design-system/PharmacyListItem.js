@@ -6,6 +6,7 @@ import { useAppTheme } from '../../utils/theme';
 import AppButton from './Button';
 import AppCard from './Card';
 import AppText from './Text';
+import EntranceView from './EntranceView';
 import FavoriteButton from './FavoriteButton';
 import StatusBadge from './Badge';
 
@@ -19,13 +20,14 @@ export default function PharmacyListItem({
   onCall,
   onDirections,
   secondaryActionLabel,
+  animationIndex = 0,
 }) {
   const { t } = useTranslation();
-  const { colors, radius, textStyles, isRTL } = useAppTheme();
+  const { colors, radius, isRTL } = useAppTheme();
 
   const styles = StyleSheet.create({
     card: {
-      marginBottom: 14,
+      marginBottom: 12,
     },
     topRow: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
@@ -42,10 +44,12 @@ export default function PharmacyListItem({
     iconWrap: {
       width: 50,
       height: 50,
-      borderRadius: 16,
+      borderRadius: radius.lg,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: colors.primaryMuted,
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     metaRow: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
@@ -56,7 +60,7 @@ export default function PharmacyListItem({
     },
     detailsBox: {
       backgroundColor: colors.surfaceSecondary,
-      borderRadius: radius.xl,
+      borderRadius: radius.lg,
       padding: 14,
       borderWidth: 1,
       borderColor: colors.border,
@@ -69,6 +73,7 @@ export default function PharmacyListItem({
     },
     actionRow: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
+      flexWrap: 'wrap',
       gap: 10,
       marginTop: 14,
     },
@@ -76,7 +81,7 @@ export default function PharmacyListItem({
       flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: 8,
-      borderRadius: radius.full,
+      borderRadius: radius.lg,
       backgroundColor: colors.chip,
       paddingHorizontal: 10,
       paddingVertical: 8,
@@ -87,7 +92,7 @@ export default function PharmacyListItem({
       flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: 6,
-      borderRadius: radius.full,
+      borderRadius: radius.lg,
       backgroundColor: colors.primaryMuted,
       paddingHorizontal: 10,
       paddingVertical: 8,
@@ -96,87 +101,103 @@ export default function PharmacyListItem({
   });
 
   return (
-    <AppCard style={styles.card}>
-      <View style={styles.topRow}>
-        <Pressable style={styles.identity} onPress={onOpenDetails}>
-          <View style={styles.iconWrap}>
-            <MaterialCommunityIcons name="medical-bag" size={20} color={colors.primary} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <AppText variant="headerSmall">{item.name}</AppText>
-            <AppText variant="bodySmall" color={colors.textSecondary} style={{ marginTop: 4 }}>
-              {distanceLabel}
+    <EntranceView index={animationIndex} distance={12}>
+      <AppCard style={styles.card}>
+        <View style={styles.topRow}>
+          <Pressable style={styles.identity} onPress={onOpenDetails}>
+            <View style={styles.iconWrap}>
+              <MaterialCommunityIcons name="medical-bag" size={20} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <AppText variant="headerSmall" numberOfLines={2}>
+                {item.name}
+              </AppText>
+              <AppText variant="bodySmall" color={colors.textSecondary} style={{ marginTop: 4 }}>
+                {distanceLabel}
+              </AppText>
+            </View>
+          </Pressable>
+          <FavoriteButton
+            active={favorite}
+            onPress={onToggleFavorite}
+            accessibilityLabel={favorite ? t('home.removeFavorite') : t('home.addFavorite')}
+          />
+        </View>
+
+        <View style={styles.metaRow}>
+          <StatusBadge status={item.isOpen ? 'open' : 'closed'} />
+          {item.emergency ? (
+            <StatusBadge status="onDuty">{t('home.onDuty', 'On duty')}</StatusBadge>
+          ) : null}
+          {item.governorate ? (
+            <View style={styles.gouvernorateBadge}>
+              <MaterialCommunityIcons name="map-marker-radius" size={12} color={colors.primary} />
+              <AppText variant="labelSmall" color={colors.primary}>
+                {item.governorate}
+              </AppText>
+            </View>
+          ) : null}
+          {rating > 0 ? (
+            <View style={styles.detailPill}>
+              <Ionicons name="star" size={14} color="#F59E0B" />
+              <AppText variant="labelMedium" color="#A16000">
+                {rating.toFixed(1)}
+              </AppText>
+            </View>
+          ) : null}
+        </View>
+
+        <View style={styles.detailsBox}>
+          <View style={styles.detailRow}>
+            <Entypo name="location-pin" size={16} color={colors.primary} />
+            <AppText variant="bodyMedium" style={{ flex: 1 }} numberOfLines={2}>
+              {item.address}
             </AppText>
           </View>
-        </Pressable>
-        <FavoriteButton
-          active={favorite}
-          onPress={onToggleFavorite}
-          accessibilityLabel={favorite ? t('home.removeFavorite') : t('home.addFavorite')}
-        />
-      </View>
-
-      <View style={styles.metaRow}>
-        <StatusBadge status={item.isOpen ? 'open' : 'closed'} />
-        {item.emergency ? <StatusBadge status="onDuty">{t('home.onDuty', 'On duty')}</StatusBadge> : null}
-        {item.governorate ? (
-          <View style={styles.gouvernorateBadge}>
-            <MaterialCommunityIcons name="map-marker-radius" size={12} color={colors.primary} />
-            <AppText variant="labelSmall" color={colors.primary}>{item.governorate}</AppText>
-          </View>
-        ) : null}
-        {rating > 0 ? (
-          <View style={styles.detailPill}>
-            <Ionicons name="star" size={14} color="#F59E0B" />
-            <AppText variant="labelMedium" color="#A16000">{rating.toFixed(1)}</AppText>
-          </View>
-        ) : null}
-      </View>
-
-      <View style={styles.detailsBox}>
-        <View style={styles.detailRow}>
-          <Entypo name="location-pin" size={16} color={colors.primary} />
-          <AppText variant="bodyMedium" style={{ flex: 1 }}>{item.address}</AppText>
+          {item.phone ? (
+            <View style={styles.detailRow}>
+              <Feather name="phone" size={15} color={colors.iconMuted} />
+              <AppText variant="bodySmall" color={colors.textSecondary}>
+                {item.phone}
+              </AppText>
+            </View>
+          ) : null}
+          {item.openHours ? (
+            <View style={[styles.detailRow, { marginBottom: 0 }]}>
+              <Feather name="clock" size={15} color={colors.iconMuted} />
+              <AppText variant="bodySmall" color={colors.textSecondary}>
+                {item.openHours}
+              </AppText>
+            </View>
+          ) : null}
         </View>
-        {item.phone ? (
-          <View style={styles.detailRow}>
-            <Feather name="phone" size={15} color={colors.iconMuted} />
-            <AppText variant="bodySmall" color={colors.textSecondary}>{item.phone}</AppText>
-          </View>
-        ) : null}
-        {item.openHours ? (
-          <View style={[styles.detailRow, { marginBottom: 0 }]}>
-            <Feather name="clock" size={15} color={colors.iconMuted} />
-            <AppText variant="bodySmall" color={colors.textSecondary}>{item.openHours}</AppText>
-          </View>
-        ) : null}
-      </View>
 
-      <View style={styles.actionRow}>
-        <AppButton
-          title={t('home.call', 'Call')}
-          onPress={onCall}
-          color="secondary"
-          size="small"
-          style={{ flex: 1 }}
-          icon={<Feather name="phone" size={14} color="#FFFFFF" />}
-        />
-        <AppButton
-          title={t('home.directions', 'Directions')}
-          onPress={onDirections}
-          size="small"
-          style={{ flex: 1 }}
-          icon={<Entypo name="map" size={14} color="#FFFFFF" />}
-        />
-        <AppButton
-          title={secondaryActionLabel || t('home.details', 'Details')}
-          onPress={onOpenDetails}
-          variant="outlined"
-          size="small"
-          style={{ flex: 1 }}
-          icon={<Feather name="info" size={14} color={colors.primary} />}
-        />
-      </View>
-    </AppCard>
+        <View style={styles.actionRow}>
+          <AppButton
+            title={t('home.call', 'Call')}
+            onPress={onCall}
+            color="secondary"
+            size="small"
+            style={{ flex: 1 }}
+            icon={<Feather name="phone" size={14} color={colors.textInverse} />}
+          />
+          <AppButton
+            title={t('home.directions', 'Directions')}
+            onPress={onDirections}
+            size="small"
+            style={{ flex: 1 }}
+            icon={<Entypo name="map" size={14} color={colors.textInverse} />}
+          />
+          <AppButton
+            title={secondaryActionLabel || t('home.details', 'Details')}
+            onPress={onOpenDetails}
+            variant="outlined"
+            size="small"
+            style={{ flexBasis: '100%' }}
+            icon={<Feather name="info" size={14} color={colors.primary} />}
+          />
+        </View>
+      </AppCard>
+    </EntranceView>
   );
 }
