@@ -70,6 +70,7 @@ logs/
 .agents/
 .augment/
 .codex
+.expo/
 .eas-tmp/
 skills-lock.json
 tmp/

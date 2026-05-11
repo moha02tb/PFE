@@ -1,3 +1,0 @@
-eas.json is not valid.
-- "build.development.android.credentialsSource" must be one of [local, remote]
-    Error: build command failed.
