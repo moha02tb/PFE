@@ -21,7 +21,7 @@ module.exports = {
     },
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(expo-modules-autolinking|expo-modules-core|expo-font|@react-navigation|@react-native-async-storage|react-native-gesture-handler|react-native-reanimated|react-native-screens|react-native-safe-area-context|react-native-maps|@react-native-community|i18next|react-i18next)/)',
+    'node_modules/(?!(expo-modules-autolinking|expo-modules-core|expo-font|@react-navigation|@react-native|@react-native-async-storage|react-native|react-native-gesture-handler|react-native-reanimated|react-native-screens|react-native-safe-area-context|@react-native-community|i18next|react-i18next)/)',
   ],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',

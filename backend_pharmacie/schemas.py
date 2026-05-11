@@ -15,7 +15,9 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
+
+from region_scope import normalize_region
 
 # ---- INPUT VALIDATION SCHEMAS ----
 
@@ -155,7 +157,11 @@ class AdminResponse(BaseModel):
     email: str
     phone: Optional[str] = None
     role: str
+    region_scope: Optional[str] = None
     is_active: bool
+    created_at: Optional[datetime] = None
+    created_by: Optional[int] = None
+    last_login: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -201,7 +207,11 @@ class AdminCreate(BaseModel):
     )
     role: str = Field(
         default="admin",
-        description="Admin role: 'admin' or 'super_admin'"
+        description="Admin role: 'admin', 'super_admin', or 'assistant'"
+    )
+    region_scope: Optional[str] = Field(
+        None,
+        description="Assistant region scope: 'north', 'middle', or 'south'",
     )
 
     @field_validator("password")
@@ -216,6 +226,32 @@ class AdminCreate(BaseModel):
             raise ValueError("Password must contain at least one digit")
         return v
 
+    @field_validator("role")
+    @classmethod
+    def validate_role(cls, v):
+        role = str(v).strip().lower()
+        if role not in {"admin", "super_admin", "assistant"}:
+            raise ValueError("Role must be 'admin', 'super_admin', or 'assistant'")
+        return role
+
+    @field_validator("region_scope")
+    @classmethod
+    def validate_region_scope(cls, v):
+        if v is None or str(v).strip() == "":
+            return None
+        normalized = normalize_region(v)
+        if not normalized:
+            raise ValueError("Region scope must be 'north', 'middle', or 'south'")
+        return normalized
+
+    @model_validator(mode="after")
+    def validate_assistant_region(self):
+        if self.role == "assistant" and not self.region_scope:
+            raise ValueError("Assistant accounts must have a region scope")
+        if self.role != "assistant":
+            self.region_scope = None
+        return self
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -223,6 +259,86 @@ class AdminCreate(BaseModel):
                 "email": "admin@pharmacie.com",
                 "password": "SecurePass123",
                 "role": "admin",
+                "region_scope": None,
+            }
+        }
+
+
+class AssistantCreate(AdminCreate):
+    """Assistant account creation request with mandatory regional scope."""
+
+    role: str = Field(
+        default="assistant",
+        description="Assistant role. Must be 'assistant'.",
+    )
+    region_scope: str = Field(
+        ...,
+        description="Assistant region scope: 'north', 'middle', or 'south'",
+    )
+
+    @field_validator("role")
+    @classmethod
+    def validate_assistant_role(cls, v):
+        role = str(v).strip().lower()
+        if role != "assistant":
+            raise ValueError("Assistant creation only supports the 'assistant' role")
+        return role
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "nomUtilisateur": "north_assistant",
+                "email": "assistant.north@pharmacie.com",
+                "password": "SecurePass123",
+                "role": "assistant",
+                "region_scope": "north",
+            }
+        }
+
+
+class AssistantUpdate(BaseModel):
+    """Admin-managed updates for an assistant account."""
+
+    region_scope: Optional[str] = Field(
+        None,
+        description="Assistant region scope: 'north', 'middle', or 'south'",
+    )
+    is_active: Optional[bool] = Field(None, description="Enable or disable assistant login")
+    password: Optional[str] = Field(
+        None,
+        min_length=8,
+        description="Optional replacement password for the assistant",
+    )
+
+    @field_validator("region_scope")
+    @classmethod
+    def validate_update_region_scope(cls, v):
+        if v is None or str(v).strip() == "":
+            return None
+        normalized = normalize_region(v)
+        if not normalized:
+            raise ValueError("Region scope must be 'north', 'middle', or 'south'")
+        return normalized
+
+    @field_validator("password")
+    @classmethod
+    def validate_update_password(cls, v):
+        if v is None or v == "":
+            return None
+        if not any(c.isupper() for c in v):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not any(c.islower() for c in v):
+            raise ValueError("Password must contain at least one lowercase letter")
+        if not any(c.isdigit() for c in v):
+            raise ValueError("Password must contain at least one digit")
+        return v
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "region_scope": "south",
+                "is_active": True,
+                "password": "NewSecurePass123",
             }
         }
 

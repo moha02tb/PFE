@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import MapView, { Marker, Polyline, UrlTile } from 'react-native-maps';
+import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
 import { Entypo, Feather, Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -14,13 +14,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from './LanguageContext';
 import logger from '../utils/logger';
 import {
-  AppButton,       
+  AppButton,
   AppCard,
   AppText,
   SearchBar,
   StatusBadge,
 } from '../components/design-system';
-import { API_CONFIG } from '../config/api';
+import { loadPharmaciesAsync } from '../utils/pharmacyDataLoader';
 import { useAppTheme } from '../utils/theme';
 
 const DEFAULT_REGION = {
@@ -47,6 +47,9 @@ const TILE_PROVIDERS = {
     maxZoom: 19,
   },
 };
+
+const LEAFLET_CSS_URL = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+const LEAFLET_JS_URL = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
 
 const parseCoordinate = (value) => {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -140,13 +143,310 @@ const getStatus = (pharmacy) => {
   return 'open';
 };
 
+const createLeafletMapHtml = (initialRegion, palette) => {
+  const bootState = JSON.stringify({
+    initialRegion,
+    palette,
+    tileProviders: TILE_PROVIDERS,
+  });
+
+  return `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <link rel="stylesheet" href="${LEAFLET_CSS_URL}" />
+  <style>
+    html, body, #map {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: #eef3f8;
+      overflow: hidden;
+    }
+
+    .leaflet-container {
+      width: 100%;
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #eef3f8;
+    }
+
+    .leaflet-control-zoom {
+      margin-right: 16px !important;
+      margin-bottom: 184px !important;
+      border: 0 !important;
+      box-shadow: 0 10px 24px rgba(16, 35, 58, 0.16) !important;
+    }
+
+    .leaflet-control-zoom a {
+      width: 42px !important;
+      height: 42px !important;
+      line-height: 42px !important;
+      color: #10233a !important;
+      border: 0 !important;
+    }
+
+    .pharmacy-marker {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--marker-color);
+      border: 3px solid #ffffff;
+      box-shadow: 0 6px 16px rgba(16, 35, 58, 0.22);
+      box-sizing: border-box;
+    }
+
+    .pharmacy-marker.is-selected {
+      width: 30px;
+      height: 30px;
+      box-shadow: 0 0 0 6px rgba(0, 102, 204, 0.18), 0 8px 18px rgba(16, 35, 58, 0.28);
+    }
+
+    .user-location-marker {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--marker-color);
+      border: 4px solid #ffffff;
+      box-shadow: 0 0 0 8px rgba(0, 102, 204, 0.18), 0 6px 16px rgba(16, 35, 58, 0.22);
+      box-sizing: border-box;
+    }
+
+    .map-error {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: #10233a;
+      text-align: center;
+      background: #eef3f8;
+      font: 600 15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="map-error" class="map-error">Map could not load.</div>
+  <script src="${LEAFLET_JS_URL}"></script>
+  <script>
+    (function () {
+      var boot = ${bootState};
+      var map = null;
+      var tileLayer = null;
+      var markerLayer = null;
+      var routeLayer = null;
+      var selectedId = null;
+      var currentTileProvider = 'standard';
+      var palette = boot.palette || {};
+
+      function post(type, payload) {
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({ type: type, payload: payload || {} }));
+        }
+      }
+
+      function showError(message) {
+        var errorEl = document.getElementById('map-error');
+        if (errorEl) {
+          errorEl.textContent = message || 'Map could not load.';
+          errorEl.style.display = 'flex';
+        }
+        post('error', { message: message || 'Map could not load.' });
+      }
+
+      function zoomFromDelta(delta) {
+        var nextDelta = Number(delta) || 0.08;
+        return Math.max(3, Math.min(18, Math.round(Math.log2(360 / nextDelta))));
+      }
+
+      function toLatLng(coordinate) {
+        if (!coordinate) return null;
+        var latitude = Number(coordinate.latitude);
+        var longitude = Number(coordinate.longitude);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+        return [latitude, longitude];
+      }
+
+      function markerColor(status, isSelected) {
+        if (isSelected) return palette.primary || '#0066cc';
+        if (status === 'closed') return palette.error || '#d92d20';
+        if (status === 'emergency' || status === 'onDuty') return palette.warning || '#b54708';
+        return palette.success || '#14804a';
+      }
+
+      function createMarkerIcon(status, isSelected) {
+        var color = markerColor(status, isSelected);
+        var className = isSelected ? 'pharmacy-marker is-selected' : 'pharmacy-marker';
+        var size = isSelected ? 30 : 24;
+        return L.divIcon({
+          className: '',
+          html: '<div class="' + className + '" style="--marker-color:' + color + '"></div>',
+          iconSize: [size, size],
+          iconAnchor: [size / 2, size / 2]
+        });
+      }
+
+      function createUserIcon() {
+        var color = palette.primary || '#0066cc';
+        return L.divIcon({
+          className: '',
+          html: '<div class="user-location-marker" style="--marker-color:' + color + '"></div>',
+          iconSize: [20, 20],
+          iconAnchor: [10, 10]
+        });
+      }
+
+      function applyTileProvider(providerKey) {
+        currentTileProvider = providerKey || currentTileProvider || 'standard';
+        var provider = boot.tileProviders[currentTileProvider] || boot.tileProviders.standard;
+        if (!provider || !map) return;
+        if (tileLayer) {
+          map.removeLayer(tileLayer);
+        }
+        tileLayer = L.tileLayer(provider.urlTemplate, {
+          maxZoom: provider.maxZoom || 19,
+          attribution: 'OpenStreetMap contributors',
+          crossOrigin: true
+        }).addTo(map);
+      }
+
+      function renderData(payload) {
+        if (!map || !markerLayer || !routeLayer) return;
+        payload = payload || {};
+        selectedId = payload.selectedId == null ? null : String(payload.selectedId);
+        if (payload.tileProvider) {
+          applyTileProvider(payload.tileProvider);
+        }
+
+        markerLayer.clearLayers();
+        routeLayer.clearLayers();
+
+        (payload.pharmacies || []).forEach(function (pharmacy) {
+          var latLng = toLatLng(pharmacy);
+          if (!latLng) return;
+          var id = String(pharmacy.id);
+          var isSelected = selectedId === id;
+          L.marker(latLng, {
+            icon: createMarkerIcon(pharmacy.status, isSelected),
+            keyboard: false
+          })
+            .addTo(markerLayer)
+            .on('click', function () {
+              post('markerPress', { id: id });
+            });
+        });
+
+        var userLatLng = toLatLng(payload.userLocation);
+        if (userLatLng) {
+          L.marker(userLatLng, {
+            icon: createUserIcon(),
+            keyboard: false,
+            interactive: false
+          }).addTo(markerLayer);
+        }
+
+        var route = (payload.routeCoordinates || []).map(toLatLng).filter(Boolean);
+        if (route.length) {
+          L.polyline(route, {
+            color: palette.primary || '#0066cc',
+            weight: 5,
+            opacity: 0.88,
+            lineCap: 'round',
+            lineJoin: 'round'
+          }).addTo(routeLayer);
+        }
+      }
+
+      function fitCoordinates(coordinates) {
+        if (!map) return;
+        var latLngs = (coordinates || []).map(toLatLng).filter(Boolean);
+        if (latLngs.length > 1) {
+          map.fitBounds(L.latLngBounds(latLngs), {
+            paddingTopLeft: [56, 150],
+            paddingBottomRight: [56, 220],
+            animate: true
+          });
+        } else if (latLngs.length === 1) {
+          map.setView(latLngs[0], 14, { animate: true });
+        }
+      }
+
+      function centerOnRegion(region) {
+        if (!map) return;
+        var latLng = toLatLng(region);
+        if (!latLng) return;
+        map.setView(latLng, zoomFromDelta(region.latitudeDelta || region.delta), { animate: true });
+      }
+
+      function handleNativeMessage(rawMessage) {
+        var message = rawMessage;
+        if (typeof rawMessage === 'string') {
+          try {
+            message = JSON.parse(rawMessage);
+          } catch (error) {
+            return;
+          }
+        }
+        if (!message || !message.type) return;
+
+        if (message.type === 'setData') renderData(message.payload);
+        if (message.type === 'fitCoordinates') fitCoordinates(message.payload && message.payload.coordinates);
+        if (message.type === 'center') centerOnRegion(message.payload && message.payload.region);
+        if (message.type === 'setTileProvider') applyTileProvider(message.payload && message.payload.tileProvider);
+      }
+
+      window.__PHARMACY_MAP_BRIDGE__ = handleNativeMessage;
+
+      function init() {
+        if (!window.L) {
+          showError('OpenStreetMap map assets could not load.');
+          return;
+        }
+
+        var initial = boot.initialRegion || {};
+        map = L.map('map', {
+          zoomControl: false,
+          attributionControl: false,
+          preferCanvas: true
+        }).setView(
+          [Number(initial.latitude) || 36.8065, Number(initial.longitude) || 10.1815],
+          zoomFromDelta(initial.latitudeDelta || 0.32)
+        );
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+        markerLayer = L.layerGroup().addTo(map);
+        routeLayer = L.layerGroup().addTo(map);
+        applyTileProvider('standard');
+        post('ready');
+      }
+
+      window.addEventListener('message', function (event) {
+        handleNativeMessage(event.data);
+      });
+      document.addEventListener('message', function (event) {
+        handleNativeMessage(event.data);
+      });
+
+      init();
+    })();
+  </script>
+</body>
+</html>`;
+};
+
 export default function MapboxMapScreen({ route }) {
   const params = route?.params;
   const routeInitialLocation = params?.initialLocation;
   const routePharmacies = params?.pharmacies;
   const routeTargetPharmacy = params?.targetPharmacy;
+  const shouldRequestUserLocation = Boolean(params?.requestUserLocation);
+  const locationRequestId = params?.locationRequestId;
   const mapRef = useRef(null);
   const initialLocationRequestRef = useRef(false);
+  const lastLocationRequestIdRef = useRef(null);
+  const lastRouteParamsRef = useRef(null);
   const lastNearbyRequestRef = useRef(null);
   const { t } = useTranslation();
   const { isRTL } = useLanguage();
@@ -164,7 +464,6 @@ export default function MapboxMapScreen({ route }) {
   const initialPharmacies = useMemo(() => normalizePharmacies(routePharmacies), [routePharmacies]);
   const initialTarget = useMemo(() => normalizePharmacy(routeTargetPharmacy, 0), [routeTargetPharmacy]);
 
-  const [region, setRegion] = useState(initialRegion);
   const [userLocation, setUserLocation] = useState(getPharmacyCoordinate(routeInitialLocation));
   const [pharmacies, setPharmacies] = useState(initialPharmacies);
   const [selectedPharmacy, setSelectedPharmacy] = useState(initialTarget);
@@ -181,6 +480,42 @@ export default function MapboxMapScreen({ route }) {
   const [routeError, setRouteError] = useState('');
   const [isRouting, setIsRouting] = useState(false);
 
+  const mapHtml = useMemo(
+    () =>
+      createLeafletMapHtml(initialRegion, {
+        primary: colors.primary,
+        primaryMuted: colors.primaryMuted,
+        success: colors.success,
+        warning: colors.warning,
+        error: colors.error,
+      }),
+    [
+      colors.error,
+      colors.primary,
+      colors.primaryMuted,
+      colors.success,
+      colors.warning,
+      initialRegion,
+    ]
+  );
+  const mapSource = useMemo(
+    () => ({ html: mapHtml, baseUrl: 'https://osm.local' }),
+    [mapHtml]
+  );
+
+  const sendMapMessage = useCallback((type, payload = {}) => {
+    if (!mapRef.current || !mapReady) return;
+
+    try {
+      const message = JSON.stringify({ type, payload });
+      mapRef.current.injectJavaScript(
+        `window.__PHARMACY_MAP_BRIDGE__ && window.__PHARMACY_MAP_BRIDGE__(${JSON.stringify(message)}); true;`
+      );
+    } catch (error) {
+      logger.warn('MapboxMapScreen', `${type} failed`, error);
+    }
+  }, [mapReady]);
+
   const filteredPharmacies = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
     if (!query) return pharmacies;
@@ -194,21 +529,13 @@ export default function MapboxMapScreen({ route }) {
 
   const fitMapToCoordinates = useCallback(
     (coordinates) => {
-      if (!mapRef.current || !mapReady) return;
+      if (!mapReady) return;
 
-      if (coordinates.length > 1) {
-        mapRef.current.fitToCoordinates(coordinates.slice(0, 150), {
-          edgePadding: { top: 150, right: 56, bottom: 220, left: 56 },
-          animated: true,
-        });
-        return;
-      }
-
-      if (coordinates.length === 1) {
-        mapRef.current.animateToRegion(getRegionFromCoordinate(coordinates[0], 0.08), 450);
-      }
+      sendMapMessage('fitCoordinates', {
+        coordinates: coordinates.slice(0, 150),
+      });
     },
-    [mapReady]
+    [mapReady, sendMapMessage]
   );
 
   const fitCoordinates = useCallback(
@@ -225,37 +552,33 @@ export default function MapboxMapScreen({ route }) {
 
     setFetchState('loading');
     try {
-      const query = `lat=${coordinate.latitude}&lon=${coordinate.longitude}&radius_km=20&limit=200`;
-      const response = await fetch(`${API_CONFIG.baseURL}${API_CONFIG.endpoints.pharmaciesNearby}?${query}`, {
-        headers: { Accept: 'application/json' },
-      });
-
-      if (!response.ok) {
-        logger.warn('MapboxMapScreen', `Nearby API failed with status ${response.status}`);
-        setFetchState('idle');
-        return;
-      }
-
-      const rows = normalizePharmacies(await response.json());
+      const rows = normalizePharmacies(await loadPharmaciesAsync(t, true, {
+        searchCoords: coordinate,
+        radiusKm: 20,
+        limit: 100,
+      }));
       if (rows.length) {
         setPharmacies(rows);
         setFetchState('ready');
-        return;
+        return rows;
       }
 
+      setPharmacies([]);
       setFetchState('empty');
+      return [];
     } catch (error) {
       logger.warn('MapboxMapScreen', 'Nearby fetch failed', error);
+      setPharmacies([]);
       setFetchState('idle');
+      return [];
     }
-  }, []);
+  }, [t]);
 
   const centerOnCoordinate = useCallback((coordinate, delta = 0.08) => {
     if (!coordinate) return;
     const nextRegion = getRegionFromCoordinate(coordinate, delta);
-    setRegion(nextRegion);
-    mapRef.current?.animateToRegion(nextRegion, 450);
-  }, []);
+    sendMapMessage('center', { region: nextRegion });
+  }, [sendMapMessage]);
 
   const requestLocation = useCallback(async() => {
     setIsLocating(true);
@@ -307,7 +630,7 @@ export default function MapboxMapScreen({ route }) {
   }, []);
 
   const showRouteInApp = useCallback(
-    async(pharmacy) => {
+    async(pharmacy, originOverride = null) => {
       const destination = pharmacy?.markerCoordinate || getPharmacyCoordinate(pharmacy);
       if (!destination) return;
 
@@ -318,7 +641,7 @@ export default function MapboxMapScreen({ route }) {
       setIsRouting(true);
 
       try {
-        const origin = userLocation || await requestLocation();
+        const origin = originOverride || userLocation || await requestLocation();
         if (!origin) {
           setRouteError(t('map.locationNeededForRoute', 'Enable location to show the road in the app.'));
           return;
@@ -371,13 +694,68 @@ export default function MapboxMapScreen({ route }) {
     [centerOnCoordinate, showRouteInApp]
   );
 
+  const mapData = useMemo(
+    () => ({
+      tileProvider,
+      selectedId: selectedPharmacy?.id == null ? null : String(selectedPharmacy.id),
+      userLocation,
+      routeCoordinates,
+      pharmacies: filteredPharmacies.map((pharmacy) => ({
+        id: String(pharmacy.id),
+        latitude: pharmacy.markerCoordinate.latitude,
+        longitude: pharmacy.markerCoordinate.longitude,
+        status: getStatus(pharmacy),
+      })),
+    }),
+    [filteredPharmacies, routeCoordinates, selectedPharmacy?.id, tileProvider, userLocation]
+  );
+
+  const handleMapMessage = useCallback(
+    (event) => {
+      let message = null;
+      try {
+        message = JSON.parse(event.nativeEvent.data);
+      } catch (error) {
+        logger.warn('MapboxMapScreen', 'Invalid map message', error);
+        return;
+      }
+
+      if (message?.type === 'ready') {
+        setMapReady(true);
+        return;
+      }
+
+      if (message?.type === 'markerPress') {
+        const markerId = String(message.payload?.id);
+        const pharmacy = filteredPharmacies.find((item) => String(item.id) === markerId);
+        if (pharmacy) {
+          selectPharmacy(pharmacy);
+        }
+        return;
+      }
+
+      if (message?.type === 'error') {
+        logger.warn('MapboxMapScreen', message.payload?.message || 'Leaflet map failed');
+        setPermissionMessage(t('map.mapUnavailable', 'Map could not load. Check your connection.'));
+      }
+    },
+    [filteredPharmacies, selectPharmacy, t]
+  );
+
   useEffect(() => {
+    if (!mapReady) return;
+    sendMapMessage('setData', mapData);
+  }, [mapData, mapReady, sendMapMessage]);
+
+  useEffect(() => {
+    if (lastRouteParamsRef.current === params) return undefined;
+    lastRouteParamsRef.current = params;
+
     const nextRegion = getInitialRegion(params);
     const nextPharmacies = normalizePharmacies(routePharmacies);
     const nextTarget = normalizePharmacy(routeTargetPharmacy, 0);
     const nextUserLocation = getPharmacyCoordinate(routeInitialLocation);
 
-    setRegion(nextRegion);
     if (nextPharmacies.length) setPharmacies(nextPharmacies);
     setSelectedPharmacy(nextTarget);
     if (nextUserLocation) setUserLocation(nextUserLocation);
@@ -385,13 +763,13 @@ export default function MapboxMapScreen({ route }) {
     const timer = setTimeout(() => {
       if (nextTarget?.markerCoordinate) {
         centerOnCoordinate(nextTarget.markerCoordinate, 0.055);
-        showRouteInApp(nextTarget);
+        showRouteInApp(nextTarget, nextUserLocation);
       } else if (nextPharmacies.length) {
         const coordinates = nextPharmacies.map((item) => item.markerCoordinate).filter(Boolean);
         if (nextUserLocation) coordinates.push(nextUserLocation);
         fitMapToCoordinates(coordinates);
       } else {
-        mapRef.current?.animateToRegion(nextRegion, 350);
+        sendMapMessage('center', { region: nextRegion });
       }
     }, 350);
 
@@ -404,13 +782,34 @@ export default function MapboxMapScreen({ route }) {
     routePharmacies,
     routeTargetPharmacy,
     showRouteInApp,
+    sendMapMessage,
   ]);
 
   useEffect(() => {
-    if (initialLocationRequestRef.current || routeInitialLocation || initialPharmacies.length) return;
+    if (shouldRequestUserLocation) {
+      const requestKey = locationRequestId || 'requested';
+      if (lastLocationRequestIdRef.current === requestKey) return;
+
+      lastLocationRequestIdRef.current = requestKey;
+      initialLocationRequestRef.current = true;
+      requestLocation();
+      return;
+    }
+
+    if (
+      initialLocationRequestRef.current ||
+      routeInitialLocation ||
+      initialPharmacies.length
+    ) return;
     initialLocationRequestRef.current = true;
     requestLocation();
-  }, [initialPharmacies.length, requestLocation, routeInitialLocation]);
+  }, [
+    initialPharmacies.length,
+    locationRequestId,
+    requestLocation,
+    routeInitialLocation,
+    shouldRequestUserLocation,
+  ]);
 
   useEffect(() => {
     const coordinate = getPharmacyCoordinate(routeInitialLocation);
@@ -454,56 +853,23 @@ export default function MapboxMapScreen({ route }) {
   const selectedDistance = selectedPharmacy
     ? getDistanceKm(userLocation, selectedPharmacy.markerCoordinate)
     : null;
-  const provider = TILE_PROVIDERS[tileProvider];
 
   return (
     <View style={styles.container}>
-      <MapView
+      <WebView
         ref={mapRef}
         style={StyleSheet.absoluteFillObject}
-        initialRegion={region}
-        mapType="none"
-        loadingEnabled
-        onMapReady={() => setMapReady(true)}
-        onRegionChangeComplete={setRegion}
-      >
-        <UrlTile
-          urlTemplate={provider.urlTemplate}
-          maximumZ={provider.maxZoom}
-          shouldReplaceMapContent
-        />
-
-        {filteredPharmacies.map((pharmacy) => (
-          <Marker
-            key={String(pharmacy.id)}
-            coordinate={pharmacy.markerCoordinate}
-            title={pharmacy.name}
-            description={pharmacy.address || pharmacy.governorate}
-            pinColor={selectedPharmacy?.id === pharmacy.id ? colors.primary : colors.success}
-            tracksViewChanges={false}
-            onPress={() => selectPharmacy(pharmacy)}
-          />
-        ))}
-
-        {userLocation ? (
-          <Marker
-            coordinate={userLocation}
-            title={t('map.userLocation', 'My location')}
-            pinColor={colors.primary}
-            tracksViewChanges={false}
-          />
-        ) : null}
-
-        {routeCoordinates.length ? (
-          <Polyline
-            coordinates={routeCoordinates}
-            strokeColor={colors.primary}
-            strokeWidth={5}
-            lineCap="round"
-            lineJoin="round"
-          />
-        ) : null}
-      </MapView>
+        source={mapSource}
+        originWhitelist={['*']}
+        javaScriptEnabled
+        domStorageEnabled
+        onLoadStart={() => setMapReady(false)}
+        onMessage={handleMapMessage}
+        onError={(event) => {
+          logger.warn('MapboxMapScreen', 'OSM WebView failed', event.nativeEvent);
+          setPermissionMessage(t('map.mapUnavailable', 'Map could not load. Check your connection.'));
+        }}
+      />
 
       <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
         <View style={styles.topOverlay} pointerEvents="box-none">
@@ -549,7 +915,7 @@ export default function MapboxMapScreen({ route }) {
 
             {fetchState === 'empty' ? (
               <AppText variant="bodySmall" color={colors.textSecondary} style={styles.noticeText}>
-                {t('map.noNearbyFallback', 'No nearby pharmacies found. Showing available records.')}
+                {t('map.noNearbyFallback', 'No nearby pharmacies found for this location.')}
               </AppText>
             ) : null}
 

@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 import models
 from models import AuditActionEnum
+from region_scope import apply_region_scope, region_access_error
 
 
 def _clean_optional_str(value) -> Optional[str]:
@@ -218,6 +219,15 @@ class GardeService:
         return {"total_rows": len(df), "successful": successful, "failed": len(errors), "errors": errors}, None
 
     def upload_csv(self, file_content: bytes, filename: str, admin_id: int) -> Tuple[dict, Optional[str]]:
+        return self.upload_csv_for_region(file_content, filename, admin_id, region_scope=None)
+
+    def upload_csv_for_region(
+        self,
+        file_content: bytes,
+        filename: str,
+        admin_id: int,
+        region_scope: str | None = None,
+    ) -> Tuple[dict, Optional[str]]:
         if not filename.lower().endswith(".csv"):
             return None, "Only CSV files are supported for garde uploads."
 
@@ -237,6 +247,11 @@ class GardeService:
 
         planner_format, planner_mapping = self._is_planner_format(df.columns)
         if planner_format:
+            if region_scope:
+                return None, (
+                    "Planner-format garde CSV uploads are not available for assistant accounts "
+                    "because rows do not include governorate data."
+                )
             result, error = self._upload_planner_csv(df, planner_mapping, admin_id)
             if error:
                 return None, error
@@ -294,6 +309,10 @@ class GardeService:
                 if not payload["pharmacy_name"]:
                     raise ValueError("pharmacy_name cannot be empty")
 
+                access_error = region_access_error(payload["governorate"], region_scope)
+                if access_error:
+                    raise ValueError(access_error)
+
                 self._save_payload(payload, admin_id)
                 successful += 1
             except Exception as exc:
@@ -338,14 +357,21 @@ class GardeService:
             "errors": errors,
         }, None
 
-    def get_gardes(self, skip: int = 0, limit: int = 100) -> list[dict]:
-        rows = (
-            self.db.query(models.GardeSchedule)
-            .order_by(models.GardeSchedule.date.desc(), models.GardeSchedule.created_at.desc())
-            .offset(skip)
-            .limit(limit)
-            .all()
+    def get_gardes(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        region_scope: str | None = None,
+    ) -> list[dict]:
+        query = apply_region_scope(
+            self.db.query(models.GardeSchedule),
+            models.GardeSchedule,
+            region_scope,
         )
+        rows = query.order_by(
+            models.GardeSchedule.date.desc(),
+            models.GardeSchedule.created_at.desc(),
+        ).offset(skip).limit(limit).all()
 
         return [
             {
@@ -363,8 +389,13 @@ class GardeService:
             for row in rows
         ]
 
-    def get_garde_count(self) -> int:
-        return self.db.query(models.GardeSchedule).count()
+    def get_garde_count(self, region_scope: str | None = None) -> int:
+        query = apply_region_scope(
+            self.db.query(models.GardeSchedule),
+            models.GardeSchedule,
+            region_scope,
+        )
+        return query.count()
 
     def get_public_gardes(self, garde_date: date, skip: int = 0, limit: int = 100) -> list[dict]:
         rows = (
@@ -425,12 +456,21 @@ class GardeService:
             "created_at": pharmacy.created_at.isoformat() if pharmacy.created_at else None,
         }
 
-    def get_garde_by_id(self, garde_id: int) -> Optional[dict]:
+    def get_garde_by_id(
+        self,
+        garde_id: int,
+        region_scope: str | None = None,
+    ) -> Optional[dict]:
         """Get a single garde schedule by ID.
         
         Returns: garde dict or None if not found
         """
-        garde = self.db.query(models.GardeSchedule).filter(models.GardeSchedule.id == garde_id).first()
+        query = apply_region_scope(
+            self.db.query(models.GardeSchedule),
+            models.GardeSchedule,
+            region_scope,
+        )
+        garde = query.filter(models.GardeSchedule.id == garde_id).first()
         
         if not garde:
             return None
@@ -450,12 +490,21 @@ class GardeService:
             "updated_at": garde.updated_at.isoformat() if garde.updated_at else None,
         }
 
-    def create_garde(self, garde_data: dict, admin_id: int) -> Tuple[Optional[dict], Optional[str]]:
+    def create_garde(
+        self,
+        garde_data: dict,
+        admin_id: int,
+        region_scope: str | None = None,
+    ) -> Tuple[Optional[dict], Optional[str]]:
         """Create a new garde schedule.
         
         Returns: (garde_dict, error_message)
         """
         try:
+            access_error = region_access_error(garde_data.get("governorate"), region_scope)
+            if access_error:
+                return None, access_error
+
             # Parse date if provided as string
             garde_date = garde_data.get("date")
             if isinstance(garde_date, str):
@@ -497,22 +546,38 @@ class GardeService:
             self.db.commit()
             self.db.refresh(garde)
             
-            return self.get_garde_by_id(garde.id), None
+            return self.get_garde_by_id(garde.id, region_scope=region_scope), None
         
         except Exception as e:
             self.db.rollback()
             return None, f"Failed to create garde schedule: {str(e)}"
 
-    def update_garde(self, garde_id: int, updates: dict, admin_id: int) -> Tuple[Optional[dict], Optional[str]]:
+    def update_garde(
+        self,
+        garde_id: int,
+        updates: dict,
+        admin_id: int,
+        region_scope: str | None = None,
+    ) -> Tuple[Optional[dict], Optional[str]]:
         """Update a garde schedule with the provided fields.
         
         Returns: (garde_dict, error_message)
         """
         try:
-            garde = self.db.query(models.GardeSchedule).filter(models.GardeSchedule.id == garde_id).first()
+            query = apply_region_scope(
+                self.db.query(models.GardeSchedule),
+                models.GardeSchedule,
+                region_scope,
+            )
+            garde = query.filter(models.GardeSchedule.id == garde_id).first()
             
             if not garde:
                 return None, "Garde schedule not found"
+
+            if "governorate" in updates:
+                access_error = region_access_error(updates.get("governorate"), region_scope)
+                if access_error:
+                    return None, access_error
             
             # Parse date if provided as string
             if "date" in updates and isinstance(updates["date"], str):
@@ -530,19 +595,24 @@ class GardeService:
             self.db.commit()
             self.db.refresh(garde)
             
-            return self.get_garde_by_id(garde.id), None
+            return self.get_garde_by_id(garde.id, region_scope=region_scope), None
         
         except Exception as e:
             self.db.rollback()
             return None, f"Failed to update garde schedule: {str(e)}"
 
-    def delete_garde(self, garde_id: int) -> Optional[str]:
+    def delete_garde(self, garde_id: int, region_scope: str | None = None) -> Optional[str]:
         """Delete a garde schedule by ID.
         
         Returns: error_message (None if successful)
         """
         try:
-            garde = self.db.query(models.GardeSchedule).filter(models.GardeSchedule.id == garde_id).first()
+            query = apply_region_scope(
+                self.db.query(models.GardeSchedule),
+                models.GardeSchedule,
+                region_scope,
+            )
+            garde = query.filter(models.GardeSchedule.id == garde_id).first()
             
             if not garde:
                 return "Garde schedule not found"

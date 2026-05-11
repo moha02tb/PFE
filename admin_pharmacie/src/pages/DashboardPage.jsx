@@ -139,19 +139,49 @@ const ServiceDot = ({ tone = 'success', label }) => (
   </div>
 );
 
+const DASHBOARD_MAP_TILES = [
+  { x: 32, y: 24, left: 'calc(50% - 463px)', top: 'calc(50% - 244px)' },
+  { x: 33, y: 24, left: 'calc(50% - 207px)', top: 'calc(50% - 244px)' },
+  { x: 34, y: 24, left: 'calc(50% + 49px)', top: 'calc(50% - 244px)' },
+  { x: 35, y: 24, left: 'calc(50% + 305px)', top: 'calc(50% - 244px)' },
+  { x: 32, y: 25, left: 'calc(50% - 463px)', top: 'calc(50% + 12px)' },
+  { x: 33, y: 25, left: 'calc(50% - 207px)', top: 'calc(50% + 12px)' },
+  { x: 34, y: 25, left: 'calc(50% + 49px)', top: 'calc(50% + 12px)' },
+  { x: 35, y: 25, left: 'calc(50% + 305px)', top: 'calc(50% + 12px)' },
+];
+
 const MapPreview = ({ coverageAverage, t }) => (
-  <div className="bento-card overflow-hidden p-0">
-    <div className="map-preview relative h-32 cursor-pointer">
-      <div className="absolute inset-0 flex items-center justify-center">
+  <div className="bento-card overflow-hidden p-0 transition-normal hover:-translate-y-0.5 hover:shadow-elevated">
+    <div className="map-preview relative h-32">
+      {DASHBOARD_MAP_TILES.map((tile) => (
+        <img
+          key={`${tile.x}-${tile.y}`}
+          src={`https://tile.openstreetmap.org/6/${tile.x}/${tile.y}.png`}
+          alt=""
+          aria-hidden="true"
+          draggable="false"
+          className="map-preview__tile"
+          style={{ left: tile.left, top: tile.top }}
+        />
+      ))}
+      <Link to="/map" className="absolute inset-0 z-[3] flex items-center justify-center" aria-label={t('dashboard.viewLiveMap')}>
         <span className="rounded-full border border-border bg-surface-elevated/90 px-3 py-1.5 text-[0.625rem] font-bold uppercase tracking-[0.12em] text-foreground shadow-soft backdrop-blur">
           {t('dashboard.viewLiveMap')}
         </span>
-      </div>
+      </Link>
+      <a
+        className="map-preview__attribution"
+        href="https://www.openstreetmap.org/copyright"
+        target="_blank"
+        rel="noreferrer"
+      >
+        OSM
+      </a>
     </div>
-    <div className="flex items-center justify-between p-4">
+    <Link to="/map" className="flex items-center justify-between p-4">
       <span className="text-sm font-semibold text-foreground">{t('dashboard.networkDensity')}</span>
       <span className="text-xs text-muted-foreground">{coverageAverage >= 75 ? t('dashboard.highCoverage') : t('dashboard.needsReview')}</span>
-    </div>
+    </Link>
   </div>
 );
 

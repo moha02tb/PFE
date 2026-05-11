@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 import models
 from events import EventTypes, get_event_bus
 from models import AuditActionEnum
+from region_scope import apply_region_scope, region_access_error
 from schemas import PharmacieCreate, PharmacieUploadErrorDetail
 
 
@@ -95,6 +96,7 @@ class PharmacyService:
         file_content: bytes,
         filename: str,
         admin_id: int,
+        region_scope: str | None = None,
     ) -> Tuple[dict, Optional[str]]:
         """
         Process pharmacy CSV upload.
@@ -205,6 +207,16 @@ class PharmacyService:
                     }
 
                     pharmacy = PharmacieCreate(**row_data)
+
+                    access_error = region_access_error(pharmacy.governorate, region_scope)
+                    if access_error:
+                        errors.append(
+                            PharmacieUploadErrorDetail(
+                                row_number=row_num,
+                                error_message=access_error,
+                            )
+                        )
+                        continue
 
                     # Check duplicate osm_id
                     if pharmacy.osm_id and pharmacy.osm_id in seen_osm_ids:
@@ -336,15 +348,15 @@ class PharmacyService:
             )
             return None, f"Unexpected error during file processing: {str(e)}"
 
-    def get_pharmacies(self, skip: int = 0, limit: int = 100) -> List[dict]:
+    def get_pharmacies(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        region_scope: str | None = None,
+    ) -> List[dict]:
         """Get all pharmacies with pagination."""
-        pharmacies = (
-            self.db.query(models.Pharmacie)
-            .order_by(models.Pharmacie.created_at.desc())
-            .offset(skip)
-            .limit(limit)
-            .all()
-        )
+        query = apply_region_scope(self.db.query(models.Pharmacie), models.Pharmacie, region_scope)
+        pharmacies = query.order_by(models.Pharmacie.created_at.desc()).offset(skip).limit(limit).all()
 
         return [
             {
@@ -362,9 +374,10 @@ class PharmacyService:
             for p in pharmacies
         ]
 
-    def get_pharmacy_count(self) -> int:
+    def get_pharmacy_count(self, region_scope: str | None = None) -> int:
         """Get total pharmacy count."""
-        return self.db.query(models.Pharmacie).count()
+        query = apply_region_scope(self.db.query(models.Pharmacie), models.Pharmacie, region_scope)
+        return query.count()
 
     def search_nearby(
         self,
@@ -421,12 +434,17 @@ class PharmacyService:
         except Exception as e:
             return [], f"Error searching nearby pharmacies: {str(e)}"
 
-    def get_pharmacy_by_id(self, pharmacy_id: int) -> Optional[dict]:
+    def get_pharmacy_by_id(
+        self,
+        pharmacy_id: int,
+        region_scope: str | None = None,
+    ) -> Optional[dict]:
         """Get a single pharmacy by ID.
         
         Returns: pharmacy dict or None if not found
         """
-        pharmacy = self.db.query(models.Pharmacie).filter(models.Pharmacie.id == pharmacy_id).first()
+        query = apply_region_scope(self.db.query(models.Pharmacie), models.Pharmacie, region_scope)
+        pharmacy = query.filter(models.Pharmacie.id == pharmacy_id).first()
         
         if not pharmacy:
             return None
@@ -446,12 +464,21 @@ class PharmacyService:
             "updated_at": pharmacy.updated_at.isoformat() if pharmacy.updated_at else None,
         }
 
-    def create_pharmacy(self, pharmacy_data: dict, admin_id: int) -> Tuple[Optional[dict], Optional[str]]:
+    def create_pharmacy(
+        self,
+        pharmacy_data: dict,
+        admin_id: int,
+        region_scope: str | None = None,
+    ) -> Tuple[Optional[dict], Optional[str]]:
         """Create a new pharmacy.
         
         Returns: (pharmacy_dict, error_message)
         """
         try:
+            access_error = region_access_error(pharmacy_data.get("governorate"), region_scope)
+            if access_error:
+                return None, access_error
+
             # Check for duplicate osm_id if provided
             if pharmacy_data.get("osm_id"):
                 existing = (
@@ -479,22 +506,34 @@ class PharmacyService:
             self.db.commit()
             self.db.refresh(pharmacy)
             
-            return self.get_pharmacy_by_id(pharmacy.id), None
+            return self.get_pharmacy_by_id(pharmacy.id, region_scope=region_scope), None
         
         except Exception as e:
             self.db.rollback()
             return None, f"Failed to create pharmacy: {str(e)}"
 
-    def update_pharmacy(self, pharmacy_id: int, updates: dict, admin_id: int) -> Tuple[Optional[dict], Optional[str]]:
+    def update_pharmacy(
+        self,
+        pharmacy_id: int,
+        updates: dict,
+        admin_id: int,
+        region_scope: str | None = None,
+    ) -> Tuple[Optional[dict], Optional[str]]:
         """Update a pharmacy with the provided fields.
         
         Returns: (pharmacy_dict, error_message)
         """
         try:
-            pharmacy = self.db.query(models.Pharmacie).filter(models.Pharmacie.id == pharmacy_id).first()
+            query = apply_region_scope(self.db.query(models.Pharmacie), models.Pharmacie, region_scope)
+            pharmacy = query.filter(models.Pharmacie.id == pharmacy_id).first()
             
             if not pharmacy:
                 return None, "Pharmacy not found"
+
+            if "governorate" in updates:
+                access_error = region_access_error(updates.get("governorate"), region_scope)
+                if access_error:
+                    return None, access_error
             
             # Check for duplicate osm_id if being updated
             if "osm_id" in updates and updates["osm_id"] != pharmacy.osm_id:
@@ -517,19 +556,20 @@ class PharmacyService:
             self.db.commit()
             self.db.refresh(pharmacy)
             
-            return self.get_pharmacy_by_id(pharmacy.id), None
+            return self.get_pharmacy_by_id(pharmacy.id, region_scope=region_scope), None
         
         except Exception as e:
             self.db.rollback()
             return None, f"Failed to update pharmacy: {str(e)}"
 
-    def delete_pharmacy(self, pharmacy_id: int) -> Optional[str]:
+    def delete_pharmacy(self, pharmacy_id: int, region_scope: str | None = None) -> Optional[str]:
         """Delete a pharmacy by ID.
         
         Returns: error_message (None if successful)
         """
         try:
-            pharmacy = self.db.query(models.Pharmacie).filter(models.Pharmacie.id == pharmacy_id).first()
+            query = apply_region_scope(self.db.query(models.Pharmacie), models.Pharmacie, region_scope)
+            pharmacy = query.filter(models.Pharmacie.id == pharmacy_id).first()
             
             if not pharmacy:
                 return "Pharmacy not found"

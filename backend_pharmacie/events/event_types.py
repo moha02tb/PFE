@@ -12,6 +12,8 @@ class EventTypes:
 
     USER_CREATED_BY_ADMIN = "user.created.by_admin"
     ADMIN_CREATED = "admin.created"
+    ADMIN_UPDATED = "admin.updated"
+    ADMIN_DELETED = "admin.deleted"
 
     PHARMACY_BULK_UPLOAD_SUCCESS = "pharmacy.bulk_upload.success"
     PHARMACY_BULK_UPLOAD_FAILED = "pharmacy.bulk_upload.failed"

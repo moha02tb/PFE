@@ -14,6 +14,7 @@ from typing import Optional, Union
 import models
 from database import get_db
 from fastapi import Cookie, Depends, Header, HTTPException, status
+from permissions import ADMIN_ROLES, STAFF_ROLES, has_role, role_value
 from security import verify_token
 from sqlalchemy.orm import Session
 
@@ -185,9 +186,21 @@ def admin_required(
     user: models.Administrateur = Depends(get_current_admin),
 ) -> models.Administrateur:
     """Dependency to require admin role"""
-    if user.role not in ["admin", "super_admin"]:
+    if not has_role(user.role, ADMIN_ROLES):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can access this resource"
+        )
+    return user
+
+
+def staff_required(
+    user: models.Administrateur = Depends(get_current_admin),
+) -> models.Administrateur:
+    """Dependency to allow admins and regional assistant accounts."""
+    if not has_role(user.role, STAFF_ROLES):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admins or assistants can access this resource",
         )
     return user
 
@@ -196,7 +209,7 @@ def super_admin_required(
     user: models.Administrateur = Depends(get_current_admin),
 ) -> models.Administrateur:
     """Dependency to require super_admin role"""
-    if user.role != "super_admin":
+    if role_value(user.role) != "super_admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only super admins can access this resource",

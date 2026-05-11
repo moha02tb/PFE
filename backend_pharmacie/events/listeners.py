@@ -24,5 +24,6 @@ def register_default_listeners() -> None:
     bus.subscribe(EventTypes.AUTH_LOGOUT, _log_event)
     bus.subscribe(EventTypes.USER_CREATED_BY_ADMIN, _log_event)
     bus.subscribe(EventTypes.ADMIN_CREATED, _log_event)
+    bus.subscribe(EventTypes.ADMIN_UPDATED, _log_event)
     bus.subscribe(EventTypes.PHARMACY_BULK_UPLOAD_SUCCESS, _log_event)
     bus.subscribe(EventTypes.PHARMACY_BULK_UPLOAD_FAILED, _log_event)

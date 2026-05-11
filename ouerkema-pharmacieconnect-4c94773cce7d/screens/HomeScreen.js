@@ -353,13 +353,15 @@ export default function HomeScreen({ navigation }) {
         else navigation.navigate('Carte', params);
       } else {
         logger.warn('HomeScreen', 'No location available, navigating to map without coordinates');
-        if (navigation?.jumpTo) navigation.jumpTo('Carte', { pharmacies: visiblePharmacies });
-        else navigation.navigate('Carte', { pharmacies: visiblePharmacies });
+        const params = { pharmacies: [], requestUserLocation: true, locationRequestId: Date.now() };
+        if (navigation?.jumpTo) navigation.jumpTo('Carte', params);
+        else navigation.navigate('Carte', params);
       }
     } catch (error) {
       logger.error('HomeScreen', 'goToUserLocation failed', error);
-      if (navigation?.jumpTo) navigation.jumpTo('Carte', { pharmacies: visiblePharmacies });
-      else navigation.navigate('Carte', { pharmacies: visiblePharmacies });
+      const params = { pharmacies: [], requestUserLocation: true, locationRequestId: Date.now() };
+      if (navigation?.jumpTo) navigation.jumpTo('Carte', params);
+      else navigation.navigate('Carte', params);
     }
   };
 
@@ -367,15 +369,21 @@ export default function HomeScreen({ navigation }) {
     try {
       const coords = await getLocationWithAndroidFix();
       const fallbackLocation = searchTargetCoords;
+      const mapPharmacies = typeof item.distanceKm === 'number' ? visiblePharmacies : [item];
       const params = coords
-        ? { pharmacies: visiblePharmacies, initialLocation: coords, targetPharmacy: item }
+        ? { pharmacies: mapPharmacies, initialLocation: coords, targetPharmacy: item }
         : fallbackLocation
           ? {
-              pharmacies: visiblePharmacies,
+              pharmacies: [item],
               initialLocation: fallbackLocation,
               targetPharmacy: item,
             }
-          : { pharmacies: visiblePharmacies, targetPharmacy: item };
+          : {
+              pharmacies: [item],
+              targetPharmacy: item,
+              requestUserLocation: true,
+              locationRequestId: Date.now(),
+            };
 
       if (navigation?.jumpTo) navigation.jumpTo('Carte', params);
       else navigation.navigate('Carte', params);
@@ -383,8 +391,13 @@ export default function HomeScreen({ navigation }) {
       logger.warn('HomeScreen', 'goToDirections failed', error);
       const fallbackLocation = searchTargetCoords;
       const params = fallbackLocation
-        ? { pharmacies: visiblePharmacies, initialLocation: fallbackLocation, targetPharmacy: item }
-        : { pharmacies: visiblePharmacies, targetPharmacy: item };
+        ? { pharmacies: [item], initialLocation: fallbackLocation, targetPharmacy: item }
+        : {
+            pharmacies: [item],
+            targetPharmacy: item,
+            requestUserLocation: true,
+            locationRequestId: Date.now(),
+          };
       if (navigation?.jumpTo) navigation.jumpTo('Carte', params);
       else navigation.navigate('Carte', params);
     }

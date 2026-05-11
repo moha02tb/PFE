@@ -106,6 +106,86 @@ describe('pharmacy location search helpers', () => {
     });
   });
 
+  it('keeps an empty nearby result empty instead of loading the full directory', async () => {
+    axios.get.mockResolvedValueOnce({ data: [] });
+
+    const result = await loadPharmaciesAsync(
+      (value) => value,
+      true,
+      {
+        searchCoords: { latitude: 36.8065, longitude: 10.1815 },
+        radiusKm: 20,
+        limit: 100,
+      }
+    );
+
+    expect(result).toEqual([]);
+    expect(axios.get).toHaveBeenCalledTimes(1);
+    expect(axios.get).toHaveBeenCalledWith('http://test-api/api/pharmacies/nearby', {
+      params: {
+        lat: 36.8065,
+        lon: 10.1815,
+        radius_km: 20,
+        limit: 100,
+      },
+      timeout: 1000,
+    });
+  });
+
+  it('filters the API directory client-side when the nearby endpoint fails', async () => {
+    axios.get
+      .mockRejectedValueOnce(new Error('network down'))
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 31,
+            name: 'Pharmacie Nearby',
+            address: 'Centre Tunis',
+            phone: null,
+            latitude: 36.807,
+            longitude: 10.182,
+            governorate: 'Tunis',
+            osm_id: 31,
+            osm_type: 'node',
+          },
+          {
+            id: 32,
+            name: 'Pharmacie Far',
+            address: 'Sfax',
+            phone: null,
+            latitude: 34.7406,
+            longitude: 10.7603,
+            governorate: 'Sfax',
+            osm_id: 32,
+            osm_type: 'node',
+          },
+        ],
+      });
+
+    const result = await loadPharmaciesAsync(
+      (value) => value,
+      true,
+      {
+        searchCoords: { latitude: 36.8065, longitude: 10.1815 },
+        radiusKm: 20,
+        limit: 100,
+      }
+    );
+
+    expect(axios.get).toHaveBeenCalledTimes(2);
+    expect(axios.get).toHaveBeenNthCalledWith(2, 'http://test-api/api/pharmacies', {
+      params: { skip: 0, limit: 500 },
+      timeout: 1000,
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      id: 31,
+      name: 'Pharmacie Nearby',
+      governorate: 'Tunis',
+    });
+    expect(result[0].distanceKm).toBeLessThan(1);
+  });
+
   it('filters pharmacies by governorate even when address is missing', () => {
     const result = filterPharmacies(
       [

@@ -1,9 +1,10 @@
-import React from 'react';
+/* eslint-disable react/prop-types */
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { hasAllowedRole } from '../lib/permissions';
 
-const ProtectedRoute = ({ element, requiredRoles = [] }) => {
+const ProtectedRoute = ({ element, requiredRoles = [], fallbackPath = '/forbidden' }) => {
     const { isAuthenticated, user, loading } = useAuth();
     const { t } = useLanguage();
 
@@ -29,15 +30,8 @@ const ProtectedRoute = ({ element, requiredRoles = [] }) => {
         return element;
     }
 
-    // Check roles if required - be flexible with role names
-    const userRole = user?.role || '';
-    const hasPermission = requiredRoles.some(role => 
-        role.toLowerCase() === userRole.toLowerCase()
-    );
-
-    if (!hasPermission) {
-        // Still allow access even if role doesn't match - frontend isn't enforcing roles strictly
-        return element;
+    if (!hasAllowedRole(user?.role, requiredRoles)) {
+        return <Navigate to={fallbackPath} replace />;
     }
 
     // Render the protected element

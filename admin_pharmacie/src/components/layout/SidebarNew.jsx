@@ -4,6 +4,7 @@ import {
   Bell,
   CalendarDays,
   ClipboardList,
+  FileText,
   Globe2,
   HeartPulse,
   LayoutDashboard,
@@ -18,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { canViewNavigationPath, ADMIN_ROLES } from '../../lib/permissions';
 import { cn } from '../../lib/utils';
 import Button from '../ui/Button';
 
@@ -46,6 +48,7 @@ const groups = [
     items: [
       { label: 'Notifications', path: '/notifications', icon: Bell },
       { label: 'Languages', path: '/languages', icon: Globe2 },
+      { label: 'Audit Logs', path: '/audit-logs', icon: FileText, adminOnly: true },
       { label: 'Settings', path: '/settings', icon: Settings },
       { label: 'Profile', path: '/profile', icon: UserRound },
     ],
@@ -95,7 +98,15 @@ const SidebarNew = ({ open, onClose }) => {
               {t(`nav.${groupLabelKey[group.label]}`)}
             </p>
             <div className="space-y-1">
-              {group.items.map((item) => {
+              {group.items
+                .filter((item) => {
+                  // Check path visibility first
+                  if (!canViewNavigationPath(user?.role, item.path)) return false;
+                  // Then check admin-only flag
+                  if (item.adminOnly && !ADMIN_ROLES.includes(user?.role)) return false;
+                  return true;
+                })
+                .map((item) => {
                 const active = location.pathname === item.path;
                 const Icon = item.icon;
                 return (
@@ -135,9 +146,11 @@ const SidebarNew = ({ open, onClose }) => {
                                           ? t('nav.notifications')
                                           : item.path === '/languages'
                                             ? t('nav.languages')
-                                            : item.path === '/settings'
-                                              ? t('nav.settings')
-                                              : t('nav.profile')}
+                                            : item.path === '/audit-logs'
+                                              ? t('nav.auditLogs')
+                                              : item.path === '/settings'
+                                                ? t('nav.settings')
+                                                : t('nav.profile')}
                     </span>
                   </Link>
                 );
@@ -171,7 +184,9 @@ const SidebarNew = ({ open, onClose }) => {
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-white">{user?.nomUtilisateur || t('profile.adminUser')}</p>
-              <p className="truncate text-xs capitalize text-slate-400">{user?.role || 'admin'}</p>
+              <p className="truncate text-xs capitalize text-slate-400">
+                {user?.region_scope ? `${user.role} · ${user.region_scope}` : user?.role || 'admin'}
+              </p>
             </div>
             <Button variant="ghost" size="icon" className="flex-shrink-0 text-slate-400 hover:bg-white/10 hover:text-white" onClick={handleLogout} aria-label={t('common.signOut')}>
               <LogOut className="h-4 w-4" />

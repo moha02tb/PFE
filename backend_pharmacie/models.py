@@ -12,7 +12,7 @@ Enums:
 import enum
 
 from database import Base
-from sqlalchemy import BigInteger, Boolean, Column, Date, DateTime, Enum, Float, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import BigInteger, Boolean, CheckConstraint, Column, Date, DateTime, Enum, Float, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.sql import func
 
 
@@ -32,6 +32,7 @@ class AdminRoleEnum(str, enum.Enum):
 
     ADMIN = "admin"
     SUPER_ADMIN = "super_admin"
+    ASSISTANT = "assistant"
 
 
 class SourceEnum(str, enum.Enum):
@@ -53,6 +54,7 @@ class AuditActionEnum(str, enum.Enum):
     ADMIN_LOGIN_FAILED = "admin_login_failed"
     ADMIN_CREATED = "admin_created"
     ADMIN_UPDATED = "admin_updated"
+    ADMIN_DELETED = "admin_deleted"
     USER_UPDATED = "user_updated"
     PASSWORD_CHANGED = "password_changed"
     ACCOUNT_DEACTIVATED = "account_deactivated"
@@ -67,6 +69,13 @@ class Administrateur(Base):
     """Admin users - separate table for admins only"""
 
     __tablename__ = "administrateurs"
+    __table_args__ = (
+        CheckConstraint(
+            "((role = 'assistant' AND region_scope IN ('north', 'middle', 'south')) "
+            "OR (role <> 'assistant' AND region_scope IS NULL))",
+            name="ck_administrateurs_assistant_region_scope",
+        ),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     nomUtilisateur = Column(String(100), unique=True, index=True, nullable=False)
@@ -75,6 +84,7 @@ class Administrateur(Base):
     bio = Column(String(500), nullable=True)
     motDePasse = Column(String(255), nullable=False)
     role = Column(_string_enum(AdminRoleEnum, 20), default=AdminRoleEnum.ADMIN, nullable=False)
+    region_scope = Column(String(20), nullable=True, index=True)
 
     is_active = Column(Boolean, default=True, index=True)
     created_by = Column(
@@ -82,6 +92,7 @@ class Administrateur(Base):
     )
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    last_login = Column(DateTime(timezone=True), nullable=True, index=True)
 
 
 class Utilisateur(Base):

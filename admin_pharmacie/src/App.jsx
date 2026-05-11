@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginNew from './pages/LoginNew';
@@ -20,6 +19,18 @@ import NotificationsPage from './pages/NotificationsPage';
 import LanguagesPage from './pages/LanguagesPage';
 import SettingsPage from './pages/SettingsPage';
 import ProfilePage from './pages/ProfilePage';
+import ForbiddenPage from './pages/ForbiddenPage';
+import AuditLogViewer from './pages/AuditLogViewer';
+import { ADMIN_ROLES, STAFF_ROLES, getDefaultRouteForUser } from './lib/permissions';
+
+const getStoredUser = () => {
+  try {
+    const storedUser = localStorage.getItem('user');
+    return storedUser ? JSON.parse(storedUser) : null;
+  } catch {
+    return null;
+  }
+};
 
 // Main layout component with sidebar and header
 const DashboardLayout = () => {
@@ -55,10 +66,24 @@ const LoginWrapper = () => {
   const navigate = useNavigate();
   
   const handleLoginSuccess = () => {
-    navigate('/dashboard');
+    navigate(getDefaultRouteForUser(getStoredUser()), { replace: true });
   };
   
   return <LoginNew onLoginSuccess={handleLoginSuccess} />;
+};
+
+const RoleAwareHome = () => {
+  const { isAuthenticated, user, loading } = useAuth();
+
+  if (loading) {
+    return null;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <Navigate to={getDefaultRouteForUser(user)} replace />;
 };
 
 const App = () => {
@@ -69,22 +94,41 @@ const App = () => {
           <Routes>
           {/* Login Route */}
           <Route path="/login" element={<LoginWrapper />} />
+          <Route path="/forbidden" element={<ProtectedRoute element={<ForbiddenPage />} />} />
           
           {/* Protected Dashboard Routes with Layout */}
           <Route 
             element={
               <ProtectedRoute
                 element={<DashboardLayout />}
-                requiredRoles={['admin', 'ADMIN', 'user', 'USER']}
+                requiredRoles={STAFF_ROLES}
               />
             }
           >
-            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute
+                  element={<DashboardPage />}
+                  requiredRoles={ADMIN_ROLES}
+                  fallbackPath="/management"
+                />
+              }
+            />
             <Route path="/pharmacies" element={<PharmaciesPage />} />
             <Route path="/management" element={<ManagementPage />} />
             <Route path="/upload-pharmacies" element={<UploadPharmaciesPage />} />
             <Route path="/upload-garde" element={<UploadGardePage />} />
-            <Route path="/upload-medicines" element={<UploadMedicinesPage />} />
+            <Route
+              path="/upload-medicines"
+              element={
+                <ProtectedRoute
+                  element={<UploadMedicinesPage />}
+                  requiredRoles={ADMIN_ROLES}
+                  fallbackPath="/management"
+                />
+              }
+            />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/map" element={<MapPage />} />
             <Route path="/emergency" element={<EmergencyPage />} />
@@ -92,10 +136,14 @@ const App = () => {
             <Route path="/languages" element={<LanguagesPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route 
+              path="/audit-logs" 
+              element={<ProtectedRoute allowedRoles={ADMIN_ROLES} element={<AuditLogViewer />} />} 
+            />
           </Route>
           
-          {/* Redirect root to dashboard */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          {/* Redirect root based on role */}
+          <Route path="/" element={<RoleAwareHome />} />
           
           {/* Catch all - redirect to login */}
           <Route path="*" element={<Navigate to="/login" replace />} />

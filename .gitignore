@@ -4,6 +4,8 @@ env/
 ENV/
 .venv/
 .env
+.env.*
+!.env.example
 
 # Python
 __pycache__/
@@ -18,6 +20,9 @@ pip-delete-this-directory.txt
 .coverage.*
 .cache
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
 *.egg-info/
 dist/
 build/
@@ -27,7 +32,10 @@ node_modules/
 .npm
 npm-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 .yarn-integrity
+.vite/
+coverage/
 
 # IDE
 .vscode/
@@ -45,8 +53,23 @@ Thumbs.db
 # Build outputs
 *.apk
 *.aab
+web-build/
+dist-ssr/
 
 # Local databases
 *.db
 *.sqlite
 *.sqlite3
+
+# Logs and runtime output
+logs/
+*.log
+*.pid
+
+# Local agent/tooling artifacts
+.agents/
+.augment/
+.codex
+.eas-tmp/
+skills-lock.json
+tmp/

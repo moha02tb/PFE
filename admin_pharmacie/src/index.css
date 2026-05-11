@@ -826,9 +826,36 @@ a {
     background-size: 96px 96px, 120px 120px, 18px 18px, 18px 18px, auto;
   }
 
+  .map-preview__tile {
+    position: absolute;
+    z-index: 0;
+    height: 256px;
+    width: 256px;
+    max-width: none;
+    opacity: 0.86;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .map-preview__attribution {
+    position: absolute;
+    right: 0.5rem;
+    bottom: 0.5rem;
+    z-index: 4;
+    border-radius: 5px;
+    background: oklch(var(--surface-elevated) / 0.88);
+    color: oklch(var(--muted-foreground));
+    font-size: 0.625rem;
+    font-weight: 800;
+    line-height: 1;
+    padding: 0.25rem 0.375rem;
+    backdrop-filter: blur(10px);
+  }
+
   .map-preview::before,
   .map-preview::after {
     position: absolute;
+    z-index: 2;
     border-radius: 9999px;
     background: oklch(var(--primary));
     box-shadow: 0 0 0 7px oklch(var(--primary) / 0.16);
@@ -1027,6 +1054,42 @@ a {
     cursor: grabbing;
   }
 
+  .map-leaflet-container {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
+  .map-leaflet-container :global(.leaflet-container) {
+    background: #d8dee6;
+    font-family: inherit;
+  }
+
+  .map-leaflet-container :global(.leaflet-marker-icon) {
+    border: 0;
+    background: none;
+  }
+
+  .map-leaflet-container :global(.leaflet-popup) {
+    margin-bottom: 0;
+  }
+
+  .map-leaflet-container :global(.leaflet-popup-content-wrapper) {
+    border-radius: 8px;
+    background: oklch(var(--surface-elevated) / 0.95);
+    box-shadow: 0 10px 32px oklch(0.16 0.04 258 / 0.16);
+  }
+
+  .map-leaflet-container :global(.leaflet-popup-tip) {
+    background: oklch(var(--surface-elevated) / 0.95);
+  }
+
+  .map-leaflet-container :global(.leaflet-popup-content) {
+    margin: 0;
+    color: oklch(var(--foreground));
+    font-size: 0.875rem;
+  }
+
   .map-tile {
     z-index: 1;
   }
@@ -1044,6 +1107,18 @@ a {
     line-height: 1;
     padding: 0.375rem 0.5rem;
     backdrop-filter: blur(10px);
+  }
+
+  .map-leaflet-container :global(.leaflet-attribution-flag) {
+    display: none;
+  }
+
+  .map-leaflet-container :global(.leaflet-attribution-flag) {
+    display: inline !important;
+  }
+
+  .map-leaflet-container :global(a) {
+    display: inline !important;
   }
 
   .map-directory-item {
@@ -1067,7 +1142,15 @@ a {
 
   .map-pin-marker:hover,
   .map-pin-marker[data-selected="true"] {
-    transform: translate(-50%, -100%) scale(1.08);
+    transform: scale(1.1);
+  }
+
+  .map-marker-green {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  }
+
+  .map-marker-blue {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
   }
 
   .map-legend,

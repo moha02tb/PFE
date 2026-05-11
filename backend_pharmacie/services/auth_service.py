@@ -89,6 +89,9 @@ class AuthService:
         )
 
         if admin and admin.is_active and verify_password(credentials.password, admin.motDePasse):
+            admin.last_login = datetime.now(timezone.utc)
+            self.db.add(admin)
+
             response = self._create_login_response(
                 user_id=admin.id,
                 role=admin.role,

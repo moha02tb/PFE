@@ -4,8 +4,52 @@ import { API_CONFIG } from '../config/api';
 
 // Get API base URL from configuration
 const API_BASE_URL = API_CONFIG.baseURL;
+const NEARBY_FALLBACK_LIMIT = 500;
 
 console.log(`[Pharmacy Loader] Initialized with API URL: ${API_BASE_URL}`);
+
+const parseCoordinate = (value) => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+};
+
+const getPharmacyCoordinate = (pharmacy) => {
+  const candidates = [
+    pharmacy?.coords,
+    pharmacy?.coordinates,
+    pharmacy,
+  ];
+
+  for (const item of candidates) {
+    const latitude = parseCoordinate(item?.latitude ?? item?.lat);
+    const longitude = parseCoordinate(item?.longitude ?? item?.lon ?? item?.lng);
+    if (latitude !== null && longitude !== null) {
+      return { latitude, longitude };
+    }
+  }
+
+  return null;
+};
+
+export const getDistanceKm = (from, to) => {
+  if (!from || !to) return null;
+
+  const earthRadius = 6371;
+  const toRadians = (value) => (value * Math.PI) / 180;
+  const latitudeDelta = toRadians(to.latitude - from.latitude);
+  const longitudeDelta = toRadians(to.longitude - from.longitude);
+  const a =
+    Math.sin(latitudeDelta / 2) ** 2 +
+    Math.cos(toRadians(from.latitude)) *
+      Math.cos(toRadians(to.latitude)) *
+      Math.sin(longitudeDelta / 2) ** 2;
+
+  return earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
 
 const formatDateParam = (value) => {
   if (!(value instanceof Date)) return value;
@@ -16,24 +60,64 @@ const formatDateParam = (value) => {
   return `${year}-${month}-${day}`;
 };
 
-const mapApiPharmacy = (pharmacy, fallbackGovernorate = null) => ({
-  id: pharmacy.id,
-  name: pharmacy.name,
-  address: pharmacy.address || 'No address available',
-  phone: pharmacy.phone || '',
-  latitude: pharmacy.latitude,
-  longitude: pharmacy.longitude,
-  governorate: pharmacy.governorate || fallbackGovernorate || null,
-  osm_id: pharmacy.osm_id,
-  osm_type: pharmacy.osm_type,
-  distanceKm: pharmacy.distance_km,
-  isOpen: true,
-  emergency: false,
-  coordinates: {
-    latitude: pharmacy.latitude,
-    longitude: pharmacy.longitude,
-  },
-});
+const mapApiPharmacy = (pharmacy, fallbackGovernorate = null) => {
+  const latitude = parseCoordinate(pharmacy.latitude);
+  const longitude = parseCoordinate(pharmacy.longitude);
+
+  return {
+    id: pharmacy.id,
+    name: pharmacy.name,
+    address: pharmacy.address || 'No address available',
+    phone: pharmacy.phone || '',
+    latitude,
+    longitude,
+    governorate: pharmacy.governorate || fallbackGovernorate || null,
+    osm_id: pharmacy.osm_id,
+    osm_type: pharmacy.osm_type,
+    distanceKm: parseCoordinate(pharmacy.distance_km),
+    isOpen: true,
+    emergency: false,
+    coordinates: latitude !== null && longitude !== null
+      ? {
+          latitude,
+          longitude,
+        }
+      : null,
+  };
+};
+
+export const filterNearbyPharmacies = (
+  pharmacies,
+  searchCoords,
+  radiusKm = 20,
+  limit = 100,
+  fallbackGovernorate = null
+) => {
+  const origin = getPharmacyCoordinate(searchCoords);
+  if (!origin || !Array.isArray(pharmacies)) return [];
+
+  return pharmacies
+    .map((pharmacy) => {
+      const coordinate = getPharmacyCoordinate(pharmacy);
+      const distanceKm = getDistanceKm(origin, coordinate);
+
+      if (typeof distanceKm !== 'number' || distanceKm > radiusKm) {
+        return null;
+      }
+
+      return {
+        ...pharmacy,
+        latitude: coordinate.latitude,
+        longitude: coordinate.longitude,
+        coordinates: coordinate,
+        governorate: pharmacy.governorate || fallbackGovernorate || null,
+        distanceKm: Number(distanceKm.toFixed(3)),
+      };
+    })
+    .filter(Boolean)
+    .sort((left, right) => left.distanceKm - right.distanceKm)
+    .slice(0, limit);
+};
 
 const normalizeLoadOptions = (optionsOrCoords) => {
   if (!optionsOrCoords) {
@@ -286,6 +370,17 @@ export const loadPharmaciesAsync = async (t, useAPI = true, optionsOrCoords = nu
           console.log(`[Pharmacy] ✓ Loaded ${nearby.length} nearby pharmacies from API`);
           return nearby;
         }
+
+        const allApiPharmacies = await fetchPharmaciesFromAPI(0, NEARBY_FALLBACK_LIMIT);
+        const nearbyFromAll = filterNearbyPharmacies(
+          allApiPharmacies,
+          searchCoords,
+          radiusKm,
+          limit,
+          fallbackGovernorate
+        );
+        console.log(`[Pharmacy] ✓ Filtered ${nearbyFromAll.length} nearby pharmacies client-side`);
+        return nearbyFromAll;
       }
 
       const apiPharmacies = await fetchPharmaciesFromAPI(0, 500);
@@ -304,6 +399,21 @@ export const loadPharmaciesAsync = async (t, useAPI = true, optionsOrCoords = nu
   console.log('[Pharmacy] Falling back to static data...');
   try {
     const staticData = loadPharmacies(t);
+    const { searchCoords, radiusKm, limit, fallbackGovernorate } =
+      normalizeLoadOptions(optionsOrCoords);
+
+    if (searchCoords?.latitude && searchCoords?.longitude) {
+      const nearbyStaticData = filterNearbyPharmacies(
+        staticData,
+        searchCoords,
+        radiusKm,
+        limit,
+        fallbackGovernorate
+      );
+      console.log(`[Pharmacy] ✓ Loaded ${nearbyStaticData.length} nearby static pharmacies`);
+      return nearbyStaticData;
+    }
+
     console.log(`[Pharmacy] ✓ Loaded ${staticData.length} static pharmacies`);
     return staticData;
   } catch (error) {

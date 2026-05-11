@@ -385,6 +385,127 @@ def _add_medicine_indexes(connection: Connection) -> None:
         connection.execute(text(statement))
 
 
+def _add_admin_region_scope(connection: Connection) -> None:
+    """Add optional regional scope for assistant administrator accounts."""
+    inspector = inspect(connection)
+    if "administrateurs" not in set(inspector.get_table_names()):
+        return
+
+    existing_columns = {
+        column["name"] for column in inspector.get_columns("administrateurs")
+    }
+    if "region_scope" not in existing_columns:
+        connection.execute(
+            text("ALTER TABLE administrateurs ADD COLUMN region_scope VARCHAR(20)")
+        )
+
+    connection.execute(
+        text(
+            "CREATE INDEX IF NOT EXISTS ix_administrateurs_region_scope "
+            "ON administrateurs (region_scope)"
+        )
+    )
+
+
+def _sync_postgres_id_sequences(connection: Connection) -> None:
+    """Move PostgreSQL SERIAL/IDENTITY sequences past existing primary keys.
+
+    Some legacy migration paths inserted explicit IDs. PostgreSQL sequences do
+    not automatically advance when explicit IDs are inserted, so the next insert
+    can try to reuse an existing primary key.
+    """
+    if connection.dialect.name != "postgresql":
+        return
+
+    table_names = set(inspect(connection).get_table_names())
+    sequence_tables = [
+        "administrateurs",
+        "utilisateurs",
+        "audit_logs",
+        "refresh_tokens",
+        "login_attempts",
+        "pharmacies",
+        "garde_schedules",
+        "search_events",
+        "medicines",
+    ]
+
+    for table_name in sequence_tables:
+        if table_name not in table_names:
+            continue
+
+        connection.execute(
+            text(
+                f"""
+                SELECT setval(
+                    pg_get_serial_sequence('{table_name}', 'id'),
+                    COALESCE((SELECT MAX(id) FROM {table_name}), 1),
+                    (SELECT COUNT(*) FROM {table_name}) > 0
+                )
+                """
+            )
+        )
+
+
+def _harden_assistant_admin_schema(connection: Connection) -> None:
+    """Add assistant account integrity helpers without rewriting existing tables."""
+    inspector = inspect(connection)
+    if "administrateurs" not in set(inspector.get_table_names()):
+        return
+
+    existing_columns = {
+        column["name"] for column in inspector.get_columns("administrateurs")
+    }
+    if "last_login" not in existing_columns:
+        connection.execute(
+            text("ALTER TABLE administrateurs ADD COLUMN last_login TIMESTAMP WITH TIME ZONE")
+        )
+
+    connection.execute(
+        text(
+            "CREATE INDEX IF NOT EXISTS ix_administrateurs_last_login "
+            "ON administrateurs (last_login)"
+        )
+    )
+    connection.execute(
+        text(
+            "UPDATE administrateurs SET region_scope = NULL "
+            "WHERE lower(role) <> 'assistant' AND region_scope IS NOT NULL"
+        )
+    )
+
+    if connection.dialect.name != "postgresql":
+        return
+
+    connection.execute(
+        text(
+            """
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM pg_constraint
+                    WHERE conname = 'ck_administrateurs_assistant_region_scope'
+                ) THEN
+                    ALTER TABLE administrateurs
+                    ADD CONSTRAINT ck_administrateurs_assistant_region_scope
+                    CHECK (
+                        (
+                            role = 'assistant'
+                            AND region_scope IN ('north', 'middle', 'south')
+                        )
+                        OR (
+                            role <> 'assistant'
+                            AND region_scope IS NULL
+                        )
+                    ) NOT VALID;
+                END IF;
+            END $$;
+            """
+        )
+    )
+
+
 MIGRATIONS = [
     Migration(
         version="2026_04_13_001_normalize_utilisateurs_verification",
@@ -410,5 +531,20 @@ MIGRATIONS = [
         version="2026_04_14_005_add_medicine_indexes",
         description="Add indexes for medicine catalog search queries",
         apply=_add_medicine_indexes,
+    ),
+    Migration(
+        version="2026_05_08_006_add_admin_region_scope",
+        description="Add regional scope for assistant administrator accounts",
+        apply=_add_admin_region_scope,
+    ),
+    Migration(
+        version="2026_05_08_007_sync_postgres_id_sequences",
+        description="Synchronize PostgreSQL id sequences after explicit-id imports",
+        apply=_sync_postgres_id_sequences,
+    ),
+    Migration(
+        version="2026_05_09_008_harden_assistant_admin_schema",
+        description="Add assistant account integrity constraints and last-login tracking",
+        apply=_harden_assistant_admin_schema,
     ),
 ]

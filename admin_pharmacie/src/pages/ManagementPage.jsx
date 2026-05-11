@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Edit2, Plus, Search, Trash2, Check, AlertCircle, Calendar } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Edit2, Plus, Search, Trash2, Check, AlertCircle, Calendar, UserPlus, Users, Power } from 'lucide-react';
 import api from '../lib/api';
 import {
   Badge,
@@ -22,13 +22,28 @@ import {
   TableHeaderCell,
   TableRow,
 } from '../components/ui';
+import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { canManageAssistants as canManageAssistantAccounts } from '../lib/permissions';
 
 const PAGE_SIZE = 20;
 
+const REGION_LABEL_KEYS = {
+  north: 'management.regionNorth',
+  middle: 'management.regionMiddle',
+  south: 'management.regionSouth',
+};
+
 const ManagementPage = () => {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('pharmacies');
+  const currentRole = (user?.role || '').toLowerCase();
+  const canManageAssistants = canManageAssistantAccounts(currentRole);
+  const assistantRegion = user?.region_scope || null;
+  const [regionOptions, setRegionOptions] = useState([]);
+  const [regionError, setRegionError] = useState('');
+  const currentRegion = regionOptions.find((region) => region.value === assistantRegion);
 
   // ========== PHARMACY STATE ==========
   const [pharmacyLoading, setPharmacyLoading] = useState(true);
@@ -78,6 +93,26 @@ const ManagementPage = () => {
     notes: '',
   });
 
+  // ========== ASSISTANT STATE ==========
+  const [assistantLoading, setAssistantLoading] = useState(false);
+  const [assistantError, setAssistantError] = useState('');
+  const [assistantSuccess, setAssistantSuccess] = useState('');
+  const [assistants, setAssistants] = useState([]);
+  const [assistantTotal, setAssistantTotal] = useState(0);
+  const [assistantSearch, setAssistantSearch] = useState('');
+  const [assistantFilterRegion, setAssistantFilterRegion] = useState('all');
+  const [showAssistantModal, setShowAssistantModal] = useState(false);
+  const [assistantModalMode, setAssistantModalMode] = useState('create');
+  const [assistantEditingId, setAssistantEditingId] = useState(null);
+  const [assistantSubmitting, setAssistantSubmitting] = useState(false);
+  const [assistantFormData, setAssistantFormData] = useState({
+    nomUtilisateur: '',
+    email: '',
+    password: '',
+    region_scope: 'north',
+    is_active: true,
+  });
+
   // Clear messages after timeout
   useEffect(() => {
     if (pharmacySuccess) {
@@ -93,13 +128,37 @@ const ManagementPage = () => {
     }
   }, [gardeSuccess]);
 
-  // ========== PHARMACY FUNCTIONS ==========
+  useEffect(() => {
+    if (assistantSuccess) {
+      const timer = setTimeout(() => setAssistantSuccess(''), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [assistantSuccess]);
 
   useEffect(() => {
-    loadPharmacies();
-  }, [pharmacyPage]);
+    if (!canManageAssistants && activeTab === 'assistants') {
+      setActiveTab('pharmacies');
+    }
+  }, [activeTab, canManageAssistants]);
 
-  const loadPharmacies = async () => {
+  const loadRegions = useCallback(async () => {
+    setRegionError('');
+
+    try {
+      const response = await api.get('/api/admin/regions');
+      setRegionOptions(Array.isArray(response.data?.regions) ? response.data.regions : []);
+    } catch (err) {
+      setRegionError(err.response?.data?.detail || err.message || t('management.failedLoadRegions'));
+    }
+  }, [t]);
+
+  useEffect(() => {
+    loadRegions();
+  }, [loadRegions]);
+
+  // ========== PHARMACY FUNCTIONS ==========
+
+  const loadPharmacies = useCallback(async () => {
     setPharmacyLoading(true);
     setPharmacyError('');
 
@@ -117,14 +176,18 @@ const ManagementPage = () => {
     } finally {
       setPharmacyLoading(false);
     }
-  };
+  }, [pharmacyPage, t]);
+
+  useEffect(() => {
+    loadPharmacies();
+  }, [loadPharmacies]);
 
   const openPharmacyCreateModal = () => {
     setPharmacyFormData({
       name: '',
       address: '',
       phone: '',
-      governorate: '',
+      governorate: currentRegion?.governorates[0] || '',
       latitude: '',
       longitude: '',
       osm_type: 'node',
@@ -159,6 +222,10 @@ const ManagementPage = () => {
   const validatePharmacyForm = () => {
     if (!pharmacyFormData.name.trim()) {
       setPharmacyError(t('management.pharmacyNameRequired'));
+      return false;
+    }
+    if (currentRegion && !currentRegion.governorates.includes(pharmacyFormData.governorate)) {
+      setPharmacyError(t('management.assistantRegionRequired'));
       return false;
     }
     if (!pharmacyFormData.latitude || isNaN(parseFloat(pharmacyFormData.latitude))) {
@@ -249,11 +316,7 @@ const ManagementPage = () => {
 
   // ========== GARDE FUNCTIONS ==========
 
-  useEffect(() => {
-    loadGardes();
-  }, [gardePage]);
-
-  const loadGardes = async () => {
+  const loadGardes = useCallback(async () => {
     setGardeLoading(true);
     setGardeError('');
 
@@ -271,7 +334,11 @@ const ManagementPage = () => {
     } finally {
       setGardeLoading(false);
     }
-  };
+  }, [gardePage, t]);
+
+  useEffect(() => {
+    loadGardes();
+  }, [loadGardes]);
 
   const openGardeCreateModal = () => {
     setGardeFormData({
@@ -280,7 +347,7 @@ const ManagementPage = () => {
       start_time: '',
       end_time: '',
       city: '',
-      governorate: '',
+      governorate: currentRegion?.governorates[0] || '',
       shift_type: '',
       notes: '',
     });
@@ -325,6 +392,10 @@ const ManagementPage = () => {
     }
     if (!gardeFormData.end_time.trim()) {
       setGardeError(t('management.endTimeRequired'));
+      return false;
+    }
+    if (currentRegion && !currentRegion.governorates.includes(gardeFormData.governorate)) {
+      setGardeError(t('management.assistantRegionRequired'));
       return false;
     }
 
@@ -418,25 +489,202 @@ const ManagementPage = () => {
   });
   const gardeTotalPages = Math.max(1, Math.ceil(gardeTotal / PAGE_SIZE));
 
+  // ========== ASSISTANT FUNCTIONS ==========
+
+  const loadAssistants = useCallback(async () => {
+    if (!canManageAssistants) return;
+
+    setAssistantLoading(true);
+    setAssistantError('');
+
+    try {
+      const [countResponse, assistantsResponse] = await Promise.all([
+        api.get('/api/admin/assistants/count'),
+        api.get('/api/admin/assistants', { params: { skip: 0, limit: 50 } }),
+      ]);
+
+      setAssistantTotal(countResponse.data?.total || 0);
+      setAssistants(Array.isArray(assistantsResponse.data) ? assistantsResponse.data : []);
+    } catch (err) {
+      setAssistantError(err.response?.data?.detail || err.message || t('management.failedLoadAssistants'));
+    } finally {
+      setAssistantLoading(false);
+    }
+  }, [canManageAssistants, t]);
+
+  useEffect(() => {
+    if (canManageAssistants) {
+      loadAssistants();
+    }
+  }, [canManageAssistants, loadAssistants]);
+
+  const openAssistantCreateModal = () => {
+    const defaultRegion = regionOptions[0]?.value || 'north';
+    setAssistantFormData({
+      nomUtilisateur: '',
+      email: '',
+      password: '',
+      region_scope: defaultRegion,
+      is_active: true,
+    });
+    setAssistantModalMode('create');
+    setAssistantEditingId(null);
+    setAssistantError('');
+    setShowAssistantModal(true);
+  };
+
+  const openAssistantEditModal = (assistant) => {
+    setAssistantFormData({
+      nomUtilisateur: assistant.nomUtilisateur || '',
+      email: assistant.email || '',
+      password: '',
+      region_scope: assistant.region_scope || regionOptions[0]?.value || 'north',
+      is_active: Boolean(assistant.is_active),
+    });
+    setAssistantModalMode('edit');
+    setAssistantEditingId(assistant.id);
+    setAssistantError('');
+    setShowAssistantModal(true);
+  };
+
+  const handleAssistantFormChange = (e) => {
+    const { name, type, checked, value } = e.target;
+    const nextValue = type === 'checkbox' ? checked : value;
+    setAssistantFormData((prev) => ({ ...prev, [name]: nextValue }));
+  };
+
+  const validateAssistantForm = () => {
+    if (assistantModalMode === 'create' && !assistantFormData.nomUtilisateur.trim()) {
+      setAssistantError(t('management.assistantUsernameRequired'));
+      return false;
+    }
+    if (assistantModalMode === 'create' && !assistantFormData.email.trim()) {
+      setAssistantError(t('management.assistantEmailRequired'));
+      return false;
+    }
+    if (
+      (assistantModalMode === 'create' || assistantFormData.password) &&
+      (
+        assistantFormData.password.length < 8 ||
+        !/[A-Z]/.test(assistantFormData.password) ||
+        !/[a-z]/.test(assistantFormData.password) ||
+        !/\d/.test(assistantFormData.password)
+      )
+    ) {
+      setAssistantError(t('management.assistantPasswordRequired'));
+      return false;
+    }
+    if (!regionOptions.some((region) => region.value === assistantFormData.region_scope)) {
+      setAssistantError(t('management.assistantRegionRequired'));
+      return false;
+    }
+    return true;
+  };
+
+  const handleAssistantSubmit = async (e) => {
+    e.preventDefault();
+    setAssistantError('');
+    setAssistantSuccess('');
+
+    if (!validateAssistantForm()) return;
+
+    setAssistantSubmitting(true);
+
+    try {
+      if (assistantModalMode === 'create') {
+        await api.post('/api/admin/assistants', {
+          nomUtilisateur: assistantFormData.nomUtilisateur,
+          email: assistantFormData.email,
+          password: assistantFormData.password,
+          region_scope: assistantFormData.region_scope,
+        });
+        setAssistantSuccess(t('management.assistantCreated'));
+      } else {
+        const payload = {
+          region_scope: assistantFormData.region_scope,
+          is_active: assistantFormData.is_active,
+        };
+
+        if (assistantFormData.password) {
+          payload.password = assistantFormData.password;
+        }
+
+        await api.patch(`/api/admin/assistants/${assistantEditingId}`, payload);
+        setAssistantSuccess(t('management.assistantUpdated'));
+      }
+
+      setShowAssistantModal(false);
+      await loadAssistants();
+    } catch (err) {
+      setAssistantError(err.response?.data?.detail || err.message || t('management.operationFailed'));
+    } finally {
+      setAssistantSubmitting(false);
+    }
+  };
+
+  const handleAssistantActiveToggle = async (assistant) => {
+    setAssistantError('');
+    setAssistantSuccess('');
+
+    try {
+      await api.patch(`/api/admin/assistants/${assistant.id}`, {
+        is_active: !assistant.is_active,
+      });
+      setAssistantSuccess(
+        assistant.is_active
+          ? t('management.assistantDeactivated')
+          : t('management.assistantActivated')
+      );
+      await loadAssistants();
+    } catch (err) {
+      setAssistantError(err.response?.data?.detail || err.message || t('management.operationFailed'));
+    }
+  };
+
+  const handleAssistantDelete = async (assistant) => {
+    if (!window.confirm(t('management.confirmDeleteAssistant'))) return;
+
+    setAssistantError('');
+    setAssistantSuccess('');
+
+    try {
+      await api.delete(`/api/admin/assistants/${assistant.id}`);
+      setAssistantSuccess(t('management.assistantDeleted'));
+      await loadAssistants();
+    } catch (err) {
+      setAssistantError(err.response?.data?.detail || err.message || t('management.failedDeleteAssistant'));
+    }
+  };
+
+  const regionLabel = (regionScope) => {
+    const region = regionOptions.find((item) => item.value === regionScope);
+    if (!region) return '-';
+    const translationKey = REGION_LABEL_KEYS[region.value];
+    return translationKey ? t(translationKey) : region.label;
+  };
+
+  const tabItems = [
+    { value: 'pharmacies', label: t('management.pharmacies') },
+    { value: 'gardes', label: t('management.gardeSchedules') },
+    ...(canManageAssistants ? [{ value: 'assistants', label: t('management.assistants') }] : []),
+  ];
+
   return (
     <div className="page-shell">
       <div className="page-content">
         <SectionHeader
           eyebrow={t('management.eyebrow')}
           title={t('management.title')}
-          description={t('management.description')}
+          description={currentRegion ? t('management.assistantDescription') : t('management.description')}
         />
 
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <Tabs
             value={activeTab}
             onChange={setActiveTab}
-            items={[
-              { value: 'pharmacies', label: t('management.pharmacies') },
-              { value: 'gardes', label: t('management.gardeSchedules') },
-            ]}
+            items={tabItems}
           />
-          <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[420px]">
+          <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[420px] xl:grid-cols-3">
             <div className="rounded-[8px] border border-border bg-surface-elevated px-4 py-3">
               <p className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">{t('management.registryRows')}</p>
               <p className="mt-1 font-display text-2xl font-bold text-foreground">{pharmacyLoading ? '...' : pharmacyTotal}</p>
@@ -445,8 +693,60 @@ const ManagementPage = () => {
               <p className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">{t('management.gardeRows')}</p>
               <p className="mt-1 font-display text-2xl font-bold text-foreground">{gardeLoading ? '...' : gardeTotal}</p>
             </div>
+            {canManageAssistants ? (
+              <div className="rounded-[8px] border border-border bg-surface-elevated px-4 py-3">
+                <p className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">{t('management.assistantRows')}</p>
+                <p className="mt-1 font-display text-2xl font-bold text-foreground">{assistantLoading ? '...' : assistantTotal}</p>
+              </div>
+            ) : null}
           </div>
         </div>
+
+        {regionError ? (
+          <div className="rounded-[8px] border border-border bg-surface-muted px-4 py-3 text-sm text-foreground">
+            {regionError}
+          </div>
+        ) : null}
+
+        {currentRegion ? (
+          <div className="rounded-[8px] border border-border bg-surface-elevated p-4">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                  {t('management.regionalOverview')}
+                </p>
+                <h2 className="mt-1 font-display text-xl font-bold text-foreground">
+                  {regionLabel(currentRegion.value)}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {currentRegion.governorates.join(', ')}
+                </p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[460px]">
+                <div className="rounded-[8px] border border-border bg-surface px-4 py-3">
+                  <p className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                    {t('management.pharmacies')}
+                  </p>
+                  <p className="mt-1 font-display text-2xl font-bold text-foreground">{pharmacyTotal}</p>
+                </div>
+                <div className="rounded-[8px] border border-border bg-surface px-4 py-3">
+                  <p className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                    {t('management.gardeSchedules')}
+                  </p>
+                  <p className="mt-1 font-display text-2xl font-bold text-foreground">{gardeTotal}</p>
+                </div>
+                <div className="rounded-[8px] border border-border bg-surface px-4 py-3">
+                  <p className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                    {t('management.governorates')}
+                  </p>
+                  <p className="mt-1 font-display text-2xl font-bold text-foreground">
+                    {currentRegion.governorates.length}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {/* PHARMACY TAB */}
         {activeTab === 'pharmacies' && (
@@ -742,6 +1042,170 @@ const ManagementPage = () => {
           </div>
         )}
 
+        {/* ASSISTANTS TAB */}
+        {activeTab === 'assistants' && canManageAssistants && (
+          <div className="grid gap-4">
+            {assistantError ? (
+              <Card className="border-border bg-surface-muted mb-4">
+                <CardContent className="flex items-center gap-3 p-4">
+                  <AlertCircle className="h-4 w-4 text-foreground" />
+                  <p className="text-sm text-foreground">{assistantError}</p>
+                </CardContent>
+              </Card>
+            ) : null}
+
+            {assistantSuccess ? (
+              <Card className="border-border bg-surface-muted mb-4">
+                <CardContent className="flex items-center gap-3 p-4">
+                  <Check className="h-4 w-4 text-foreground" />
+                  <p className="text-sm text-foreground">{assistantSuccess}</p>
+                </CardContent>
+              </Card>
+            ) : null}
+
+            <Card>
+              <CardHeader className="border-b border-border">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <CardTitle>{t('management.assistants')}</CardTitle>
+                    <p className="mt-1 text-sm text-muted-foreground">{t('management.manageAssistants')}</p>
+                  </div>
+                  <Button
+                    onClick={openAssistantCreateModal}
+                    disabled={!regionOptions.length}
+                    className="w-full sm:w-auto sm:flex-shrink-0"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    {t('management.addAssistant')}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                {assistants.length ? (
+                  <>
+                    <div className="border-b border-border bg-surface-muted px-6 py-4">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <Input
+                          placeholder={t('management.searchAssistants')}
+                          value={assistantSearch}
+                          onChange={(e) => setAssistantSearch(e.target.value)}
+                          className="w-full"
+                        />
+                        <Select value={assistantFilterRegion} onChange={(e) => setAssistantFilterRegion(e.target.value)}>
+                          <option value="all">{t('management.allRegions')}</option>
+                          {regionOptions.map((region) => (
+                            <option key={region.value} value={region.value}>
+                              {regionLabel(region.value)}
+                            </option>
+                          ))}
+                        </Select>
+                      </div>
+                    </div>
+                    <Table>
+                      <TableHead>
+                        <tr>
+                          <TableHeaderCell>{t('management.username')}</TableHeaderCell>
+                          <TableHeaderCell>{t('management.email')}</TableHeaderCell>
+                          <TableHeaderCell>{t('management.region')}</TableHeaderCell>
+                          <TableHeaderCell>{t('management.status')}</TableHeaderCell>
+                          <TableHeaderCell>{t('management.createdAt')}</TableHeaderCell>
+                          <TableHeaderCell>{t('management.lastLogin')}</TableHeaderCell>
+                          <TableHeaderCell>{t('management.createdBy')}</TableHeaderCell>
+                          <TableHeaderCell>{t('management.actions')}</TableHeaderCell>
+                        </tr>
+                      </TableHead>
+                      <TableBody>
+                        {(() => {
+                          const assistantRegions = Array.from(new Set(assistants.map((item) => item.region_scope).filter(Boolean)));
+                          const filteredAssistants = assistants.filter((item) => {
+                            const matchesSearch =
+                              !assistantSearch ||
+                              [item.nomUtilisateur, item.email]
+                                .filter(Boolean)
+                                .some((value) => value.toLowerCase().includes(assistantSearch.toLowerCase()));
+                            const matchesRegion = assistantFilterRegion === 'all' || item.region_scope === assistantFilterRegion;
+                            return matchesSearch && matchesRegion;
+                          });
+                          return filteredAssistants.map((assistant) => (
+                        <TableRow key={assistant.id}>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium text-foreground">{assistant.nomUtilisateur}</p>
+                              <p className="mt-1 text-xs text-muted-foreground">#{assistant.id}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>{assistant.email}</TableCell>
+                          <TableCell>
+                            <Badge variant="primary">{regionLabel(assistant.region_scope)}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={assistant.is_active ? 'secondary' : 'neutral'}>
+                              {assistant.is_active ? t('profile.active') : t('profile.inactive')}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {assistant.created_at ? new Date(assistant.created_at).toLocaleDateString() : '-'}
+                          </TableCell>
+                          <TableCell>
+                            {assistant.last_login ? new Date(assistant.last_login).toLocaleString() : t('management.never')}
+                          </TableCell>
+                          <TableCell>{assistant.created_by ? `#${assistant.created_by}` : '-'}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => openAssistantEditModal(assistant)}
+                                title={t('management.editAssistant')}
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant={assistant.is_active ? 'danger' : 'secondary'}
+                                size="sm"
+                                onClick={() => handleAssistantActiveToggle(assistant)}
+                                title={
+                                  assistant.is_active
+                                    ? t('management.deactivateAssistant')
+                                    : t('management.activateAssistant')
+                                }
+                              >
+                                <Power className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="danger"
+                                size="sm"
+                                onClick={() => handleAssistantDelete(assistant)}
+                                title={t('management.deleteAssistant')}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ));
+                        })()}
+                    </TableBody>
+                  </Table>
+                  </>
+                ) : (
+                  <div className="p-6">
+                    <EmptyState
+                      icon={Users}
+                      title={assistantLoading ? t('management.loadingAssistants') : t('management.noAssistantsFound')}
+                      description={
+                        assistantLoading
+                          ? t('management.fetchingAssistantData')
+                          : t('management.noAssistantsFoundDesc')
+                      }
+                    />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* PHARMACY MODAL */}
         <Modal
           open={showPharmacyModal}
@@ -788,13 +1252,23 @@ const ManagementPage = () => {
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-foreground">{t('management.governorate')}</label>
-              <Input
-                type="text"
-                name="governorate"
-                value={pharmacyFormData.governorate}
-                onChange={handlePharmacyFormChange}
-                placeholder={t('management.enterGovernorate')}
-              />
+              {currentRegion ? (
+                <Select name="governorate" value={pharmacyFormData.governorate} onChange={handlePharmacyFormChange}>
+                  {currentRegion.governorates.map((governorate) => (
+                    <option key={governorate} value={governorate}>
+                      {governorate}
+                    </option>
+                  ))}
+                </Select>
+              ) : (
+                <Input
+                  type="text"
+                  name="governorate"
+                  value={pharmacyFormData.governorate}
+                  onChange={handlePharmacyFormChange}
+                  placeholder={t('management.enterGovernorate')}
+                />
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -944,13 +1418,23 @@ const ManagementPage = () => {
               </div>
               <div>
                 <label className="mb-2 block text-sm font-semibold text-foreground">{t('management.governorate')}</label>
-                <Input
-                  type="text"
-                  name="governorate"
-                  value={gardeFormData.governorate}
-                  onChange={handleGardeFormChange}
-                  placeholder={t('management.enterGovernorate')}
-                />
+                {currentRegion ? (
+                  <Select name="governorate" value={gardeFormData.governorate} onChange={handleGardeFormChange}>
+                    {currentRegion.governorates.map((governorate) => (
+                      <option key={governorate} value={governorate}>
+                        {governorate}
+                      </option>
+                    ))}
+                  </Select>
+                ) : (
+                  <Input
+                    type="text"
+                    name="governorate"
+                    value={gardeFormData.governorate}
+                    onChange={handleGardeFormChange}
+                    placeholder={t('management.enterGovernorate')}
+                  />
+                )}
               </div>
             </div>
 
@@ -986,6 +1470,132 @@ const ManagementPage = () => {
               </Button>
               <Button type="submit" disabled={gardeSubmitting}>
                 {gardeSubmitting ? t('management.saving') : gardeModalMode === 'create' ? t('management.create') : t('management.update')}
+              </Button>
+            </div>
+          </form>
+        </Modal>
+
+        {/* ASSISTANT MODAL */}
+        <Modal
+          open={showAssistantModal}
+          onClose={() => setShowAssistantModal(false)}
+          title={
+            assistantModalMode === 'create'
+              ? t('management.createAssistant')
+              : t('management.editAssistant')
+          }
+          description={
+            assistantModalMode === 'create'
+              ? t('management.createAssistantDesc')
+              : t('management.editAssistantDesc')
+          }
+        >
+          <form onSubmit={handleAssistantSubmit} className="space-y-4">
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-foreground">
+                {t('management.username')} <span className="text-foreground">*</span>
+              </label>
+              <Input
+                type="text"
+                name="nomUtilisateur"
+                value={assistantFormData.nomUtilisateur}
+                onChange={handleAssistantFormChange}
+                placeholder={t('management.enterAssistantUsername')}
+                disabled={assistantModalMode === 'edit'}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-foreground">
+                {t('management.email')} <span className="text-foreground">*</span>
+              </label>
+              <Input
+                type="email"
+                name="email"
+                value={assistantFormData.email}
+                onChange={handleAssistantFormChange}
+                placeholder={t('management.enterAssistantEmail')}
+                disabled={assistantModalMode === 'edit'}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-foreground">
+                {assistantModalMode === 'create' ? t('management.password') : t('management.resetPassword')}
+                {assistantModalMode === 'create' ? <span className="text-foreground"> *</span> : null}
+              </label>
+              <Input
+                type="password"
+                name="password"
+                value={assistantFormData.password}
+                onChange={handleAssistantFormChange}
+                placeholder={
+                  assistantModalMode === 'create'
+                    ? t('management.enterAssistantPassword')
+                    : t('management.leaveBlankToKeepCurrent')
+                }
+                required={assistantModalMode === 'create'}
+              />
+              <p className="mt-2 text-xs text-muted-foreground">
+                {assistantModalMode === 'create'
+                  ? t('management.assistantPasswordHint')
+                  : t('management.passwordResetHint')}
+              </p>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-foreground">
+                {t('management.region')} <span className="text-foreground">*</span>
+              </label>
+              <Select
+                name="region_scope"
+                value={assistantFormData.region_scope}
+                onChange={handleAssistantFormChange}
+              >
+                {regionOptions.map((region) => (
+                  <option key={region.value} value={region.value}>
+                    {regionLabel(region.value)}
+                  </option>
+                ))}
+              </Select>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                {
+                  regionOptions.find((region) => region.value === assistantFormData.region_scope)
+                    ?.governorates.join(', ')
+                }
+              </p>
+            </div>
+
+            {assistantModalMode === 'edit' ? (
+              <label className="flex items-center gap-3 rounded-[8px] border border-border bg-surface px-3 py-3 text-sm font-medium text-foreground">
+                <input
+                  type="checkbox"
+                  name="is_active"
+                  checked={assistantFormData.is_active}
+                  onChange={handleAssistantFormChange}
+                  className="h-4 w-4 rounded border-border"
+                />
+                {t('management.assistantCanSignIn')}
+              </label>
+            ) : null}
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setShowAssistantModal(false)}
+                disabled={assistantSubmitting}
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button type="submit" disabled={assistantSubmitting}>
+                {assistantSubmitting
+                  ? t('management.saving')
+                  : assistantModalMode === 'create'
+                    ? t('management.create')
+                    : t('management.update')}
               </Button>
             </div>
           </form>
