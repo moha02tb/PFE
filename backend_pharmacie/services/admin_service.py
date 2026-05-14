@@ -4,7 +4,6 @@ Extracted from routers/auth.py to enable testing, reuse, and cleaner separation 
 Handles: admin creation, admin management, admin queries.
 """
 
-import json
 from typing import Optional, Tuple
 
 from sqlalchemy import text
@@ -15,6 +14,7 @@ from events import EventTypes, get_event_bus
 from region_scope import normalize_region
 from schemas import AdminCreate, AdminResponse, AssistantCreate, AssistantUpdate
 from security import hash_password
+from services.audit_service import AuditService
 
 
 class AdminService:
@@ -353,18 +353,12 @@ class AdminService:
         entity_id: int,
         details: dict,
     ) -> None:
-        try:
-            self.db.add(
-                models.AuditLog(
-                    action=action,
-                    entity_type="administrateur",
-                    entity_id=entity_id,
-                    actor_id=actor_id,
-                    actor_type="administrateur",
-                    details=json.dumps(details),
-                    status="success",
-                )
-            )
-            self.db.commit()
-        except Exception:
-            self.db.rollback()
+        AuditService(self.db).log_action(
+            action=action,
+            entity_type="administrateur",
+            entity_id=entity_id,
+            actor_id=actor_id,
+            actor_type="administrateur",
+            details=details,
+            status="success",
+        )

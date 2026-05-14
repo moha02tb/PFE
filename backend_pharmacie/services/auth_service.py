@@ -22,6 +22,7 @@ from schemas import (
     TokenResponse,
     UserResponse,
 )
+from services.audit_service import AuditService
 from services.email_service import EmailService
 from security import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
@@ -71,8 +72,59 @@ class AuthService:
 
         return None
 
+    def _audit_login_success(
+        self,
+        entity_type: str,
+        entity_id: int,
+        email: str,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None,
+    ) -> None:
+        action = (
+            models.AuditActionEnum.ADMIN_LOGIN
+            if entity_type == "administrateur"
+            else models.AuditActionEnum.USER_LOGIN
+        )
+        AuditService(self.db).log_action(
+            action=action,
+            actor_id=entity_id,
+            actor_type=entity_type,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            details={"email": email},
+            status="success",
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+
+    def _audit_login_failed(
+        self,
+        email: str,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None,
+        entity_type: Optional[str] = None,
+        entity_id: Optional[int] = None,
+        reason: str = "invalid_credentials",
+    ) -> None:
+        action = (
+            models.AuditActionEnum.ADMIN_LOGIN_FAILED
+            if entity_type == "administrateur"
+            else models.AuditActionEnum.USER_LOGIN_FAILED
+        )
+        AuditService(self.db).log_action(
+            action=action,
+            actor_id=None,
+            actor_type=None,
+            entity_type=entity_type or "auth",
+            entity_id=entity_id or 0,
+            details={"email": email, "reason": reason},
+            status="failed",
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+
     def login(
-        self, credentials: LoginRequest, ip_address: str
+        self, credentials: LoginRequest, ip_address: str, user_agent: Optional[str] = None
     ) -> Tuple[dict, Optional[str]]:
         """
         Authenticate user (admin or regular).
@@ -109,6 +161,13 @@ class AuthService:
                     "ip_address": ip_address,
                 },
             )
+            self._audit_login_success(
+                entity_type="administrateur",
+                entity_id=admin.id,
+                email=credentials.email,
+                ip_address=ip_address,
+                user_agent=user_agent,
+            )
             return response, None
 
         # Try user table
@@ -120,6 +179,14 @@ class AuthService:
 
         if user and user.is_active and verify_password(credentials.password, user.motDePasse):
             if not user.email_verified:
+                self._audit_login_failed(
+                    email=credentials.email,
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                    entity_type="utilisateur",
+                    entity_id=user.id,
+                    reason="email_not_verified",
+                )
                 return None, "Please verify your email before signing in"
 
             # Update last login
@@ -143,6 +210,13 @@ class AuthService:
                     "ip_address": ip_address,
                 },
             )
+            self._audit_login_success(
+                entity_type="utilisateur",
+                entity_id=user.id,
+                email=credentials.email,
+                ip_address=ip_address,
+                user_agent=user_agent,
+            )
             return response, None
 
         # Log failed attempt
@@ -150,6 +224,23 @@ class AuthService:
             models.LoginAttempt(email=credentials.email, ip_address=ip_address, success=False)
         )
         self.db.commit()
+
+        failed_entity_type = None
+        failed_entity_id = None
+        if admin:
+            failed_entity_type = "administrateur"
+            failed_entity_id = admin.id
+        elif user:
+            failed_entity_type = "utilisateur"
+            failed_entity_id = user.id
+
+        self._audit_login_failed(
+            email=credentials.email,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            entity_type=failed_entity_type,
+            entity_id=failed_entity_id,
+        )
 
         self.event_bus.publish(
             EventTypes.AUTH_LOGIN_FAILED,
@@ -201,7 +292,12 @@ class AuthService:
             "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         }
 
-    def register(self, reg_data: RegisterRequest) -> Tuple[dict, Optional[str]]:
+    def register(
+        self,
+        reg_data: RegisterRequest,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None,
+    ) -> Tuple[dict, Optional[str]]:
         """
         Register new user (non-admin).
         
@@ -263,6 +359,22 @@ class AuthService:
             return None, f"Unable to create pending account: {exc}"
 
         self.db.refresh(new_user)
+
+        AuditService(self.db).log_action(
+            action=models.AuditActionEnum.USER_REGISTERED,
+            actor_id=new_user.id,
+            actor_type="utilisateur",
+            entity_type="utilisateur",
+            entity_id=new_user.id,
+            details={
+                "email": new_user.email,
+                "username": new_user.nomUtilisateur,
+                "source": getattr(new_user.source, "value", new_user.source),
+            },
+            status="success",
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
 
         self.event_bus.publish(
             EventTypes.AUTH_REGISTERED,
@@ -398,23 +510,45 @@ class AuthService:
             "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         }, None
 
-    def logout(self, refresh_token: Optional[str] = None) -> bool:
+    def logout(
+        self,
+        refresh_token: Optional[str] = None,
+        actor_id: Optional[int] = None,
+        actor_type: Optional[str] = None,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None,
+    ) -> bool:
         """Revoke refresh token (logout)."""
-        if not refresh_token:
-            return True
+        jti = None
 
-        payload = verify_token(refresh_token, token_type="refresh")
-        if not payload:
-            return True
+        if refresh_token:
+            payload = verify_token(refresh_token, token_type="refresh")
+            if payload:
+                jti = payload.get("jti")
+                self.db.query(models.RefreshToken).filter(
+                    models.RefreshToken.token_jti == jti
+                ).delete()
+                self.db.commit()
 
-        jti = payload.get("jti")
-        self.db.query(models.RefreshToken).filter(models.RefreshToken.token_jti == jti).delete()
-        self.db.commit()
+        if actor_id is not None and actor_type:
+            AuditService(self.db).log_action(
+                action=models.AuditActionEnum.LOGOUT,
+                actor_id=actor_id,
+                actor_type=actor_type,
+                entity_type=actor_type,
+                entity_id=actor_id,
+                details={"token_jti": jti} if jti else None,
+                status="success",
+                ip_address=ip_address,
+                user_agent=user_agent,
+            )
 
         self.event_bus.publish(
             EventTypes.AUTH_LOGOUT,
             {
                 "token_jti": jti,
+                "entity_type": actor_type,
+                "entity_id": actor_id,
             },
         )
 
@@ -497,12 +631,29 @@ class AuthService:
         self.db.commit()
         self.db.refresh(user)
 
+        entity_type = (
+            "administrateur"
+            if isinstance(user, models.Administrateur)
+            else "utilisateur"
+        )
+        AuditService(self.db).log_action(
+            action=(
+                models.AuditActionEnum.ADMIN_UPDATED
+                if entity_type == "administrateur"
+                else models.AuditActionEnum.USER_UPDATED
+            ),
+            actor_id=user.id,
+            actor_type=entity_type,
+            entity_type=entity_type,
+            entity_id=user.id,
+            details={"updated_fields": list(updates.keys())},
+            status="success",
+        )
+
         self.event_bus.publish(
             EventTypes.AUTH_PROFILE_UPDATED,
             {
-                "entity_type": "administrateur"
-                if isinstance(user, models.Administrateur)
-                else "utilisateur",
+                "entity_type": entity_type,
                 "entity_id": user.id,
                 "updated_fields": list(updates.keys()),
             },
@@ -515,6 +666,9 @@ class AuthService:
     def create_user_by_admin(
         self,
         user_data: AdminCreateByAdmin,
+        created_by_admin_id: Optional[int] = None,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None,
     ) -> Tuple[Optional[UserResponse], Optional[str]]:
         """
         Admin creates new regular user account.
@@ -567,6 +721,22 @@ class AuthService:
         self.db.add(new_user)
         self.db.commit()
         self.db.refresh(new_user)
+
+        AuditService(self.db).log_action(
+            action=models.AuditActionEnum.USER_REGISTERED,
+            actor_id=created_by_admin_id,
+            actor_type="administrateur" if created_by_admin_id is not None else None,
+            entity_type="utilisateur",
+            entity_id=new_user.id,
+            details={
+                "email": new_user.email,
+                "username": new_user.nomUtilisateur,
+                "source": "admin_created",
+            },
+            status="success",
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
 
         self.event_bus.publish(
             EventTypes.USER_CREATED_BY_ADMIN,

@@ -1,0 +1,117 @@
+\section{Introduction}
+
+Ce chapitre situe le projet dans son cadre général. Il présente d'abord l'organisme d'accueil, puis le
+domaine pharmaceutique dans lequel s'inscrit la solution. Il décrit ensuite le contexte du projet, les
+solutions existantes, leurs limites et la réponse proposée à travers PharmacieConnect.
+
+\section{Présentation de l'organisme d'accueil}
+
+Le projet a été réalisé au sein de l'organisme d'accueil suivant : [À compléter].
+
+\begin{table}[H]
+    \centering
+    \caption{Fiche signalétique de l'organisme d'accueil}
+    \begin{tabular}{L{5cm}L{8cm}}
+        \toprule
+        \textbf{Élément} & \textbf{Information} \\
+        \midrule
+        Nom de l'organisme & [À compléter] \\
+        Secteur d'activité & [À compléter] \\
+        Adresse & [À compléter] \\
+        Encadrant professionnel & [À compléter] \\
+        Missions principales & [À compléter] \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Les informations détaillées sur l'organisme d'accueil doivent être complétées à partir de sources
+vérifiées. Pour cette raison, le rapport ne contient pas de description non confirmée de l'entreprise, de
+son organisation ou de ses services internes.
+
+\section{Présentation du domaine pharmaceutique}
+
+La pharmacie joue un rôle direct dans l'accès aux médicaments et dans l'orientation du patient. En dehors
+des horaires habituels, les pharmacies de garde permettent de maintenir ce service disponible, notamment
+la nuit, les week-ends et les jours fériés.
+
+Dans ce domaine, la qualité des données a un impact réel sur l'utilisateur. Une adresse incorrecte, un
+numéro de téléphone absent ou un horaire non actualisé peut empêcher une personne de trouver la
+pharmacie recherchée. La mise à jour des informations devient donc une partie importante du service, au
+même titre que leur consultation.
+
+\section{Contexte du projet}
+
+PharmacieConnect a été pensé comme un outil permettant de regrouper les informations relatives aux
+pharmacies, aux plannings de garde et aux médicaments. La plateforme s'adresse à deux types
+d'utilisateurs. Le citoyen utilise l'application mobile pour chercher une pharmacie, consulter les gardes
+ou accéder au catalogue de médicaments. L'administrateur, de son côté, utilise le tableau de bord web
+pour gérer et contrôler les données.
+
+Le backend joue le rôle de point central entre ces deux interfaces et la base de données. Cette
+organisation évite que les clients manipulent directement les données et permet de placer les règles
+métier, la validation et la sécurité au niveau du serveur.
+
+\section{Étude de l'existant}
+
+Les informations sur les pharmacies de garde peuvent être consultées à travers plusieurs supports. Le
+premier support est la liste statique, publiée sous forme de page web, d'image ou de document. Cette
+solution est simple à diffuser, mais elle reste limitée lorsqu'il faut rechercher par ville, par date ou par
+position.
+
+Le deuxième support repose sur la recherche manuelle : appels téléphoniques, réseaux sociaux ou
+informations locales. Cette méthode peut parfois donner une réponse rapide, mais elle dépend de la
+disponibilité des personnes et de la fiabilité des informations partagées.
+
+Le troisième support correspond aux applications ou sites spécialisés. Ces outils sont plus pratiques pour
+l'utilisateur, surtout lorsqu'ils proposent la géolocalisation ou la recherche par date. En revanche, ils
+nécessitent une base de données propre, une administration régulière et des mécanismes de mise à jour.
+
+\begin{table}[H]
+    \centering
+    \caption{Comparaison générale des solutions existantes}
+    \begin{tabular}{L{4cm}L{4.5cm}L{4.5cm}}
+        \toprule
+        \textbf{Solution} & \textbf{Avantages} & \textbf{Limites} \\
+        \midrule
+        Listes statiques & Faciles à publier, accessibles sans installation & Recherche difficile, mise à jour manuelle, faible adaptation mobile \\
+        Appels ou sources locales & Possibilité d'obtenir une information directe & Dépendance à la disponibilité et risque d'information incomplète \\
+        Applications spécialisées & Recherche plus rapide, filtres et géolocalisation possibles & Besoin d'une base fiable, d'une administration et d'une maintenance continue \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\section{Critique de l'existant}
+
+L'étude de l'existant montre que le problème ne se limite pas à l'affichage des données. Les informations
+peuvent être dispersées, présentées sous des formats différents ou mises à jour de manière irrégulière.
+Pour un utilisateur mobile, cela rend la recherche moins fluide, surtout lorsqu'il souhaite filtrer par
+gouvernorat, par date ou par proximité.
+
+Le même problème se retrouve côté administration. Lorsque les données augmentent, la saisie manuelle
+devient difficile à contrôler. Sans import, validation, gestion des rôles et journalisation, il devient plus
+compliqué de garder une base cohérente et de suivre les modifications effectuées.
+
+\section{Solution proposée}
+
+La solution proposée, \textbf{PharmacieConnect}, regroupe trois composants :
+
+\begin{itemize}
+    \item une API backend développée avec FastAPI pour centraliser les données, gérer l'authentification,
+    appliquer les règles métier et exposer les endpoints REST ;
+    \item un tableau de bord administrateur développé avec React et Vite pour gérer les pharmacies, les
+    gardes, les médicaments, les imports CSV, les assistants régionaux, les analytics et les journaux d'audit ;
+    \item une application mobile développée avec Expo et React Native pour permettre au citoyen de
+    rechercher des pharmacies, consulter les gardes, utiliser la géolocalisation et accéder au catalogue
+    de médicaments.
+\end{itemize}
+
+Cette organisation répond aux limites relevées dans l'existant. Les données sont centralisées, les accès
+sont contrôlés et les interfaces sont adaptées aux deux usages principaux : la consultation mobile et
+l'administration.
+
+\section{Conclusion}
+
+Ce chapitre a présenté le contexte du projet, le domaine pharmaceutique, les solutions existantes et leurs
+limites. PharmacieConnect propose une réponse structurée à ces limites en séparant le backend,
+l'administration web et l'application mobile. Le chapitre suivant présente l'analyse détaillée des besoins
+du système.

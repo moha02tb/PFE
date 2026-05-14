@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import re
 from decimal import Decimal, InvalidOperation
 from io import BytesIO
@@ -16,6 +15,7 @@ import models
 from events import EventTypes, get_event_bus
 from models import AuditActionEnum
 from schemas import MedicineCreate, MedicineUploadIssueDetail
+from services.audit_service import AuditService
 
 
 def _clean_optional_str(value) -> Optional[str]:
@@ -246,28 +246,20 @@ class MedicineService:
             )
             return None, f"Failed to save medicines: {exc}"
 
-        try:
-            self.db.add(
-                models.AuditLog(
-                    action=AuditActionEnum.MEDICINE_BULK_UPLOAD,
-                    entity_type="medicine",
-                    entity_id=0,
-                    actor_id=admin_id,
-                    actor_type="administrateur",
-                    details=json.dumps(
-                        {
-                            "rows_processed": len(df),
-                            "rows_successful": successful,
-                            "rows_failed": len(errors),
-                            "rows_warned": len(warnings),
-                        }
-                    ),
-                    status="success",
-                )
-            )
-            self.db.commit()
-        except Exception:
-            self.db.rollback()
+        AuditService(self.db).log_action(
+            action=AuditActionEnum.MEDICINE_BULK_UPLOAD,
+            entity_type="medicine",
+            entity_id=0,
+            actor_id=admin_id,
+            actor_type="administrateur",
+            details={
+                "rows_processed": len(df),
+                "rows_successful": successful,
+                "rows_failed": len(errors),
+                "rows_warned": len(warnings),
+            },
+            status="success",
+        )
 
         self.event_bus.publish(
             EventTypes.MEDICINE_BULK_UPLOAD_SUCCESS,

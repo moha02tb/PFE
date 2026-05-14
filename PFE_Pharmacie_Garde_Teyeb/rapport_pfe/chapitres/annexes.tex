@@ -1,0 +1,142 @@
+\section{Commandes de lancement}
+
+\subsection*{Backend}
+
+\begin{lstlisting}
+cd backend_pharmacie
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --reload
+\end{lstlisting}
+
+\subsection*{Interface d'administration}
+
+\begin{lstlisting}
+cd admin_pharmacie
+npm install
+npm run dev
+\end{lstlisting}
+
+\subsection*{Application mobile}
+
+\begin{lstlisting}
+cd ouerkema-pharmacieconnect-4c94773cce7d
+npm install
+npm start
+\end{lstlisting}
+
+\section{Commandes de test}
+
+\subsection*{Backend}
+
+\begin{lstlisting}
+cd backend_pharmacie
+source venv/bin/activate
+pytest
+\end{lstlisting}
+
+\subsection*{Administration web}
+
+\begin{lstlisting}
+cd admin_pharmacie
+npm run lint
+npm run build
+\end{lstlisting}
+
+\subsection*{Application mobile}
+
+\begin{lstlisting}
+cd ouerkema-pharmacieconnect-4c94773cce7d
+npm test
+npm run lint
+\end{lstlisting}
+
+\section{Exemples de colonnes CSV}
+
+\subsection*{Pharmacies}
+
+\begin{table}[H]
+    \centering
+    \caption{Exemple de structure CSV pour les pharmacies}
+    \begin{tabular}{L{4cm}L{9cm}}
+        \toprule
+        \textbf{Colonne} & \textbf{Description} \\
+        \midrule
+        \texttt{name} & Nom de la pharmacie. \\
+        \texttt{latitude} & Latitude GPS. \\
+        \texttt{longitude} & Longitude GPS. \\
+        \texttt{address} & Adresse complète ou approximative. \\
+        \texttt{phone} & Numéro de téléphone. \\
+        \texttt{governorate} & Gouvernorat utilisé pour le filtrage régional. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection*{Médicaments}
+
+\begin{table}[H]
+    \centering
+    \caption{Exemple de structure CSV pour les médicaments}
+    \begin{tabular}{L{5.2cm}L{7.8cm}}
+        \toprule
+        \textbf{Colonne} & \textbf{Description} \\
+        \midrule
+        \texttt{code\_pct} & Identifiant métier du médicament. \\
+        \texttt{nom\_commercial} & Nom commercial. \\
+        \texttt{prix\_public\_dt} & Prix public en dinars. \\
+        \texttt{tarif\_reference\_dt} & Tarif de référence. \\
+        \texttt{categorie\_remboursement} & Catégorie de remboursement. \\
+        \texttt{dci} & Dénomination commune internationale. \\
+        \texttt{ap} & Autorisation ou indicateur AP selon la source de données. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\section{Variables d'environnement principales}
+
+\begin{table}[H]
+    \centering
+    \caption{Variables d'environnement utilisées par le backend}
+    \begin{tabular}{L{6.2cm}L{6.8cm}}
+        \toprule
+        \textbf{Variable} & \textbf{Rôle} \\
+        \midrule
+        \texttt{DATABASE\_URL} & Chaîne de connexion à la base de données. \\
+        \texttt{SECRET\_KEY} & Clé de signature des jetons JWT. \\
+        \texttt{ALGORITHM} & Algorithme de signature des jetons. \\
+        \texttt{ACCESS\_TOKEN\_EXPIRE\_MINUTES} & Durée de validité du jeton d'accès. \\
+        \texttt{REFRESH\_TOKEN\_EXPIRE\_DAYS} & Durée de validité du jeton de rafraîchissement. \\
+        \texttt{FRONTEND\_URL} & Origine autorisée pour l'interface web. \\
+        \texttt{TRUSTED\_HOSTS} & Hôtes autorisés par le backend. \\
+        \texttt{REDIS\_URL} & URL du service Redis lorsque le cache est utilisé. \\
+        \texttt{ENABLE\_REDIS\_CACHE} & Active ou désactive le cache Redis si configuré. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\section{Emplacements des diagrammes et captures}
+
+\begin{longtable}{L{5cm}L{9cm}}
+    \caption{Éléments visuels à intégrer avant la version finale}\\
+    \toprule
+    \textbf{Élément} & \textbf{Statut} \\
+    \midrule
+    \endfirsthead
+    \toprule
+    \textbf{Élément} & \textbf{Statut} \\
+    \midrule
+    \endhead
+    Diagramme de cas d'utilisation & [À compléter] \\
+    Diagramme de classes & [À compléter] \\
+    Diagramme de séquence authentification JWT & [À compléter] \\
+    Diagramme de séquence recherche pharmacie & [À compléter] \\
+    Diagramme de composants & [À compléter] \\
+    Diagramme de déploiement & [À compléter] \\
+    Capture dashboard administrateur & [À compléter] \\
+    Capture gestion des pharmacies & [À compléter] \\
+    Capture accueil mobile & [À compléter] \\
+    Capture calendrier des gardes & [À compléter] \\
+    Capture catalogue médicaments & [À compléter] \\
+    \bottomrule
+\end{longtable}

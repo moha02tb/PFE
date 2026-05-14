@@ -1,0 +1,219 @@
+\section{Introduction}
+
+La conception permet de passer des besoins fonctionnels à une organisation technique claire. Dans ce
+chapitre, nous présentons l'architecture générale de PharmacieConnect, la structure de chaque composant,
+le modèle de données, les diagrammes UML prévus, les mécanismes de sécurité et les choix techniques
+retenus.
+
+\section{Architecture globale de la solution}
+
+PharmacieConnect repose sur une architecture client-serveur. L'application mobile et le tableau de bord
+administrateur ne communiquent pas directement avec la base de données. Toutes les opérations passent
+par l'API backend. Ce choix permet de centraliser la validation, la sécurité et les règles métier.
+
+\placeholderfigure
+{Architecture globale de PharmacieConnect}
+{Backend FastAPI, dashboard administrateur React/Vite, application mobile Expo/React Native et base de données SQLAlchemy avec SQLite ou PostgreSQL.}
+{fig:architecture-globale}
+
+L'application mobile consomme surtout les endpoints publics et les services liés au compte utilisateur. Le
+dashboard administrateur utilise les endpoints protégés pour gérer les données. Le backend sert donc de
+couche commune entre les deux interfaces et la base de données.
+
+\section{Architecture du backend}
+
+Le backend est développé avec FastAPI. Sa structure sépare les routes HTTP, les services métier, les
+modèles de données et les schémas de validation. Cette séparation rend le code plus lisible et facilite
+les tests.
+
+\begin{table}[H]
+    \centering
+    \caption{Organisation du backend}
+    \begin{tabular}{L{4cm}L{9cm}}
+        \toprule
+        \textbf{Élément} & \textbf{Rôle} \\
+        \midrule
+        \texttt{main.py} & Initialisation de l'application FastAPI, middlewares, migrations au démarrage et endpoints publics. \\
+        \texttt{routers/} & Routes d'authentification, d'administration et d'analytics. \\
+        \texttt{services/} & Logique métier liée à l'authentification, aux pharmacies, aux gardes, aux médicaments, à l'audit et au cache. \\
+        \texttt{models.py} & Modèles SQLAlchemy représentant les tables principales. \\
+        \texttt{schemas.py} & Schémas Pydantic utilisés pour valider les entrées et structurer les sorties. \\
+        \texttt{migrations/} & Scripts SQL permettant de faire évoluer le schéma de la base. \\
+        \texttt{events/} & Bus d'événements interne et écouteurs associés. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Le traitement d'une requête suit généralement le même parcours. Le client appelle une route FastAPI, la
+route vérifie les paramètres et l'utilisateur courant, puis le service métier applique les règles nécessaires
+avant l'accès à la base via SQLAlchemy.
+
+\section{Architecture de l'interface d'administration}
+
+L'interface d'administration est développée avec React et Vite. Elle regroupe des pages, des composants
+réutilisables, des contextes applicatifs et un client API centralisé.
+
+\begin{table}[H]
+    \centering
+    \caption{Organisation de l'administration web}
+    \begin{tabular}{L{4cm}L{9cm}}
+        \toprule
+        \textbf{Élément} & \textbf{Rôle} \\
+        \midrule
+        \texttt{src/pages/} & Pages principales du tableau de bord : pharmacies, gardes, médicaments, carte, audit, paramètres et gestion. \\
+        \texttt{src/components/} & Composants d'interface, tableaux, formulaires, modales, cartes statistiques et éléments de layout. \\
+        \texttt{src/context/} & Gestion de l'authentification, de la langue et de certains états globaux. \\
+        \texttt{src/lib/api.js} & Client Axios responsable des appels backend et de l'injection du jeton JWT. \\
+        \texttt{src/styles/} & Styles et utilitaires liés à la présentation de l'interface. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Cette organisation évite de mélanger l'affichage avec la logique d'accès aux données. Le client API ajoute
+le jeton d'accès aux requêtes protégées et gère le renouvellement de session lorsque le jeton expire.
+
+\section{Architecture de l'application mobile}
+
+L'application mobile est développée avec Expo et React Native. Elle est organisée autour d'écrans
+orientés vers l'usage citoyen : recherche, carte, calendrier de garde, médicaments, authentification et
+paramètres.
+
+\begin{table}[H]
+    \centering
+    \caption{Organisation de l'application mobile}
+    \begin{tabular}{L{4cm}L{9cm}}
+        \toprule
+        \textbf{Élément} & \textbf{Rôle} \\
+        \midrule
+        \texttt{screens/} & Écrans de l'application : accueil, carte, calendrier, médicaments, connexion, inscription, vérification email et paramètres. \\
+        \texttt{components/} & Composants réutilisables comme les cartes de pharmacies, modales, sélecteurs et éléments RTL. \\
+        \texttt{config/api.js} & Configuration de l'URL backend et des appels API. \\
+        \texttt{utils/} & Fonctions utilitaires pour les données, les couleurs, le thème, le logging et la gestion RTL. \\
+        \texttt{locales/} & Fichiers de traduction français, anglais et arabe. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Des contextes React Native sont utilisés pour partager certaines informations entre les écrans, comme
+l'authentification, la langue, le thème, les favoris, les filtres et les notifications. Cela évite de répéter
+la même logique dans plusieurs parties de l'application.
+
+\section{Modèle de données}
+
+Le modèle de données est défini avec SQLAlchemy. Les principales entités utilisées par le backend sont
+présentées dans le tableau suivant.
+
+\begin{longtable}{L{4cm}L{10cm}}
+    \caption{Entités principales du modèle de données}\\
+    \toprule
+    \textbf{Entité} & \textbf{Description} \\
+    \midrule
+    \endfirsthead
+    \toprule
+    \textbf{Entité} & \textbf{Description} \\
+    \midrule
+    \endhead
+    \texttt{Utilisateur} & Compte utilisateur de l'application mobile avec email, mot de passe, statut actif et vérification email. \\
+    \texttt{Administrateur} & Compte de gestion avec rôle, statut, informations de profil et périmètre régional éventuel. \\
+    \texttt{RefreshToken} & Jeton de rafraîchissement permettant de prolonger une session selon les règles de sécurité. \\
+    \texttt{LoginAttempt} & Tentative de connexion utilisée pour suivre les succès et les échecs d'authentification. \\
+    \texttt{Pharmacie} & Données d'une pharmacie : nom, adresse, téléphone, gouvernorat, latitude, longitude et référence OSM éventuelle. \\
+    \texttt{GardeSchedule} & Planning de garde avec date, pharmacie, horaire, ville, gouvernorat, type de garde et notes. \\
+    \texttt{Medicine} & Catalogue de médicaments avec code PCT, nom commercial, prix public, tarif de référence, remboursement, DCI et AP. \\
+    \texttt{AuditLog} & Trace des actions importantes avec acteur, cible, statut, adresse IP et détails. \\
+    \texttt{SearchEvent} & Événements de recherche utilisés pour alimenter les statistiques et les analytics. \\
+    \bottomrule
+\end{longtable}
+
+\section{Diagrammes UML}
+
+Les diagrammes UML ci-dessous sont prévus pour compléter la conception. Les emplacements sont gardés
+dans le rapport afin de pouvoir insérer les exports finaux dès qu'ils sont disponibles.
+
+\placeholderfigure
+{Diagramme de classes}
+{Image UML à insérer : classes Utilisateur, Administrateur, Pharmacie, GardeSchedule, Medicine, AuditLog, RefreshToken, LoginAttempt et SearchEvent.}
+{fig:class-diagram-placeholder}
+
+\placeholderfigure
+{Diagramme de séquence : authentification JWT}
+{Image UML à insérer : saisie des identifiants, appel API, vérification du mot de passe, génération du jeton d'accès et du jeton de rafraîchissement.}
+{fig:sequence-auth-placeholder}
+
+\placeholderfigure
+{Diagramme de séquence : recherche d'une pharmacie}
+{Image UML à insérer : recherche mobile, appel API, filtrage par texte ou proximité, calcul de distance et retour des résultats.}
+{fig:sequence-search-placeholder}
+
+\placeholderfigure
+{Diagramme de composants}
+{Image UML à insérer : application mobile, dashboard administrateur, API FastAPI, services métier, ORM SQLAlchemy et base de données.}
+{fig:component-diagram-placeholder}
+
+\placeholderfigure
+{Diagramme de déploiement}
+{Image UML à insérer : client mobile, navigateur administrateur, serveur backend, base de données et services de configuration.}
+{fig:deployment-diagram-placeholder}
+
+\section{Sécurité et contrôle d'accès}
+
+La sécurité a été traitée au niveau du backend, car les règles d'accès ne doivent pas dépendre uniquement
+des interfaces clientes.
+
+\subsection{Authentification JWT}
+
+Après une connexion réussie, le backend génère un jeton d'accès et un jeton de rafraîchissement. Le
+jeton d'accès sert à appeler les routes protégées. Le jeton de rafraîchissement permet de renouveler la
+session lorsque le jeton d'accès expire.
+
+\subsection{Contrôle d'accès basé sur les rôles}
+
+Le système distingue plusieurs rôles administratifs, notamment administrateur, super administrateur et
+assistant. Ces rôles limitent les actions accessibles. Les assistants peuvent aussi être liés à un périmètre
+régional afin de limiter leurs interventions aux zones autorisées.
+
+\subsection{Hachage des mots de passe}
+
+Les mots de passe ne sont pas stockés en clair. Le backend les hache avant l'enregistrement et compare
+les valeurs hachées pendant la connexion.
+
+\subsection{Validation des API}
+
+Les données envoyées vers l'API sont validées avec Pydantic et avec les services métier. Cette validation
+concerne les champs obligatoires, les coordonnées GPS, les dates, les fichiers CSV, les limites de
+pagination et les autorisations.
+
+\subsection{Variables d'environnement}
+
+Les paramètres sensibles sont placés dans des variables d'environnement. Cela concerne notamment la
+chaîne de connexion à la base de données, la clé de signature JWT, la durée des jetons, les origines CORS,
+les hôtes autorisés et la configuration du cache.
+
+\section{Justification des choix techniques}
+
+\begin{longtable}{L{4cm}L{10cm}}
+    \caption{Justification des choix techniques}\\
+    \toprule
+    \textbf{Choix} & \textbf{Justification} \\
+    \midrule
+    \endfirsthead
+    \toprule
+    \textbf{Choix} & \textbf{Justification} \\
+    \midrule
+    \endhead
+    FastAPI & Framework Python adapté aux API REST, avec validation Pydantic et documentation OpenAPI automatique. \\
+    React et Vite & Ensemble adapté à la création d'une interface d'administration rapide, modulaire et maintenable. \\
+    Expo et React Native & Permettent de développer une application mobile avec une base de code JavaScript et un accès simplifié aux fonctionnalités natives. \\
+    SQLAlchemy & ORM permettant de structurer l'accès aux données tout en conservant un contrôle sur les modèles et les requêtes. \\
+    SQLite et PostgreSQL & SQLite facilite le développement local, tandis que PostgreSQL constitue une option plus adaptée à un environnement configuré. \\
+    JWT & Mécanisme adapté à la sécurisation des API et à la séparation entre jeton d'accès et jeton de rafraîchissement. \\
+    CSV & Format simple pour importer des volumes de données de pharmacies, gardes et médicaments. \\
+    \bottomrule
+\end{longtable}
+
+\section{Conclusion}
+
+Ce chapitre a présenté la conception de PharmacieConnect. L'architecture retenue sépare le backend,
+l'administration web, l'application mobile et la base de données. Cette organisation facilite le
+développement, les tests et les évolutions futures. Le chapitre suivant présente la réalisation technique
+et la validation de la solution.

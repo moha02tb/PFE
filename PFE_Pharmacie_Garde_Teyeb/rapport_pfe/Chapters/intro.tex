@@ -1,0 +1,78 @@
+\chapter*{Introduction générale}
+\addcontentsline{toc}{chapter}{Introduction générale}
+
+\section*{Contexte général}
+\addcontentsline{toc}{section}{Contexte général}
+
+Dans le domaine de la santé, l'accès à une information fiable peut avoir un impact direct sur le service
+rendu au citoyen. Pour les pharmacies, cette information concerne notamment l'adresse, le numéro de
+téléphone, les horaires et les périodes de garde. Lorsqu'un utilisateur cherche une pharmacie disponible,
+il attend une réponse simple et rapide, surtout en dehors des horaires habituels.
+
+En Tunisie, les informations relatives aux pharmacies de garde existent, mais leur consultation reste
+parfois peu pratique. Elles peuvent être diffusées sous forme de listes, relayées localement ou mises à
+jour manuellement. Cette dispersion complique la recherche depuis un téléphone, en particulier lorsque
+l'utilisateur ne connaît pas bien la ville ou le gouvernorat concerné.
+
+Le projet \textbf{PharmacieConnect} s'inscrit dans ce contexte. Il associe une API backend FastAPI, un
+tableau de bord administrateur React/Vite et une application mobile Expo/React Native. Le backend porte
+la logique commune, tandis que les deux interfaces répondent à des usages complémentaires : la
+consultation citoyenne et l'administration des données.
+
+\section*{Problématique}
+\addcontentsline{toc}{section}{Problématique}
+
+La problématique du projet peut être formulée ainsi : comment concevoir une plateforme qui permette au
+citoyen de trouver rapidement une pharmacie ou une pharmacie de garde, tout en offrant à
+l'administrateur un moyen fiable de gérer, corriger et suivre les données ?
+
+Cette question impose plusieurs contraintes. L'application mobile doit rester simple à utiliser et fournir
+des résultats lisibles. Le tableau de bord doit faciliter l'import, la correction et le suivi des données.
+Le backend, quant à lui, doit contrôler les accès, valider les informations reçues et conserver une trace
+des actions importantes.
+
+\section*{Objectifs du projet}
+\addcontentsline{toc}{section}{Objectifs du projet}
+
+Le projet vise à réaliser une plateforme complète autour des pharmacies et des pharmacies de garde. Les
+objectifs retenus sont les suivants :
+
+\begin{itemize}
+    \item concevoir une API backend centralisant les données et les règles métier ;
+    \item mettre en place une authentification sécurisée avec des jetons \gls{jwt} ;
+    \item mettre à disposition une interface web pour gérer les pharmacies, les gardes, les médicaments et les utilisateurs autorisés ;
+    \item réaliser une application mobile orientée vers la recherche de pharmacies, la consultation des gardes et l'accès au catalogue de médicaments ;
+    \item intégrer une recherche par proximité à partir des coordonnées \gls{gps} ;
+    \item prendre en charge l'import de fichiers \gls{csv} avec validation des données et retour d'erreurs ;
+    \item ajouter des journaux d'audit, des indicateurs et un contrôle d'accès basé sur les rôles ;
+    \item tester les fonctionnalités principales à travers des tests backend et des scénarios fonctionnels.
+\end{itemize}
+
+\section*{Méthodologie adoptée}
+\addcontentsline{toc}{section}{Méthodologie adoptée}
+
+La démarche suivie est itérative et incrémentale, avec une organisation inspirée de Scrum
+\cite{scrumguide}. Le travail a été découpé en cycles courts afin d'avancer progressivement sur des
+modules vérifiables : analyse du besoin, étude de l'existant, définition des fonctionnalités, conception de
+l'architecture, développement du backend, développement de l'administration web, développement de
+l'application mobile, intégration, tests et rédaction du rapport.
+
+La modélisation s'appuie sur le formalisme \gls{uml} \cite{uml} pour représenter les acteurs, les cas
+d'utilisation, les classes principales et les échanges entre les composants. La réalisation a d'abord
+porté sur les règles métier du backend, puisque l'API centralise la validation, la sécurité et l'accès aux
+données. Les interfaces web et mobile ont ensuite été raccordées progressivement aux endpoints
+disponibles.
+
+Les fonctionnalités sensibles ont été vérifiées au fur et à mesure de leur intégration. Cette progression a
+facilité la validation des imports, de l'authentification, de la gestion des rôles, de la recherche par
+proximité et des principaux parcours utilisateur.
+
+\section*{Organisation du rapport}
+\addcontentsline{toc}{section}{Organisation du rapport}
+
+Le rapport est organisé en quatre chapitres. Le premier situe le projet dans son cadre général, présente
+le domaine pharmaceutique et analyse l'existant. Le deuxième précise les acteurs, les besoins
+fonctionnels, les besoins non fonctionnels et les règles de gestion. Le troisième est consacré à la
+conception : architecture, modèle de données, diagrammes \gls{uml} et sécurité. Le quatrième décrit la
+réalisation technique, l'intégration API, la configuration, les tests et les difficultés rencontrées. Une
+conclusion générale, une bibliographie et des annexes complètent le document.

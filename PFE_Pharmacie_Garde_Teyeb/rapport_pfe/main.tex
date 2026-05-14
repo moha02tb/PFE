@@ -1,0 +1,186 @@
+\documentclass[12pt,a4paper,notitlepage,oneside]{book}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[french]{babel}
+\usepackage[left=1.1in,right=1.0in,top=1.0in,bottom=1.0in,head=1.0cm,foot=1.0cm]{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage[table,dvipsnames]{xcolor}
+\usepackage{amsmath,amssymb}
+\usepackage{url}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{ragged2e}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{fancyhdr}
+\usepackage[Lenny]{fncychap}
+\usepackage[onehalfspacing]{setspace}
+\usepackage[hidelinks]{hyperref}
+\usepackage[french]{minitoc}
+\usepackage[acronym, nonumberlist, nomain]{glossaries}
+
+\definecolor{pcblue}{HTML}{1D4ED8}
+\definecolor{pcteal}{HTML}{0F766E}
+\definecolor{pcgreen}{HTML}{15803D}
+\definecolor{pcamber}{HTML}{B45309}
+\definecolor{pcslate}{HTML}{334155}
+\definecolor{pclight}{HTML}{F8FAFC}
+
+\makeglossaries
+\input{Preambule/acronymes}
+
+\graphicspath{{Figures/}{images/}}
+
+\setcounter{tocdepth}{3}
+\setcounter{secnumdepth}{3}
+\setcounter{minitocdepth}{2}
+
+\justifying
+\setlength{\parindent}{1.25cm}
+\setlength{\parskip}{0pt}
+\setlength{\headheight}{15pt}
+\setlength{\emergencystretch}{3em}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+\captionsetup[figure]{position=below}
+\captionsetup[table]{position=above}
+\renewcommand{\tablename}{Tableau}
+\addto\captionsfrench{\renewcommand{\tablename}{Tableau}}
+\addto\captionsfrench{\renewcommand{\figurename}{Figure}}
+\renewcommand{\bibname}{Bibliographie}
+
+\newcommand{\visualslot}[3]{%
+    \begin{figure}[H]
+        \centering
+        \fbox{%
+            \begin{minipage}[c][3.4cm][c]{0.88\textwidth}
+                \centering
+                \textbf{#1}\\[0.25cm]
+                \small #2
+            \end{minipage}%
+        }
+        \caption{#1}
+        \label{#3}
+    \end{figure}
+}
+
+\hypersetup{
+    pdftitle={PharmacieConnect - Rapport de projet de fin d'études},
+    pdfauthor={Ounoun Mohamed},
+    pdfsubject={Plateforme web et mobile de gestion des pharmacies de garde},
+    pdfkeywords={FastAPI, React, Vite, Expo, React Native, JWT, pharmacies, Tunisie}
+}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{gray!8},
+    keywordstyle=\color{blue!70!black},
+    commentstyle=\color{gray!70!black},
+    stringstyle=\color{green!40!black},
+    showstringspaces=false,
+    tabsize=2
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{PharmacieConnect}
+\fancyhead[R]{\nouppercase{\leftmark}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\begin{document}
+\dominitoc
+
+\pagenumbering{gobble}
+\hypersetup{pageanchor=false}
+\input{Preambule/page_garde}
+\clearpage
+
+\hypersetup{pageanchor=true}
+\frontmatter
+
+\chapter*{Dédicace}
+\addcontentsline{toc}{chapter}{Dédicace}
+\input{Preambule/dedicace}
+\clearpage
+
+\chapter*{Remerciements / Préface}
+\addcontentsline{toc}{chapter}{Remerciements / Préface}
+\input{Preambule/preface}
+\clearpage
+
+\chapter*{Résumé}
+\addcontentsline{toc}{chapter}{Résumé}
+\input{Preambule/resume}
+\clearpage
+
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+\input{Preambule/abstract}
+\clearpage
+
+\phantomsection
+\addcontentsline{toc}{chapter}{Liste des figures}
+\listoffigures
+\clearpage
+
+\phantomsection
+\addcontentsline{toc}{chapter}{Liste des tableaux}
+\listoftables
+\clearpage
+
+\phantomsection
+\tableofcontents
+\adjustmtc
+\clearpage
+
+\phantomsection
+\addcontentsline{toc}{chapter}{Liste des acronymes}
+\glsaddall
+\printglossary[type=\acronymtype,title={Liste des acronymes}]
+\clearpage
+
+\mainmatter
+
+\input{Chapters/intro}
+\clearpage
+
+\setcounter{mtc}{8}
+\input{Chapters/chap1}
+\clearpage
+
+\input{Chapters/analyse_besoins}
+\clearpage
+
+\input{Chapters/conception}
+\clearpage
+
+\input{Chapters/realisation_tests}
+\clearpage
+
+\input{Chapters/conclusion}
+\clearpage
+
+\phantomsection
+\addcontentsline{toc}{chapter}{Bibliographie}
+\nocite{*}
+\bibliographystyle{ieeetr}
+\bibliography{Biblio}
+\clearpage
+
+\appendix
+\input{Appendices/annexes}
+
+\end{document}

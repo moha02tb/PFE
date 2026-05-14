@@ -1,35 +1,55 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useAppTheme } from '../utils/theme';
 import { AppButton, AppCard, AppInput, AppText } from '../components/design-system';
+import { askFirstAidAssistant } from '../utils/chatbotApi';
 
-const QUICK_PROMPTS = ['burn', 'bleeding', 'fainting', 'choking'];
+const QUICK_PROMPTS = [
+  { key: 'burn', query: 'What should I do for a burn?' },
+  { key: 'bleeding', query: 'How do I stop heavy bleeding?' },
+  { key: 'fainting', query: 'What should I do if someone faints?' },
+  { key: 'choking', query: 'Someone is choking and cannot breathe. What should I do?' },
+];
 
-const buildReply = (message, t) => {
-  const text = message.toLowerCase();
-  if (text.includes('burn') || text.includes('brul') || text.includes('حرق')) {
-    return t('chatbot.answers.burn', 'Cool the burn under clean running water for 10 to 20 minutes. Do not apply ice. Cover it with a clean non-stick cloth and seek urgent care if the burn is large, deep, or on the face, hands, feet, or genitals.');
+const buildAssistantError = (error, t) => {
+  const isTimeout = error?.code === 'ECONNABORTED' || /timeout/i.test(error?.message || '');
+  const isNetwork = error?.code === 'ERR_NETWORK' || error?.message === 'Network Error';
+
+  if (isTimeout) {
+    return t(
+      'chatbot.errors.timeout',
+      'The assistant did not respond in time. Please check the connection and try again.'
+    );
   }
-  if (text.includes('bleed') || text.includes('blood') || text.includes('saigne') || text.includes('نزيف')) {
-    return t('chatbot.answers.bleeding', 'Apply firm direct pressure with a clean cloth, keep pressure steady, and raise the injured area if possible. If bleeding is heavy or does not stop quickly, call emergency services immediately.');
+
+  if (isNetwork) {
+    return t(
+      'chatbot.errors.network',
+      'The first-aid assistant service is unreachable right now. Please try again when the service is online.'
+    );
   }
-  if (text.includes('faint') || text.includes('syncope') || text.includes('évan') || text.includes('إغم')) {
-    return t('chatbot.answers.fainting', 'Lay the person flat, raise the legs slightly, loosen tight clothing, and make sure they can breathe. If they do not wake quickly, have trouble breathing, or were injured during the fall, call emergency services.');
-  }
-  if (text.includes('chok') || text.includes('étouff') || text.includes('اختناق')) {
-    return t('chatbot.answers.choking', 'If the person cannot speak or breathe, call emergency services and start age-appropriate choking first aid immediately. Encourage coughing only if they can still breathe.');
-  }
-  return t('chatbot.answers.default', 'I can give basic first-aid guidance for burns, bleeding, choking, fainting, fever, and allergic reactions. For severe symptoms or danger signs, call emergency services immediately.');
+
+  return (
+    error?.response?.data?.detail?.[0]?.msg ||
+    error?.response?.data?.detail ||
+    error?.message ||
+    t('chatbot.errors.generic', 'The assistant could not answer right now. Please try again.')
+  );
 };
 
 export default function ChatbotScreen() {
   const { t } = useTranslation();
   const { colors, radius, shadows, isRTL } = useAppTheme();
-  const styles = useMemo(() => createStyles(colors, radius, shadows, isRTL), [colors, radius, shadows, isRTL]);
+  const styles = useMemo(
+    () => createStyles(colors, radius, shadows, isRTL),
+    [colors, radius, shadows, isRTL]
+  );
+  const scrollRef = useRef(null);
 
   const [draft, setDraft] = useState('');
+  const [isSending, setIsSending] = useState(false);
   const [messages, setMessages] = useState([
     {
       id: 'welcome',
@@ -41,15 +61,57 @@ export default function ChatbotScreen() {
     },
   ]);
 
-  const sendMessage = (value) => {
+  useEffect(() => {
+    const scrollTimer = setTimeout(() => {
+      scrollRef.current?.scrollToEnd?.({ animated: true });
+    }, 50);
+
+    return () => clearTimeout(scrollTimer);
+  }, [messages.length, isSending]);
+
+  const sendMessage = async (value, displayValue = null) => {
     const content = (value ?? draft).trim();
-    if (!content) return;
+    if (!content || isSending) return;
+
+    const timestamp = Date.now();
     setMessages((current) => [
       ...current,
-      { id: `u-${Date.now()}`, role: 'user', text: content },
-      { id: `a-${Date.now() + 1}`, role: 'assistant', text: buildReply(content, t) },
+      { id: `u-${timestamp}`, role: 'user', text: displayValue || content },
     ]);
     setDraft('');
+    setIsSending(true);
+
+    try {
+      const result = await askFirstAidAssistant(content);
+      setMessages((current) => [
+        ...current,
+        {
+          id: `a-${timestamp + 1}`,
+          role: 'assistant',
+          text:
+            result.answer ||
+            t(
+              'chatbot.emptyAnswer',
+              'I could not find a reliable first-aid answer for that question.'
+            ),
+          confidence: result.confidence,
+          answerMode: result.answerMode,
+          topicPrediction: result.topicPrediction,
+        },
+      ]);
+    } catch (error) {
+      setMessages((current) => [
+        ...current,
+        {
+          id: `a-${timestamp + 1}`,
+          role: 'assistant',
+          text: buildAssistantError(error, t),
+          isError: true,
+        },
+      ]);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -65,7 +127,10 @@ export default function ChatbotScreen() {
           {t('chatbot.title', 'First Aid Assistant')}
         </AppText>
         <AppText variant="bodyMedium" color="rgba(255,255,255,0.82)" style={{ marginTop: 8 }}>
-          {t('chatbot.subtitle', 'Fast basic first-aid guidance. This does not replace emergency care or a doctor.')}
+          {t(
+            'chatbot.subtitle',
+            'Fast basic first-aid guidance. This does not replace emergency care or a doctor.'
+          )}
         </AppText>
       </View>
 
@@ -73,35 +138,90 @@ export default function ChatbotScreen() {
         <View style={styles.warningRow}>
           <Feather name="alert-triangle" size={16} color={colors.warning} />
           <AppText variant="bodySmall" color={colors.textSecondary} style={{ flex: 1 }}>
-            {t('chatbot.disclaimer', 'Emergency warning signs such as breathing trouble, severe bleeding, seizures, chest pain, or loss of consciousness need urgent medical help.')}
+            {t(
+              'chatbot.disclaimer',
+              'Emergency warning signs such as breathing trouble, severe bleeding, seizures, chest pain, or loss of consciousness need urgent medical help.'
+            )}
           </AppText>
         </View>
       </AppCard>
 
-      <ScrollView style={styles.messages} contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        ref={scrollRef}
+        style={styles.messages}
+        contentContainerStyle={{ paddingBottom: 24 }}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.prompts}>
-          {QUICK_PROMPTS.map((prompt) => (
-            <TouchableOpacity key={prompt} style={styles.promptChip} onPress={() => sendMessage(prompt)}>
-              <AppText variant="labelMedium" color={colors.text}>
-                {t(`chatbot.prompts.${prompt}`, prompt)}
-              </AppText>
-            </TouchableOpacity>
-          ))}
+          {QUICK_PROMPTS.map((prompt) => {
+            const promptLabel = t(`chatbot.prompts.${prompt.key}`, prompt.key);
+
+            return (
+              <TouchableOpacity
+                key={prompt.key}
+                style={[styles.promptChip, isSending ? styles.disabledPrompt : null]}
+                onPress={() => sendMessage(prompt.query, promptLabel)}
+                disabled={isSending}
+              >
+                <AppText variant="labelMedium" color={colors.text}>
+                  {promptLabel}
+                </AppText>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         {messages.map((message) => {
           const isUser = message.role === 'user';
           return (
-            <AppCard key={message.id} style={[styles.messageCard, isUser ? styles.userMessage : styles.assistantMessage]}>
-              <AppText variant="labelSmall" color={isUser ? 'rgba(255,255,255,0.74)' : colors.textSecondary}>
+            <AppCard
+              key={message.id}
+              style={[
+                styles.messageCard,
+                isUser ? styles.userMessage : styles.assistantMessage,
+                message.isError ? styles.errorMessage : null,
+              ]}
+            >
+              <AppText
+                variant="labelSmall"
+                color={isUser ? 'rgba(255,255,255,0.74)' : colors.textSecondary}
+              >
                 {isUser ? t('chatbot.you', 'You') : t('chatbot.assistant', 'Assistant')}
               </AppText>
-              <AppText variant="bodyMedium" color={isUser ? '#FFFFFF' : colors.text} style={{ marginTop: 6 }}>
+              <AppText
+                variant="bodyMedium"
+                color={isUser ? '#FFFFFF' : colors.text}
+                style={{ marginTop: 6 }}
+              >
                 {message.text}
               </AppText>
+              {!isUser && message.topicPrediction ? (
+                <View style={styles.metaRow}>
+                  <AppText variant="labelSmall" color={colors.textSecondary}>
+                    {t('chatbot.topic', 'Topic')}: {message.topicPrediction}
+                  </AppText>
+                  {typeof message.confidence === 'number' ? (
+                    <AppText variant="labelSmall" color={colors.textSecondary}>
+                      {t('chatbot.confidence', 'Confidence')}:{' '}
+                      {Math.round(message.confidence * 100)}%
+                    </AppText>
+                  ) : null}
+                </View>
+              ) : null}
             </AppCard>
           );
         })}
+
+        {isSending ? (
+          <AppCard style={[styles.messageCard, styles.assistantMessage]}>
+            <AppText variant="labelSmall" color={colors.textSecondary}>
+              {t('chatbot.assistant', 'Assistant')}
+            </AppText>
+            <AppText variant="bodyMedium" color={colors.text} style={{ marginTop: 6 }}>
+              {t('chatbot.thinking', 'Checking first-aid guidance...')}
+            </AppText>
+          </AppCard>
+        ) : null}
       </ScrollView>
 
       <View style={styles.composer}>
@@ -109,11 +229,16 @@ export default function ChatbotScreen() {
           placeholder={t('chatbot.placeholder', 'Describe the first-aid situation...')}
           value={draft}
           onChangeText={setDraft}
+          editable={!isSending}
+          returnKeyType="send"
+          onSubmitEditing={() => sendMessage()}
           style={{ flex: 1, marginBottom: 0 }}
         />
         <AppButton
           title={t('chatbot.send', 'Send')}
           onPress={() => sendMessage()}
+          loading={isSending}
+          disabled={!draft.trim()}
           icon={<Feather name="send" size={16} color="#FFFFFF" />}
           style={{ minWidth: 108 }}
         />
@@ -174,6 +299,9 @@ const createStyles = (colors, radius, shadows, isRTL) =>
       borderWidth: 1,
       borderColor: colors.border,
     },
+    disabledPrompt: {
+      opacity: 0.56,
+    },
     messageCard: {
       marginHorizontal: 16,
       marginBottom: 12,
@@ -187,6 +315,15 @@ const createStyles = (colors, radius, shadows, isRTL) =>
       borderColor: colors.primary,
       marginLeft: isRTL ? 16 : 52,
       marginRight: isRTL ? 52 : 16,
+    },
+    errorMessage: {
+      borderColor: colors.error,
+    },
+    metaRow: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+      flexWrap: 'wrap',
+      gap: 10,
+      marginTop: 10,
     },
     composer: {
       flexDirection: isRTL ? 'row-reverse' : 'row',

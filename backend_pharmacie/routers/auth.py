@@ -79,9 +79,10 @@ async def login(
     - `500`: Server error
     """
     auth_service = AuthService(db)
-    ip_address = request.client.host
+    ip_address = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent")
     
-    token_response, error = auth_service.login(credentials, ip_address)
+    token_response, error = auth_service.login(credentials, ip_address, user_agent)
     
     if error:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=error)
@@ -119,7 +120,9 @@ async def register(
     - `429`: Rate limit exceeded
     """
     auth_service = AuthService(db)
-    token_response, error = auth_service.register(reg_data)
+    ip_address = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent")
+    token_response, error = auth_service.register(reg_data, ip_address, user_agent)
     
     if error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
@@ -210,7 +213,14 @@ async def logout(
     except:
         refresh_token = None
 
-    auth_service.logout(refresh_token)
+    actor_type = "administrateur" if isinstance(user, models.Administrateur) else "utilisateur"
+    auth_service.logout(
+        refresh_token,
+        actor_id=user.id,
+        actor_type=actor_type,
+        ip_address=request.client.host if request.client else "unknown",
+        user_agent=request.headers.get("user-agent"),
+    )
 
     # Clear access token cookie
     response.delete_cookie(key="access_token")
@@ -268,13 +278,19 @@ async def create_admin(
 # ---- CREATE USER BY ADMIN ----
 @router.post("/admin/create-user")
 async def admin_create_user(
+    request: Request,
     user_data: AdminCreateByAdmin,
     current_admin: models.Administrateur = Depends(admin_required),
     db: Session = Depends(get_db),
 ):
     """Create new regular user account (admin only)"""
     auth_service = AuthService(db)
-    new_user, error = auth_service.create_user_by_admin(user_data)
+    new_user, error = auth_service.create_user_by_admin(
+        user_data,
+        created_by_admin_id=current_admin.id,
+        ip_address=request.client.host if request.client else "unknown",
+        user_agent=request.headers.get("user-agent"),
+    )
     
     if error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)

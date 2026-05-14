@@ -1,0 +1,52 @@
+\chapter*{Conclusion générale}
+\addcontentsline{toc}{chapter}{Conclusion générale}
+
+\section*{Bilan}
+\addcontentsline{toc}{section}{Bilan}
+
+Ce projet de fin d'études a abouti à la réalisation de \textbf{PharmacieConnect}, une plateforme web et
+mobile répondant à un besoin concret : faciliter l'accès aux informations sur les pharmacies et les
+pharmacies de garde, tout en proposant un espace de gestion pour les administrateurs. La solution
+s'appuie sur une API backend, un tableau de bord administrateur et une application mobile.
+
+\section*{Résultats obtenus}
+\addcontentsline{toc}{section}{Résultats obtenus}
+
+Les objectifs principaux ont été atteints. L'utilisateur mobile peut rechercher des pharmacies, utiliser la
+géolocalisation, consulter les pharmacies de garde par date et accéder au catalogue de médicaments.
+L'administrateur peut gérer les pharmacies, les gardes, les médicaments, les utilisateurs autorisés, les
+imports CSV, les indicateurs et les journaux d'audit. Le backend assure la centralisation des données,
+l'authentification, le contrôle des rôles, la validation des API et la traçabilité des actions sensibles.
+
+Sur le plan technique, ce travail a mobilisé plusieurs compétences : conception d'API REST,
+développement backend avec FastAPI, modélisation SQLAlchemy, développement web avec React et Vite,
+développement mobile avec Expo et React Native, authentification JWT, validation de fichiers CSV,
+journalisation, indicateurs et tests automatisés. Il a également montré l'intérêt d'une séparation claire
+entre les routes, les services, les modèles, les interfaces clientes et la base de données.
+
+\section*{Limites}
+\addcontentsline{toc}{section}{Limites}
+
+Certaines limites restent à prendre en compte. Le catalogue des médicaments ne représente pas encore le
+stock réel de chaque pharmacie. Les données de garde dépendent toujours de la qualité des fichiers
+importés. Les tests bout en bout et les tests de charge doivent encore être renforcés. L'application mobile
+devra aussi être testée sur davantage d'appareils et dans différents contextes de connexion.
+
+\section*{Perspectives}
+\addcontentsline{toc}{section}{Perspectives}
+
+Les perspectives d'amélioration sont les suivantes :
+
+\begin{itemize}
+    \item ajouter la disponibilité des médicaments par pharmacie ;
+    \item permettre aux pharmacies de mettre à jour directement certaines informations sous contrôle ;
+    \item envoyer des notifications lorsque les gardes changent ;
+    \item améliorer la recherche par synonymes, erreurs de frappe ou noms commerciaux proches ;
+    \item intégrer des tests bout en bout couvrant l'application mobile, le tableau de bord et l'API ;
+    \item renforcer le déploiement par une configuration de production, une supervision et des sauvegardes ;
+    \item enrichir les indicateurs pour mieux suivre les recherches et la couverture territoriale.
+\end{itemize}
+
+Ainsi, PharmacieConnect constitue une base fonctionnelle pour une solution de gestion pharmaceutique. Le
+projet peut encore évoluer, mais il montre déjà qu'une architecture bien organisée peut répondre à la fois
+aux besoins du citoyen et aux besoins de l'administration.

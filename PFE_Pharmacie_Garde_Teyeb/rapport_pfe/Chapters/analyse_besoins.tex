@@ -1,0 +1,239 @@
+\chapter{Analyse et spécification des besoins}
+\label{ch:analyse-besoins}
+\minitoc
+\clearpage
+
+\section{Introduction}
+
+Après le cadrage général, l'analyse des besoins permet de préciser ce que la plateforme doit réellement
+prendre en charge. Cette étape identifie les acteurs, les fonctionnalités attendues et les règles de gestion
+qui guideront ensuite la conception technique.
+
+\section{Acteurs}
+
+La plateforme distingue plusieurs acteurs. Chacun intervient avec un rôle précis et un niveau d'accès
+adapté à ses responsabilités.
+
+\begin{longtable}{L{4cm}L{10cm}}
+    \caption{Acteurs de la plateforme PharmacieConnect}\\
+    \toprule
+    \textbf{Acteur} & \textbf{Rôle dans le système} \\
+    \midrule
+    \endfirsthead
+    \toprule
+    \textbf{Acteur} & \textbf{Rôle dans le système} \\
+    \midrule
+    \endhead
+    Administrateur & Gère les pharmacies, les plannings de garde, les médicaments, les imports CSV, les indicateurs, les utilisateurs autorisés et les journaux d'audit. \\
+    Assistant ou utilisateur autorisé & Intervient sur un périmètre limité, notamment pour mettre à jour les pharmacies et les gardes selon les droits accordés. \\
+    Utilisateur mobile ou citoyen & Recherche une pharmacie, consulte les pharmacies de garde, utilise la géolocalisation, consulte les médicaments et gère ses préférences. \\
+    Système & Valide les données, applique les règles métier, sécurise les accès, calcule les distances, journalise les actions et expose les API. \\
+    \bottomrule
+\end{longtable}
+
+\section{Besoins fonctionnels détaillés}
+
+Les besoins fonctionnels décrivent les services attendus par les utilisateurs et par l'administration. Ils
+sont organisés par module afin de garder une séparation claire entre consultation mobile, gestion des
+données et sécurité.
+
+\begin{longtable}{L{4cm}L{10cm}}
+    \caption{Besoins fonctionnels principaux}\\
+    \toprule
+    \textbf{Module} & \textbf{Fonctionnalités attendues} \\
+    \midrule
+    \endfirsthead
+    \toprule
+    \textbf{Module} & \textbf{Fonctionnalités attendues} \\
+    \midrule
+    \endhead
+    Authentification & Connexion, inscription, vérification email, rafraîchissement de session, déconnexion et consultation du profil. \\
+    Recherche de pharmacies & Recherche par texte, consultation de la liste des pharmacies, détail d'une pharmacie et recherche par proximité. \\
+    Pharmacies de garde & Consultation des gardes par date, import des plannings, création, modification et suppression côté administration. \\
+    Gestion des pharmacies & Création, modification, suppression, consultation, pagination et import CSV des pharmacies. \\
+    Gestion des médicaments & Import CSV, recherche par nom commercial, DCI ou code PCT, consultation du détail et pagination. \\
+    Administration & Tableau de bord, gestion des assistants, contrôle des autorisations, carte administrative, indicateurs et journaux d'audit. \\
+    Application mobile & Accueil, carte, calendrier des gardes, médicaments, paramètres, langues, thème sombre, favoris et notifications. \\
+    \bottomrule
+\end{longtable}
+
+\section{Besoins non fonctionnels}
+
+Les besoins non fonctionnels expriment les qualités attendues de la plateforme. Ils ne correspondent pas à
+une page ou à une action précise, mais ils influencent directement les choix de conception et de
+réalisation.
+
+\begin{itemize}
+    \item \textbf{Sécurité} : protéger les routes administratives, hacher les mots de passe, utiliser des jetons JWT,
+    vérifier les rôles et tracer les actions sensibles.
+    \item \textbf{Performance} : paginer les réponses, limiter les tailles d'import, éviter les réponses trop
+    volumineuses et utiliser le cache lorsque la configuration le permet.
+    \item \textbf{Ergonomie} : proposer une application mobile simple, une administration claire et une navigation
+    adaptée aux opérations fréquentes.
+    \item \textbf{Maintenabilité} : séparer les routes, services, modèles, schémas, composants et écrans afin de
+    faciliter l'évolution du projet.
+    \item \textbf{Disponibilité} : rendre les informations importantes accessibles à travers des endpoints publics
+    et prévoir une configuration adaptée au déploiement.
+    \item \textbf{Fiabilité des données} : valider les fichiers CSV, contrôler les champs obligatoires, signaler les
+    erreurs et éviter les doublons lorsque des identifiants métier existent.
+\end{itemize}
+
+\section{Règles de gestion}
+
+Les règles de gestion suivantes encadrent le comportement de la plateforme :
+
+\begin{itemize}
+    \item une route d'administration ne peut être appelée que par un compte authentifié et autorisé ;
+    \item un assistant ne peut intervenir que dans le périmètre régional qui lui est attribué ;
+    \item les mots de passe doivent être hachés avant leur enregistrement ;
+    \item les jetons d'accès expirés doivent être renouvelés à travers un jeton de rafraîchissement valide ;
+    \item une pharmacie doit posséder au minimum un nom et des informations de localisation exploitables ;
+    \item les coordonnées GPS doivent respecter les bornes valides de latitude et de longitude ;
+    \item un planning de garde doit être associé à une date valide ;
+    \item un fichier CSV importé doit respecter les colonnes obligatoires du module concerné ;
+    \item les erreurs d'import doivent être retournées avec un message compréhensible ;
+    \item les actions sensibles doivent être journalisées dans les logs d'audit.
+\end{itemize}
+
+\section{Descriptions textuelles des cas d'utilisation}
+
+\subsection{Cas d'utilisation : authentification}
+
+\begin{longtable}{L{4cm}L{10cm}}
+    \caption{Description textuelle du cas d'utilisation Authentification}\\
+    \toprule
+    \textbf{Élément} & \textbf{Description} \\
+    \midrule
+    \endfirsthead
+    \toprule
+    \textbf{Élément} & \textbf{Description} \\
+    \midrule
+    \endhead
+    Acteurs & Administrateur, assistant, utilisateur mobile \\
+    Objectif & Donner à l'utilisateur l'accès aux fonctionnalités correspondant à son profil. \\
+    Précondition & L'utilisateur possède un compte valide ou suit le processus d'inscription. \\
+    Scénario nominal & L'utilisateur saisit ses identifiants, le backend vérifie les informations, génère les jetons JWT et retourne les données de session. \\
+    Postcondition & L'utilisateur est authentifié et peut accéder aux fonctionnalités autorisées. \\
+    Exceptions & Identifiants invalides, compte désactivé, email non vérifié ou jeton expiré. \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Cas d'utilisation : recherche d'une pharmacie}
+
+\begin{longtable}{L{4cm}L{10cm}}
+    \caption{Description textuelle du cas d'utilisation Recherche d'une pharmacie}\\
+    \toprule
+    \textbf{Élément} & \textbf{Description} \\
+    \midrule
+    \endfirsthead
+    \toprule
+    \textbf{Élément} & \textbf{Description} \\
+    \midrule
+    \endhead
+    Acteur & Utilisateur mobile ou citoyen \\
+    Objectif & Retrouver une pharmacie à partir d'un mot-clé, d'un gouvernorat ou de la position GPS. \\
+    Précondition & L'application mobile est installée et l'API est accessible. \\
+    Scénario nominal & L'utilisateur saisit une recherche ou autorise la géolocalisation. L'application interroge l'API, puis le backend filtre les pharmacies et retourne les résultats. \\
+    Postcondition & Les pharmacies correspondantes sont affichées sous forme de liste ou sur la carte. \\
+    Exceptions & Position indisponible, recherche vide, absence de résultat ou indisponibilité temporaire de l'API. \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Cas d'utilisation : consultation des pharmacies de garde}
+
+\begin{longtable}{L{4cm}L{10cm}}
+    \caption{Description textuelle du cas d'utilisation Consultation des gardes}\\
+    \toprule
+    \textbf{Élément} & \textbf{Description} \\
+    \midrule
+    \endfirsthead
+    \toprule
+    \textbf{Élément} & \textbf{Description} \\
+    \midrule
+    \endhead
+    Acteur & Utilisateur mobile ou citoyen \\
+    Objectif & Consulter les pharmacies de garde pour une date donnée. \\
+    Précondition & Des plannings de garde sont enregistrés dans la base. \\
+    Scénario nominal & L'utilisateur choisit une date. L'application interroge l'API des gardes et affiche les pharmacies disponibles. \\
+    Postcondition & Les gardes correspondant à la date choisie sont affichées. \\
+    Exceptions & Date invalide, absence de planning ou erreur de communication avec l'API. \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Cas d'utilisation : gestion des pharmacies}
+
+\begin{longtable}{L{4cm}L{10cm}}
+    \caption{Description textuelle du cas d'utilisation Gestion des pharmacies}\\
+    \toprule
+    \textbf{Élément} & \textbf{Description} \\
+    \midrule
+    \endfirsthead
+    \toprule
+    \textbf{Élément} & \textbf{Description} \\
+    \midrule
+    \endhead
+    Acteurs & Administrateur, assistant autorisé \\
+    Objectif & Ajouter, modifier, consulter ou supprimer les informations des pharmacies. \\
+    Précondition & L'acteur est authentifié et possède les droits nécessaires. \\
+    Scénario nominal & L'acteur ouvre la page des pharmacies et effectue l'opération souhaitée. Le backend valide les données avant d'enregistrer la modification. \\
+    Postcondition & Les données sont mises à jour et l'action est journalisée si nécessaire. \\
+    Exceptions & Données invalides, pharmacie introuvable, droits insuffisants ou périmètre régional non autorisé. \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Cas d'utilisation : import CSV}
+
+\begin{longtable}{L{4cm}L{10cm}}
+    \caption{Description textuelle du cas d'utilisation Import CSV}\\
+    \toprule
+    \textbf{Élément} & \textbf{Description} \\
+    \midrule
+    \endfirsthead
+    \toprule
+    \textbf{Élément} & \textbf{Description} \\
+    \midrule
+    \endhead
+    Acteurs & Administrateur, assistant autorisé selon le périmètre \\
+    Objectif & Importer un ensemble de pharmacies, de gardes ou de médicaments à partir d'un fichier CSV. \\
+    Précondition & L'acteur est authentifié et le fichier respecte le format attendu. \\
+    Scénario nominal & L'acteur charge le fichier. Le backend vérifie l'extension, la taille, les colonnes et les valeurs, puis enregistre les lignes valides. \\
+    Postcondition & Les données valides sont enregistrées et un bilan d'import est retourné. \\
+    Exceptions & Colonnes manquantes, lignes invalides, fichier trop volumineux, doublons ou données hors périmètre régional. \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Cas d'utilisation : gestion des utilisateurs et assistants}
+
+\begin{longtable}{L{4cm}L{10cm}}
+    \caption{Description textuelle du cas d'utilisation Gestion des utilisateurs et assistants}\\
+    \toprule
+    \textbf{Élément} & \textbf{Description} \\
+    \midrule
+    \endfirsthead
+    \toprule
+    \textbf{Élément} & \textbf{Description} \\
+    \midrule
+    \endhead
+    Acteur & Administrateur ou super administrateur \\
+    Objectif & Créer, modifier, activer, désactiver ou limiter les comptes administratifs et assistants. \\
+    Précondition & L'acteur dispose d'un rôle autorisé. \\
+    Scénario nominal & L'administrateur renseigne les informations du compte, choisit le rôle et le périmètre éventuel, puis valide l'opération. \\
+    Postcondition & Le compte est créé ou mis à jour avec les permissions correspondantes. \\
+    Exceptions & Email déjà utilisé, rôle invalide, droits insuffisants ou informations manquantes. \\
+    \bottomrule
+\end{longtable}
+
+\section{Diagramme de cas d'utilisation}
+
+Le diagramme de cas d'utilisation synthétise les interactions entre les acteurs et la plateforme. Il sert de
+repère visuel pour relier les besoins exprimés aux fonctionnalités retenues.
+
+\visualslot{Diagramme de cas d'utilisation détaillé}
+{Diagramme UML détaillé à insérer après export depuis l'outil de modélisation.}
+{fig:use-case-detaille}
+
+\section{Conclusion}
+
+Cette analyse précise les acteurs, les besoins et les règles de gestion de PharmacieConnect. Elle établit
+le lien entre les attentes fonctionnelles et les choix techniques qui seront détaillés dans le chapitre de
+conception.

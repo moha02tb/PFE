@@ -1,0 +1,456 @@
+\chapter{Réalisation et tests}
+\label{ch:realisation-tests}
+\minitoc
+\clearpage
+
+\section{Introduction}
+
+Après la conception, cette partie décrit la réalisation concrète de PharmacieConnect. Elle présente
+l'environnement de travail, les technologies utilisées, l'organisation du dépôt et les principales
+fonctionnalités développées dans le backend, le tableau de bord administrateur et l'application mobile. La
+fin du chapitre est consacrée à l'intégration, à la configuration, aux tests et aux difficultés rencontrées.
+
+\section{Environnement matériel et logiciel}
+
+Le développement de PharmacieConnect a mobilisé plusieurs outils, car le projet combine un backend, une
+interface web d'administration et une application mobile.
+
+\begin{table}[H]
+    \centering
+    \caption{Environnement de développement}
+    \begin{tabular}{L{5cm}L{8cm}}
+        \toprule
+        \textbf{Élément} & \textbf{Description} \\
+        \midrule
+        Machine de développement & Ordinateur portable Intel Core i7-8750H, 12 threads, 16 Go RAM, stockage local 343 Go. \\
+        Système d'exploitation & Linux 6.17 x86\_64. \\
+        Éditeur de code & Visual Studio Code. \\
+        Backend & Python, FastAPI, Uvicorn, SQLAlchemy, Pydantic, Pytest \\
+        Administration web & Node.js, React, Vite, React Router, Axios, Tailwind CSS \\
+        Application mobile & Expo, React Native, React Navigation, i18next \\
+        Base de données & SQLite en développement local, PostgreSQL selon la configuration \\
+        Outils de test & Pytest, Jest, build Vite et tests fonctionnels manuels \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\section{Technologies utilisées}
+
+Les choix techniques découlent directement des besoins du projet. Le backend devait fournir des API
+claires et sécurisées. L'administration nécessitait une interface web capable de gérer les données depuis
+un navigateur. L'application mobile, de son côté, devait rester simple à utiliser tout en intégrant la
+recherche, la carte et la consultation des gardes.
+
+\begin{longtable}{L{4cm}L{10cm}}
+    \caption{Technologies utilisées dans le projet}\\
+    \toprule
+    \textbf{Technologie} & \textbf{Utilisation} \\
+    \midrule
+    \endfirsthead
+    \toprule
+    \textbf{Technologie} & \textbf{Utilisation} \\
+    \midrule
+    \endhead
+    FastAPI & Développement de l'API REST, endpoints publics et endpoints protégés. \\
+    SQLAlchemy & Modélisation des entités et accès à la base de données. \\
+    Pydantic & Validation des données entrantes et structuration des réponses. \\
+    JWT & Authentification, jetons d'accès et jetons de rafraîchissement. \\
+    React & Construction de l'interface d'administration. \\
+    Vite & Outil de développement et de build pour le tableau de bord administrateur. \\
+    Axios & Communication entre le tableau de bord administrateur et l'API. \\
+    Tailwind CSS & Mise en forme de l'interface d'administration. \\
+    Expo & Développement et exécution de l'application mobile. \\
+    React Native & Création des écrans et composants mobiles. \\
+    i18next & Gestion de l'internationalisation. \\
+    OpenStreetMap / Nominatim & Référence cartographique et géocodage lorsque l'enrichissement des coordonnées est nécessaire \cite{nominatim}. \\
+    Pytest & Tests automatisés du backend \cite{pytest}. \\
+    Jest & Tests automatisés côté application mobile \cite{jest}. \\
+    \bottomrule
+\end{longtable}
+
+\section{Organisation du dépôt}
+
+Le projet est regroupé dans un même espace de travail. Cette structure a facilité l'intégration entre
+l'API, le tableau de bord et l'application mobile, notamment lors des tests de communication entre les
+clients et le backend.
+
+\begin{table}[H]
+    \centering
+    \caption{Organisation générale du dépôt}
+    \begin{tabular}{L{5.6cm}L{7.4cm}}
+        \toprule
+        \textbf{Dossier} & \textbf{Contenu} \\
+        \midrule
+        \path{backend_pharmacie/} & API FastAPI, modèles SQLAlchemy, services métier, migrations, sécurité et tests. \\
+        \path{admin_pharmacie/} & Tableau de bord React/Vite destiné à l'administration. \\
+        \begin{minipage}[t]{5.4cm}\ttfamily\small ouerkema-pharmacieconnect-\linebreak 4c94773cce7d/\end{minipage} & Application mobile Expo/React Native destinée aux utilisateurs finaux. \\
+        \path{docs/} & Documentation technique liée à l'architecture, l'API, le backend, le web admin et le mobile. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\section{Réalisation backend}
+
+Le backend constitue la partie centrale de PharmacieConnect. Il reçoit les requêtes des deux interfaces,
+applique les règles métier et interagit avec la base de données. Il regroupe également les mécanismes
+d'authentification, de validation, d'audit et d'import.
+
+\subsection{Endpoints publics}
+
+Les endpoints publics répondent surtout aux besoins de l'application mobile. Ils donnent accès aux
+informations de consultation sans passer par l'espace d'administration.
+
+\begin{itemize}
+    \item \texttt{GET /health} pour vérifier l'état du backend ;
+    \item \texttt{GET /api/pharmacies} pour consulter les pharmacies avec pagination ;
+    \item \texttt{GET /api/pharmacies/search} pour rechercher par texte ;
+    \item \texttt{GET /api/pharmacies/nearby} pour rechercher les pharmacies proches d'une position GPS ;
+    \item \texttt{GET /api/pharmacies/\{pharmacy\_id\}} pour consulter le détail d'une pharmacie ;
+    \item \texttt{GET /api/gardes} pour consulter les gardes d'une date donnée ;
+    \item \texttt{GET /api/medicines} pour rechercher dans le catalogue de médicaments ;
+    \item \texttt{GET /api/medicines/\{code\_pct\}} pour consulter le détail d'un médicament.
+\end{itemize}
+
+Pour la recherche par proximité, l'API utilise les coordonnées GPS envoyées par le client. Elle calcule la
+distance avec les pharmacies disponibles et retourne les résultats triés par distance.
+
+\subsection{Authentification et sessions}
+
+L'authentification est gérée côté backend afin de garder le contrôle sur les comptes et les autorisations.
+Lorsqu'une connexion réussit, le serveur retourne un jeton d'accès et un jeton de rafraîchissement.
+
+\begin{lstlisting}[caption={Structure simplifiée d'une réponse de connexion}]
+{
+  "access_token": "[jeton d'acces]",
+  "refresh_token": "[jeton de rafraichissement]",
+  "token_type": "bearer",
+  "expires_in": 1800
+}
+\end{lstlisting}
+
+Les routes protégées vérifient ensuite le jeton reçu et le rôle de l'utilisateur. Cette vérification est
+réalisée côté serveur afin qu'un simple contrôle d'interface ne puisse pas être contourné.
+
+\subsection{Services métier}
+
+La logique principale est placée dans des services. Ce choix évite de concentrer trop de code dans les
+routes et rend les traitements plus faciles à tester.
+
+\begin{itemize}
+    \item \texttt{AuthService} pour l'inscription, la connexion, la vérification email, le rafraîchissement et la déconnexion ;
+    \item \texttt{PharmacyService} pour la gestion et l'import des pharmacies ;
+    \item \texttt{GardeService} pour la gestion et l'import des plannings de garde ;
+    \item \texttt{MedicineService} pour l'import, la recherche et la consultation des médicaments ;
+    \item \texttt{AuditService} pour la journalisation des actions importantes ;
+    \item \texttt{CacheService} pour l'utilisation du cache lorsque la configuration le permet.
+\end{itemize}
+
+\subsection{Imports CSV}
+
+Les imports CSV ont été ajoutés pour éviter la saisie manuelle d'un grand nombre de lignes. Avant
+l'enregistrement, le backend vérifie l'extension, la taille, les colonnes obligatoires, le format des
+valeurs et les contraintes métier.
+
+Lorsqu'une ligne est incorrecte, la réponse indique les informations nécessaires pour corriger le fichier.
+Pour les médicaments, le code PCT sert d'identifiant pour mettre à jour un enregistrement existant au lieu
+de créer un doublon.
+
+\subsection{Audit et indicateurs}
+
+Les actions sensibles sont enregistrées dans les journaux d'audit. Cela concerne notamment les
+connexions, les échecs de connexion, les inscriptions, les créations administratives et les imports. Les
+données statistiques alimentent le tableau de bord et donnent une vision synthétique de l'activité.
+
+\section{Réalisation du tableau de bord administrateur}
+
+Le tableau de bord administrateur rassemble les fonctions de gestion dans une interface web destinée aux
+administrateurs et aux utilisateurs autorisés.
+
+\subsection{Pages principales}
+
+Les principales pages développées sont :
+
+\begin{itemize}
+    \item le tableau de bord pour les compteurs, indicateurs et activités récentes ;
+    \item la page des pharmacies pour consulter, créer, modifier, supprimer et importer les pharmacies ;
+    \item la page des gardes pour gérer les plannings de garde ;
+    \item la page des médicaments pour importer et consulter le catalogue ;
+    \item la carte pour visualiser les pharmacies géographiquement ;
+    \item la page de management pour gérer les assistants et les autorisations ;
+    \item la page des journaux d'audit pour consulter les actions enregistrées ;
+    \item les pages de profil, paramètres, notifications et langues.
+\end{itemize}
+
+\subsection{Gestion des sessions côté administration}
+
+Le tableau de bord utilise un client API centralisé. Ce client ajoute le jeton JWT aux requêtes protégées.
+Si le jeton d'accès expire, il tente de renouveler la session. En cas d'échec, l'utilisateur est redirigé
+vers la page de connexion.
+
+\section{Réalisation application mobile}
+
+L'application mobile correspond à la partie utilisée par le citoyen. Elle regroupe la recherche, la
+consultation des gardes, la carte, le catalogue de médicaments et les paramètres.
+
+\subsection{Recherche et détail des pharmacies}
+
+Depuis l'écran d'accueil, l'utilisateur peut rechercher une pharmacie par texte et consulter les résultats.
+La fiche de détail affiche les informations disponibles, comme le nom, l'adresse, le téléphone, le
+gouvernorat et les coordonnées lorsque celles-ci existent.
+
+\subsection{Carte et géolocalisation}
+
+L'application peut demander l'autorisation d'utiliser la position de l'utilisateur. Cette position est
+envoyée au backend afin de récupérer les pharmacies proches. La carte affiche ensuite les résultats sous
+forme de marqueurs.
+
+\subsection{Calendrier des gardes}
+
+Le calendrier donne à l'utilisateur le choix d'une date et affiche les pharmacies de garde correspondantes.
+Cette fonctionnalité répond au besoin principal du projet : trouver rapidement une pharmacie disponible à
+une date précise.
+
+\subsection{Catalogue de médicaments}
+
+L'écran des médicaments prend en charge la recherche par nom commercial, DCI ou code PCT. La fiche de détail
+affiche les informations présentes dans la base, comme le prix public, le tarif de référence et la catégorie
+de remboursement.
+
+\subsection{Paramètres, langues et thème}
+
+L'application prend en charge le français, l'anglais et l'arabe. Le choix de l'arabe active l'affichage RTL.
+Les paramètres regroupent aussi le thème, les notifications, les favoris et certaines préférences
+utilisateur.
+
+\section{Captures d'écran}
+
+Les captures réelles seront ajoutées après export depuis l'administration web et l'application mobile. Les
+emplacements suivants conservent la structure du rapport sans utiliser de vues synthétiques.
+
+\visualslot{Vue du tableau de bord administrateur}
+{Capture réelle à insérer après exécution de l'interface d'administration.}
+{fig:screenshot-admin-dashboard}
+
+\visualslot{Vue de gestion des pharmacies}
+{Capture réelle à insérer après exécution de l'interface d'administration.}
+{fig:screenshot-admin-pharmacies}
+
+\visualslot{Vue mobile d'accueil et de recherche}
+{Capture réelle à insérer depuis l'application mobile.}
+{fig:screenshot-mobile-home}
+
+\visualslot{Vue mobile du calendrier des gardes}
+{Capture réelle à insérer depuis l'application mobile.}
+{fig:screenshot-mobile-gardes}
+
+\visualslot{Vue mobile du catalogue de médicaments}
+{Capture réelle à insérer depuis l'application mobile.}
+{fig:screenshot-mobile-medicines}
+
+\section{Intégration API}
+
+L'intégration API relie les deux interfaces au backend. Le tableau de bord administrateur utilise Axios,
+tandis que l'application mobile possède sa propre configuration d'appel API. Les deux clients consomment
+les endpoints FastAPI selon leurs besoins.
+
+\begin{table}[H]
+    \centering
+    \caption{Principales intégrations API}
+    \begin{tabular}{L{4cm}L{5cm}L{4cm}}
+        \toprule
+        \textbf{Client} & \textbf{Endpoints utilisés} & \textbf{Objectif} \\
+        \midrule
+        Application mobile & Pharmacies, gardes, médicaments, authentification & Consultation et parcours citoyen \\
+        Tableau de bord admin & Administration, imports, indicateurs, audit, authentification & Gestion opérationnelle \\
+        Backend & Base de données, services métier, sécurité & Centralisation et validation \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\section{Déploiement et configuration}
+
+La configuration du backend repose sur des variables d'environnement. Cette approche sépare le code des
+valeurs qui changent selon l'environnement, comme la base de données ou les clés de sécurité.
+
+\begin{table}[H]
+    \centering
+    \caption{Variables d'environnement principales}
+    \begin{tabular}{L{6.2cm}L{6.8cm}}
+        \toprule
+        \textbf{Variable} & \textbf{Rôle} \\
+        \midrule
+        \texttt{DATABASE\_URL} & Chaîne de connexion à la base de données. \\
+        \texttt{SECRET\_KEY} & Clé utilisée pour signer les jetons JWT. \\
+        \texttt{ALGORITHM} & Algorithme de signature des jetons. \\
+        \texttt{ACCESS\_TOKEN\_EXPIRE\_MINUTES} & Durée de validité du jeton d'accès. \\
+        \texttt{REFRESH\_TOKEN\_EXPIRE\_DAYS} & Durée de validité du jeton de rafraîchissement. \\
+        \texttt{FRONTEND\_URL} & Origine autorisée pour l'interface web. \\
+        \texttt{TRUSTED\_HOSTS} & Liste des hôtes autorisés. \\
+        \texttt{ENABLE\_REDIS\_CACHE} & Activation ou désactivation du cache Redis. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Pour la version de validation, le projet est exécuté localement de manière contrôlée : le backend FastAPI
+est lancé avec Uvicorn, l'interface d'administration avec le serveur de développement Vite et
+l'application mobile avec Expo. Dans cette configuration, l'intégration entre les trois parties peut être
+vérifiée avant une mise en production. Pour un déploiement final, la même architecture peut être placée
+derrière un serveur HTTPS, avec PostgreSQL comme base de données persistante et des variables
+d'environnement séparées pour la production. Les commandes de lancement local sont placées en annexe afin
+de ne pas alourdir le corps du rapport.
+
+\section{Tests unitaires, API et manuels}
+
+\subsection{Stratégie de test}
+
+La validation combine des tests automatisés côté backend et des vérifications manuelles sur les
+interfaces. Les tests backend portent surtout sur les règles sensibles : authentification, audit,
+restrictions régionales, indicateurs et imports.
+
+\begin{table}[H]
+    \centering
+    \caption{Stratégie de validation}
+    \begin{tabular}{L{4cm}L{9cm}}
+        \toprule
+        \textbf{Type de test} & \textbf{Objectif} \\
+        \midrule
+        Tests unitaires backend & Vérifier une règle métier isolée dans un service. \\
+        Tests API & Vérifier les endpoints, les statuts HTTP, les réponses et les droits d'accès. \\
+        Tests d'import & Contrôler les fichiers CSV, les colonnes, les lignes invalides et les bilans d'import. \\
+        Tests de sécurité & Vérifier les rôles, la vérification email, les jetons et les accès interdits. \\
+        Tests manuels web & Valider les pages d'administration, formulaires, tableaux, cartes et imports. \\
+        Tests manuels mobile & Valider la recherche, la carte, le calendrier, les langues, les paramètres et les médicaments. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Résultats de validation automatisée}
+
+Une campagne de vérification a été exécutée sur les trois parties du projet le 13 mai 2026. Elle ne
+remplace pas une recette complète en production, mais elle confirme que les modules principaux compilent
+ou passent leurs tests automatisés dans l'environnement local.
+
+\begin{longtable}{L{3.6cm}L{4.7cm}L{5.7cm}}
+    \caption{Résultats de validation exécutés}\\
+    \toprule
+    \textbf{Partie vérifiée} & \textbf{Commande} & \textbf{Résultat observé} \\
+    \midrule
+    \endfirsthead
+    \toprule
+    \textbf{Partie vérifiée} & \textbf{Commande} & \textbf{Résultat observé} \\
+    \midrule
+    \endhead
+    Backend : indicateurs, assistants et audit & \texttt{pytest} sur les fichiers ciblés & 14 tests réussis, 21 avertissements, durée 4,45 s. \\
+    Application mobile & \texttt{npm test -- --runInBand} & 7 tests réussis sur la recherche mobile par localisation, durée 2,781 s. \\
+    Administration web & \texttt{npm run build} & Build Vite terminé avec succès, génération du dossier \texttt{dist/}. \\
+    Import médicaments & \texttt{pytest} sur le fichier d'upload médicaments avec limite de temps & Exécution interrompue après 20 s sur le premier test ; ce point doit être stabilisé pour la validation complète de ce module. \\
+    \bottomrule
+\end{longtable}
+
+Le build de l'administration a produit les artefacts \texttt{index.html}, CSS et JavaScript. Vite a signalé
+un avertissement concernant une taille de bundle JavaScript supérieure à 500 kB après minification. Cet
+avertissement n'empêche pas le build, mais il indique qu'un découpage dynamique des pages pourrait être
+ajouté dans une future optimisation.
+
+\subsection{Tests automatisés du backend}
+
+Les tests backend sont écrits avec Pytest. Ils utilisent une base de test afin de ne pas modifier les
+données de développement. Les fichiers identifiés couvrent notamment :
+
+\begin{itemize}
+    \item \texttt{test\_analytics\_dashboard.py} pour les indicateurs du tableau de bord ;
+    \item \texttt{test\_assistant\_regions.py} pour les restrictions régionales des assistants ;
+    \item \texttt{test\_audit\_logs.py} pour la traçabilité des connexions et des actions ;
+    \item \texttt{test\_medicine\_upload.py} pour l'import et la recherche de médicaments.
+\end{itemize}
+
+Les tests d'audit vérifient qu'une connexion administrateur réussie crée une entrée
+\texttt{ADMIN\_LOGIN}, qu'un échec crée une entrée \texttt{ADMIN\_LOGIN\_FAILED}, et qu'une inscription crée
+une entrée \texttt{USER\_REGISTERED}. Les tests de restrictions régionales contrôlent qu'un assistant ne
+peut agir que dans son périmètre autorisé. Les tests d'import de médicaments couvrent les colonnes
+obligatoires, la normalisation des prix, la gestion des doublons par \texttt{code\_pct} et les messages
+d'erreur pour les lignes invalides.
+
+\subsection{Tests API}
+
+Les tests API vérifient les routes publiques et protégées. Ils contrôlent les paramètres requis, les
+limites de pagination, les erreurs de validation, les accès interdits et la cohérence des réponses JSON.
+
+\subsection{Validation du déploiement local}
+
+La version validée du projet est exécutable localement avec trois services séparés : backend FastAPI,
+administration React/Vite et application mobile Expo. Cette structure reflète l'architecture cible et
+donne un cadre clair pour vérifier les échanges API avant un déploiement final.
+
+\begin{table}[H]
+    \centering
+    \caption{Preuves de lancement et de build}
+    \begin{tabular}{L{4cm}L{4.8cm}L{4.2cm}}
+        \toprule
+        \textbf{Composant} & \textbf{Commande de vérification} & \textbf{État} \\
+        \midrule
+        Backend FastAPI & \texttt{pytest} sur tests ciblés & Tests ciblés réussis. \\
+        Administration web & \texttt{npm run build} & Build de production réussi. \\
+        Application mobile & \texttt{npm test -- --runInBand} & Tests Jest réussis. \\
+        Configuration & Variables d'environnement listées & Paramètres identifiés. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Validation fonctionnelle}
+
+Les principaux scénarios fonctionnels vérifiés sont présentés dans le tableau suivant.
+
+\begin{longtable}{L{4cm}L{5cm}L{5cm}}
+    \caption{Scénarios fonctionnels testés}\\
+    \toprule
+    \textbf{Scénario} & \textbf{Étapes} & \textbf{Résultat attendu} \\
+    \midrule
+    \endfirsthead
+    \toprule
+    \textbf{Scénario} & \textbf{Étapes} & \textbf{Résultat attendu} \\
+    \midrule
+    \endhead
+    Connexion administrateur & Saisir email et mot de passe, puis valider. & Accès au tableau de bord et stockage des jetons. \\
+    Recherche mobile & Saisir un nom, une adresse ou un gouvernorat. & Affichage d'une liste de pharmacies pertinentes. \\
+    Recherche par proximité & Autoriser la localisation et lancer la recherche. & Pharmacies triées par distance. \\
+    Consultation des gardes & Choisir une date dans le calendrier. & Affichage des pharmacies de garde correspondantes. \\
+    Import pharmacies & Charger un fichier CSV valide. & Données importées et bilan affiché. \\
+    Import gardes & Charger un planning CSV. & Gardes consultables côté administration et côté mobile. \\
+    Recherche médicament & Chercher par nom, DCI ou code PCT. & Résultats pertinents et détail accessible. \\
+    Audit logs & Filtrer les actions enregistrées. & Résultats paginés cohérents. \\
+    Changement de langue & Passer du français à l'arabe. & Interface traduite avec direction RTL appliquée. \\
+    \bottomrule
+\end{longtable}
+
+\section{Difficultés rencontrées et solutions adoptées}
+
+Plusieurs difficultés sont apparues pendant la réalisation. Elles ont principalement concerné la cohérence
+des données, les droits d'accès et l'intégration entre les trois parties du projet.
+
+\begin{longtable}{L{5cm}L{9cm}}
+    \caption{Difficultés rencontrées et solutions adoptées}\\
+    \toprule
+    \textbf{Difficulté} & \textbf{Solution adoptée} \\
+    \midrule
+    \endfirsthead
+    \toprule
+    \textbf{Difficulté} & \textbf{Solution adoptée} \\
+    \midrule
+    \endhead
+    Alignement entre backend, web et mobile & Centralisation des contrats API et séparation des services backend. \\
+    Qualité variable des fichiers CSV & Validation des colonnes, contrôle des types, retour des erreurs ligne par ligne et comportement d'upsert pour les médicaments. \\
+    Gestion des rôles et des assistants régionaux & Vérification des permissions côté backend et application du périmètre régional dans les services. \\
+    Géolocalisation mobile & Demande explicite des permissions, contrôle de l'activation des services de position et recherche par coordonnées. \\
+    Maintenabilité du backend & Séparation entre routes, services, modèles, schémas, sécurité et migrations. \\
+    Internationalisation mobile & Utilisation de fichiers de traduction et prise en charge de la direction RTL pour l'arabe. \\
+    \bottomrule
+\end{longtable}
+
+\section{Conclusion}
+
+La réalisation a abouti à une plateforme fonctionnelle composée d'une API sécurisée, d'un tableau de bord
+administrateur et d'une application mobile. Les tests réalisés ont couvert les parcours essentiels :
+authentification, recherche de pharmacies, consultation des gardes, imports CSV, gestion des rôles, audit
+et recherche de médicaments. Des améliorations restent possibles, notamment les tests bout en bout, les
+tests de charge et la validation sur un volume de données plus important.

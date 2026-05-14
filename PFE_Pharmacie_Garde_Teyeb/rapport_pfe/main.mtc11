@@ -1,0 +1,18 @@
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {3.1}Introduction}{\reset@font\mtcSfont 22}{section.3.1}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {3.2}Architecture globale}{\reset@font\mtcSfont 22}{section.3.2}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {3.3}Backend FastAPI}{\reset@font\mtcSfont 22}{section.3.3}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {3.4}Tableau de bord React/Vite}{\reset@font\mtcSfont 23}{section.3.4}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {3.5}Application mobile Expo/React Native}{\reset@font\mtcSfont 24}{section.3.5}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {3.6}Modèle de données}{\reset@font\mtcSfont 24}{section.3.6}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {3.7}Diagramme de classes}{\reset@font\mtcSfont 25}{section.3.7}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {3.8}Diagrammes de séquence}{\reset@font\mtcSfont 25}{section.3.8}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {3.9}Diagramme d'activité}{\reset@font\mtcSfont 26}{section.3.9}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {3.10}Diagramme de composants et de déploiement}{\reset@font\mtcSfont 26}{section.3.10}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {3.11}Sécurité}{\reset@font\mtcSfont 27}{section.3.11}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {3.11.1}JWT}{\reset@font\mtcSSfont 27}{subsection.3.11.1}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {3.11.2}Contrôle d'accès basé sur les rôles (RBAC)}{\reset@font\mtcSSfont 27}{subsection.3.11.2}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {3.11.3}Hachage des mots de passe}{\reset@font\mtcSSfont 28}{subsection.3.11.3}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {3.11.4}Validation API}{\reset@font\mtcSSfont 28}{subsection.3.11.4}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {3.11.5}Variables d'environnement}{\reset@font\mtcSSfont 28}{subsection.3.11.5}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {3.12}Justification des choix techniques}{\reset@font\mtcSfont 28}{section.3.12}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {3.13}Conclusion}{\reset@font\mtcSfont 29}{section.3.13}}

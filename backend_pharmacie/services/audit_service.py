@@ -4,6 +4,7 @@ Handles: audit log creation, audit queries, activity tracking.
 """
 
 import json
+import logging
 from datetime import datetime
 from typing import Any, Dict, Optional
 
@@ -11,6 +12,8 @@ from sqlalchemy.orm import Session
 
 import models
 from models import AuditActionEnum
+
+logger = logging.getLogger(__name__)
 
 
 class AuditService:
@@ -22,12 +25,14 @@ class AuditService:
     def log_action(
         self,
         action: AuditActionEnum,
-        actor_id: int,
-        actor_type: str,
+        actor_id: Optional[int],
+        actor_type: Optional[str],
         entity_type: str,
         entity_id: int = 0,
         details: Optional[Dict[str, Any]] = None,
         status: str = "success",
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None,
     ) -> bool:
         """
         Log an audit action.
@@ -39,7 +44,9 @@ class AuditService:
             entity_type: Type of entity affected ('pharmacie', 'user', etc.)
             entity_id: ID of entity affected (0 for bulk/N/A)
             details: Additional context as dict (will be JSON serialized)
-            status: 'success' or 'failure'
+            status: 'success', 'failed', or 'warning'
+            ip_address: Remote client IP address when available
+            user_agent: Remote client user agent when available
             
         Returns: True on success, False on failure
         """
@@ -50,15 +57,25 @@ class AuditService:
                 actor_type=actor_type,
                 entity_type=entity_type,
                 entity_id=entity_id,
-                details=json.dumps(details) if details else None,
+                ip_address=ip_address,
+                user_agent=user_agent[:255] if user_agent else None,
+                details=json.dumps(details, default=str) if details else None,
                 status=status,
             )
             self.db.add(audit_log)
             self.db.commit()
             return True
-        except Exception as e:
+        except Exception:
             self.db.rollback()
-            print(f"Error logging audit action: {str(e)}")
+            logger.exception(
+                "Failed to write audit log action=%s actor_type=%s actor_id=%s "
+                "entity_type=%s entity_id=%s",
+                getattr(action, "value", action),
+                actor_type,
+                actor_id,
+                entity_type,
+                entity_id,
+            )
             return False
 
     def get_user_actions(
@@ -92,8 +109,12 @@ class AuditService:
                 }
                 for log in logs
             ]
-        except Exception as e:
-            print(f"Error fetching audit logs: {str(e)}")
+        except Exception:
+            logger.exception(
+                "Failed to fetch audit logs for actor_type=%s actor_id=%s",
+                actor_type,
+                user_id,
+            )
             return []
 
     def get_entity_changes(
@@ -127,8 +148,12 @@ class AuditService:
                 }
                 for log in logs
             ]
-        except Exception as e:
-            print(f"Error fetching entity changes: {str(e)}")
+        except Exception:
+            logger.exception(
+                "Failed to fetch audit logs for entity_type=%s entity_id=%s",
+                entity_type,
+                entity_id,
+            )
             return []
 
     def get_recent_actions(self, limit: int = 100, days: int = 7) -> list:
@@ -157,6 +182,6 @@ class AuditService:
                 }
                 for log in logs
             ]
-        except Exception as e:
-            print(f"Error fetching recent actions: {str(e)}")
+        except Exception:
+            logger.exception("Failed to fetch recent audit logs")
             return []

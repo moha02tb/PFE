@@ -6,12 +6,13 @@ Endpoints:
     POST /api/admin/upload: Upload pharmacy data from CSV or Excel
 """
 
+from datetime import date, datetime, time, timedelta
 from typing import List
 
 from database import get_db
 from dependencies import admin_required, staff_required
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
-from models import Administrateur, AuditLog
+from models import Administrateur, AuditActionEnum
 from permissions import role_value
 from region_scope import normalize_region, region_options
 from services import CacheService, MedicineService, PharmacyService
@@ -29,6 +30,15 @@ from schemas import (
 )
 
 router = APIRouter(prefix="/api/admin", tags=["Administration"])
+
+AUDIT_ENTITY_TYPES = {
+    "administrateur",
+    "auth",
+    "garde_schedule",
+    "medicine",
+    "pharmacie",
+    "utilisateur",
+}
 
 
 @router.get("/permissions")
@@ -58,6 +68,75 @@ def _raise_service_error(error: str) -> None:
     if "assistant" in lowered or "outside the assistant region" in lowered:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=error)
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+
+
+def _audit_log_filters(
+    action_type: str | None,
+    entity_type: str | None,
+    date_from: date | None,
+    date_to: date | None,
+) -> tuple[str, dict]:
+    """Build validated audit log WHERE fragments with bound parameters."""
+    params = {}
+    filters = ["1=1"]
+
+    if action_type:
+        valid_actions = {action.value for action in AuditActionEnum}
+        if action_type not in valid_actions:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid audit action filter",
+            )
+        filters.append("action = :action_type")
+        params["action_type"] = action_type
+
+    if entity_type:
+        if entity_type not in AUDIT_ENTITY_TYPES:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid audit entity filter",
+            )
+        filters.append("entity_type = :entity_type")
+        params["entity_type"] = entity_type
+
+    if date_from and date_to and date_to < date_from:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="date_to must be on or after date_from",
+        )
+
+    if date_from:
+        filters.append("created_at >= :date_from")
+        params["date_from"] = datetime.combine(date_from, time.min)
+
+    if date_to:
+        filters.append("created_at < :date_to_exclusive")
+        params["date_to_exclusive"] = datetime.combine(date_to, time.min) + timedelta(
+            days=1
+        )
+
+    return " AND ".join(filters), params
+
+
+def _serialize_audit_row(row) -> dict:
+    item = row._mapping
+    created_at = item["created_at"]
+    if created_at is not None and hasattr(created_at, "isoformat"):
+        created_at = created_at.isoformat()
+
+    return {
+        "id": item["id"],
+        "action": item["action"],
+        "entity_type": item["entity_type"],
+        "entity_id": item["entity_id"],
+        "actor_id": item["actor_id"],
+        "actor_type": item["actor_type"],
+        "ip_address": item["ip_address"],
+        "user_agent": item["user_agent"],
+        "details": item["details"],
+        "status": item["status"],
+        "created_at": created_at,
+    }
 
 
 @router.get("/admins")
@@ -177,69 +256,60 @@ async def get_audit_logs(
     limit: int = 50,
     action_type: str = None,
     entity_type: str = None,
+    date_from: date | None = None,
+    date_to: date | None = None,
 ):
     """Get audit logs for admin actions. Super admin access is required for viewing all logs."""
-    # Use raw SQL to avoid enum deserialization errors with legacy data
-    query = text("""
-        SELECT id, action, entity_type, entity_id, actor_id, actor_type, details, status, created_at
+    if skip < 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="skip must be >= 0",
+        )
+    if limit < 1 or limit > 200:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="limit must be between 1 and 200",
+        )
+
+    where_sql, params = _audit_log_filters(action_type, entity_type, date_from, date_to)
+    params.update({"limit": limit, "skip": skip})
+
+    query = text(
+        f"""
+        SELECT
+            id,
+            action,
+            entity_type,
+            entity_id,
+            actor_id,
+            actor_type,
+            ip_address,
+            user_agent,
+            details,
+            status,
+            created_at
         FROM audit_logs
-        WHERE 1=1
-    """)
-    
-    params = {}
-    
-    if action_type:
-        query = text(str(query) + " AND action = :action_type")
-        params["action_type"] = action_type
-    
-    if entity_type:
-        query = text(str(query) + " AND entity_type = :entity_type")
-        params["entity_type"] = entity_type
-    
-    count_query = text("""
-        SELECT COUNT(*) FROM audit_logs WHERE 1=1
-    """)
-    
-    if action_type:
-        count_query = text(str(count_query) + " AND action = :action_type")
-    if entity_type:
-        count_query = text(str(count_query) + " AND entity_type = :entity_type")
-    
-    # Execute raw count query
-    total_result = db.execute(count_query, params).scalar()
-    total = total_result or 0
-    
-    # Get paginated logs
-    final_query = text(str(query) + " ORDER BY created_at DESC LIMIT :limit OFFSET :skip")
-    params["limit"] = limit
-    params["skip"] = skip
-    
-    result = db.execute(final_query, params)
-    rows = result.fetchall()
-    
-    return [
-        {
-            "id": row[0],
-            "action": row[1],
-            "entity_type": row[2],
-            "entity_id": row[3],
-            "actor_id": row[4],
-            "actor_type": row[5],
-            "details": row[6],
-            "status": row[7],
-            "created_at": row[8].isoformat() if row[8] else None,
-        }
-        for row in rows
-    ]
+        WHERE {where_sql}
+        ORDER BY created_at DESC
+        LIMIT :limit OFFSET :skip
+        """
+    )
+
+    return [_serialize_audit_row(row) for row in db.execute(query, params).fetchall()]
 
 
 @router.get("/audit-logs/count")
 async def get_audit_logs_count(
     current_admin: Administrateur = Depends(admin_required),
     db: Session = Depends(get_db),
+    action_type: str = None,
+    entity_type: str = None,
+    date_from: date | None = None,
+    date_to: date | None = None,
 ):
     """Get total count of audit logs."""
-    result = db.execute(text("SELECT COUNT(*) FROM audit_logs"))
+    where_sql, params = _audit_log_filters(action_type, entity_type, date_from, date_to)
+    result = db.execute(text(f"SELECT COUNT(*) FROM audit_logs WHERE {where_sql}"), params)
     count = result.scalar() or 0
     return {"total": count}
 

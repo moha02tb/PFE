@@ -1,0 +1,69 @@
+\section*{Contexte général}
+\addcontentsline{toc}{section}{Contexte général}
+
+L'accès à une information fiable est un besoin important dans le domaine de la santé. Pour les
+pharmacies, cette information concerne souvent l'adresse, le numéro de téléphone, les horaires ou encore
+les gardes disponibles. Dans une situation urgente, l'utilisateur cherche surtout une réponse rapide :
+trouver une pharmacie proche ou savoir quelle pharmacie assure la garde à une date donnée.
+
+En Tunisie, les informations sur les pharmacies de garde existent, mais elles ne sont pas toujours
+faciles à consulter. Elles peuvent être publiées sous forme de listes, partagées localement ou mises à jour
+manuellement. Cette organisation rend la recherche moins pratique, surtout depuis un téléphone ou dans
+une zone que l'utilisateur ne connaît pas bien.
+
+C'est dans ce contexte que s'inscrit le projet \textbf{PharmacieConnect}. La plateforme regroupe une API
+backend développée avec FastAPI, un tableau de bord administrateur réalisé avec React/Vite et une
+application mobile Expo/React Native. L'objectif est de faciliter l'accès aux données côté citoyen tout en
+donnant aux administrateurs un outil de gestion plus structuré.
+
+\section*{Problématique}
+\addcontentsline{toc}{section}{Problématique}
+
+La question principale posée par ce projet est la suivante : comment mettre en place une plateforme qui
+permet au citoyen de rechercher rapidement une pharmacie ou une pharmacie de garde, tout en permettant
+à l'administrateur de gérer les données de manière sécurisée et organisée ?
+
+Cette question implique plusieurs points. L'application mobile doit rester simple à utiliser et proposer
+des résultats clairs. Le tableau de bord doit permettre d'importer, de corriger et de suivre les données.
+Le backend doit, de son côté, contrôler les accès, valider les informations reçues et garder une trace des
+actions importantes.
+
+\section*{Objectifs du projet}
+\addcontentsline{toc}{section}{Objectifs du projet}
+
+Le projet a pour objectif de réaliser une plateforme complète de gestion des pharmacies de garde. Les
+objectifs retenus sont les suivants :
+
+\begin{itemize}
+    \item développer une API backend qui centralise les données et les règles métier ;
+    \item mettre en place une authentification sécurisée avec des jetons JWT ;
+    \item créer une interface web pour gérer les pharmacies, les gardes, les médicaments et les utilisateurs autorisés ;
+    \item développer une application mobile pour la recherche de pharmacies, la consultation des gardes et l'accès au catalogue de médicaments ;
+    \item intégrer une recherche par proximité à partir des coordonnées GPS ;
+    \item permettre l'import de fichiers CSV avec validation des données et retour d'erreurs ;
+    \item ajouter des journaux d'audit, des indicateurs et un contrôle d'accès basé sur les rôles ;
+    \item tester les fonctionnalités principales à travers des tests backend et des scénarios fonctionnels.
+\end{itemize}
+
+\section*{Méthodologie adoptée}
+\addcontentsline{toc}{section}{Méthodologie adoptée}
+
+La méthodologie adoptée pour la réalisation de ce projet est [À compléter]. Le travail a été mené par
+étapes : analyse du besoin, étude de l'existant, définition des fonctionnalités, conception de
+l'architecture, développement du backend, développement de l'administration web, développement de
+l'application mobile, intégration, tests et rédaction du rapport.
+
+Cette progression a permis de commencer par les règles métier du backend avant de les exploiter dans les
+interfaces. Elle a aussi facilité la validation des imports, de l'authentification, de la gestion des rôles
+et des principaux parcours utilisateur.
+
+\section*{Organisation du rapport}
+\addcontentsline{toc}{section}{Organisation du rapport}
+
+Ce rapport est composé de quatre chapitres. Le premier chapitre présente le cadre général du projet, le
+domaine pharmaceutique, l'étude de l'existant, ses limites et la solution proposée. Le deuxième chapitre
+décrit les acteurs, les besoins fonctionnels, les besoins non fonctionnels et les règles de gestion. Le
+troisième chapitre présente la conception de la solution, son architecture, son modèle de données, ses
+diagrammes UML et ses mécanismes de sécurité. Le quatrième chapitre détaille la réalisation technique,
+l'intégration API, la configuration, les tests et les difficultés rencontrées. Le rapport se termine par une
+conclusion générale et des perspectives d'amélioration.

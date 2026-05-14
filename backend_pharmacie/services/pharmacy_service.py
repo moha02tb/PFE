@@ -4,7 +4,6 @@ Extracted from routers/admin.py to enable testing, reuse, and cleaner separation
 Handles: CSV upload, validation, bulk insert, pharmacy queries.
 """
 
-import json
 from io import BytesIO
 from typing import List, Optional, Tuple
 
@@ -16,6 +15,7 @@ from events import EventTypes, get_event_bus
 from models import AuditActionEnum
 from region_scope import apply_region_scope, region_access_error
 from schemas import PharmacieCreate, PharmacieUploadErrorDetail
+from services.audit_service import AuditService
 
 
 def _parse_optional_str(row, column_mapping: dict, field: str) -> Optional[str]:
@@ -301,27 +301,19 @@ class PharmacyService:
                 return None, f"Failed to save pharmacies to database: {str(e)}"
 
             # 10. Create audit log
-            try:
-                audit_log = models.AuditLog(
-                    action=AuditActionEnum.PHARMACY_BULK_UPLOAD,
-                    entity_type="pharmacie",
-                    entity_id=0,
-                    actor_id=admin_id,
-                    actor_type="administrateur",
-                    details=json.dumps(
-                        {
-                            "rows_processed": len(df),
-                            "rows_successful": len(valid_pharmacies),
-                            "rows_failed": len(errors),
-                        }
-                    ),
-                    status="success",
-                )
-                self.db.add(audit_log)
-                self.db.commit()
-            except Exception as e:
-                self.db.rollback()
-                print(f"Warning: Failed to log audit entry: {str(e)}")
+            AuditService(self.db).log_action(
+                action=AuditActionEnum.PHARMACY_BULK_UPLOAD,
+                entity_type="pharmacie",
+                entity_id=0,
+                actor_id=admin_id,
+                actor_type="administrateur",
+                details={
+                    "rows_processed": len(df),
+                    "rows_successful": len(valid_pharmacies),
+                    "rows_failed": len(errors),
+                },
+                status="success",
+            )
 
             self.event_bus.publish(
                 EventTypes.PHARMACY_BULK_UPLOAD_SUCCESS,

@@ -1,6 +1,5 @@
 """Garde schedule upload and query service."""
 
-import json
 import re
 from datetime import date, datetime
 from io import BytesIO
@@ -13,6 +12,7 @@ from sqlalchemy.orm import Session
 import models
 from models import AuditActionEnum
 from region_scope import apply_region_scope, region_access_error
+from services.audit_service import AuditService
 
 
 def _clean_optional_str(value) -> Optional[str]:
@@ -261,28 +261,20 @@ class GardeService:
                 self.db.rollback()
                 return None, f"Failed to save garde rows: {exc}"
 
-            try:
-                self.db.add(
-                    models.AuditLog(
-                        action=AuditActionEnum.GARDE_BULK_UPLOAD,
-                        entity_type="garde_schedule",
-                        entity_id=0,
-                        actor_id=admin_id,
-                        actor_type="administrateur",
-                        details=json.dumps(
-                            {
-                                "rows_processed": len(df),
-                                "rows_successful": result["successful"],
-                                "rows_failed": result["failed"],
-                                "format": "planner",
-                            }
-                        ),
-                        status="success",
-                    )
-                )
-                self.db.commit()
-            except Exception:
-                self.db.rollback()
+            AuditService(self.db).log_action(
+                action=AuditActionEnum.GARDE_BULK_UPLOAD,
+                entity_type="garde_schedule",
+                entity_id=0,
+                actor_id=admin_id,
+                actor_type="administrateur",
+                details={
+                    "rows_processed": len(df),
+                    "rows_successful": result["successful"],
+                    "rows_failed": result["failed"],
+                    "format": "planner",
+                },
+                status="success",
+            )
 
             return result, None
 
@@ -328,27 +320,19 @@ class GardeService:
             self.db.rollback()
             return None, f"Failed to save garde rows: {exc}"
 
-        try:
-            self.db.add(
-                models.AuditLog(
-                    action=AuditActionEnum.GARDE_BULK_UPLOAD,
-                    entity_type="garde_schedule",
-                    entity_id=0,
-                    actor_id=admin_id,
-                    actor_type="administrateur",
-                    details=json.dumps(
-                        {
-                            "rows_processed": len(df),
-                            "rows_successful": successful,
-                            "rows_failed": len(errors),
-                        }
-                    ),
-                    status="success",
-                )
-            )
-            self.db.commit()
-        except Exception:
-            self.db.rollback()
+        AuditService(self.db).log_action(
+            action=AuditActionEnum.GARDE_BULK_UPLOAD,
+            entity_type="garde_schedule",
+            entity_id=0,
+            actor_id=admin_id,
+            actor_type="administrateur",
+            details={
+                "rows_processed": len(df),
+                "rows_successful": successful,
+                "rows_failed": len(errors),
+            },
+            status="success",
+        )
 
         return {
             "total_rows": len(df),

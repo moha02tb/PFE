@@ -113,6 +113,15 @@
     "assistant": "Assistant",
     "you": "Vous",
     "bubbleLabel": "Ouvrir l'assistant de premiers secours",
+    "thinking": "Vérification des conseils de premiers secours...",
+    "topic": "Sujet",
+    "confidence": "Confiance",
+    "emptyAnswer": "Je n'ai pas trouvé de réponse fiable de premiers secours pour cette question.",
+    "errors": {
+      "timeout": "L'assistant n'a pas répondu à temps. Vérifiez la connexion puis réessayez.",
+      "network": "Le service de premiers secours est inaccessible pour le moment. Réessayez quand le service est en ligne.",
+      "generic": "L'assistant ne peut pas répondre pour le moment. Réessayez."
+    },
     "prompts": {
       "burn": "Brûlure",
       "bleeding": "Saignement",

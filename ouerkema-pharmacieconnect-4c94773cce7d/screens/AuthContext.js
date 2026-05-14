@@ -8,8 +8,6 @@ import { API_CONFIG } from '../config/api';
 const AuthContext = createContext({});
 
 // Configuration
-// Use machine IP for development (192.168.1.6:8000)
-// Change this if your machine IP is different
 const BACKEND_URL = API_CONFIG.baseURL;
 const ACCESS_TOKEN_KEY = 'access_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';

@@ -1,0 +1,137 @@
+\section{Introduction}
+
+Les tests ont pour objectif de vérifier que les fonctionnalités développées correspondent aux besoins et
+que les règles métier importantes ne se cassent pas lors des modifications. Dans PharmacieConnect, la
+validation combine des tests automatisés côté backend et des tests fonctionnels manuels sur les
+interfaces web et mobile.
+
+\section{Stratégie de test}
+
+La stratégie retenue est pragmatique. Les règles les plus sensibles sont testées automatiquement :
+authentification, audit, restrictions régionales, analytics et imports. Les parcours d'interface sont
+validés manuellement, car ils dépendent de l'affichage, de la navigation, des permissions de localisation
+et des données chargées.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{L{4cm}L{9cm}}
+        \toprule
+        \textbf{Type de test} & \textbf{Objectif} \\
+        \midrule
+        Tests unitaires backend & Vérifier une règle métier isolée dans un service. \\
+        Tests d'intégration backend & Vérifier le comportement entre route, service et base de données de test. \\
+        Tests d'import & Contrôler la lecture CSV, les validations et les compteurs de succès/échec. \\
+        Tests de sécurité & Vérifier les rôles, la vérification email, les jetons et les accès interdits. \\
+        Tests manuels web & Valider les pages d'administration, les formulaires et les tableaux. \\
+        Tests manuels mobile & Valider la recherche, la carte, le calendrier, les langues et les paramètres. \\
+        \bottomrule
+    \end{tabular}
+    \caption{Stratégie de validation}
+\end{table}
+
+\section{Tests automatisés du backend}
+
+Les tests backend sont écrits avec Pytest. La configuration crée une base SQLite en mémoire pour isoler
+les tests de la base réelle du développeur. Cela permet de rejouer les tests sans risque sur les données de
+production ou de démonstration.
+
+Les fichiers de test présents couvrent notamment :
+
+\begin{itemize}
+    \item \texttt{test\_analytics\_dashboard.py} pour les indicateurs du tableau de bord ;
+    \item \texttt{test\_assistant\_regions.py} pour les restrictions régionales des assistants ;
+    \item \texttt{test\_audit\_logs.py} pour la traçabilité des connexions et des actions ;
+    \item \texttt{test\_medicine\_upload.py} pour l'import et la recherche de médicaments.
+\end{itemize}
+
+\subsection{Validation de l'audit}
+
+Les tests vérifient qu'une connexion administrateur réussie crée une entrée
+\texttt{ADMIN\_LOGIN}, qu'un échec crée une entrée \texttt{ADMIN\_LOGIN\_FAILED}, et qu'une inscription crée
+une entrée \texttt{USER\_REGISTERED}. Cette validation est importante car l'audit est une fonctionnalité de
+confiance : s'il manque des événements, l'administrateur ne peut plus suivre correctement l'activité.
+
+\subsection{Validation des restrictions régionales}
+
+Les assistants ne doivent pas gérer toutes les pharmacies du pays. Les tests vérifient que les opérations
+acceptent uniquement les gouvernorats appartenant à la région de l'assistant. Par exemple, un assistant
+du nord ne doit pas pouvoir importer une pharmacie localisée dans le sud.
+
+\subsection{Validation des imports de médicaments}
+
+Les tests d'import de médicaments vérifient les colonnes obligatoires, la normalisation des prix, la gestion
+des doublons par \texttt{code\_pct} et les messages d'erreur pour les lignes invalides. Cette partie est
+sensible parce qu'un fichier mal formé peut introduire beaucoup d'erreurs dans le catalogue.
+
+\section{Scénarios de validation fonctionnelle}
+
+Les scénarios suivants décrivent les parcours validés sur les interfaces.
+
+\begin{longtable}{L{4cm}L{5cm}L{5cm}}
+    \caption{Scénarios fonctionnels testés}\\
+    \toprule
+    \textbf{Scénario} & \textbf{Étapes} & \textbf{Résultat attendu} \\
+    \midrule
+    \endfirsthead
+    \toprule
+    \textbf{Scénario} & \textbf{Étapes} & \textbf{Résultat attendu} \\
+    \midrule
+    \endhead
+    Connexion admin & Saisir email et mot de passe, valider le formulaire. & Accès au tableau de bord et stockage des jetons. \\
+    Recherche mobile & Entrer un nom ou une ville dans l'écran d'accueil. & Liste filtrée de pharmacies avec informations lisibles. \\
+    Recherche par proximité & Autoriser la localisation et lancer la recherche. & Pharmacies triées par distance dans le rayon configuré. \\
+    Import pharmacies & Charger un fichier CSV valide depuis l'administration. & Nombre de lignes réussies, erreurs éventuelles et données visibles. \\
+    Import gardes & Charger un planning de garde CSV. & Gardes consultables par l'admin et par le mobile pour la date donnée. \\
+    Recherche médicament & Chercher par nom, DCI ou code PCT. & Résultats pertinents et détail du médicament accessible. \\
+    Audit logs & Filtrer par action, entité ou date. & Résultats paginés cohérents avec le compteur. \\
+    Changement de langue & Passer du français à l'arabe dans les paramètres. & Interface traduite et direction RTL appliquée. \\
+    \bottomrule
+\end{longtable}
+
+\section{Validation des API}
+
+La validation de l'API se fait à deux niveaux. D'abord, FastAPI fournit une documentation OpenAPI
+permettant de vérifier les routes, les paramètres attendus et les modèles de réponse. Ensuite, les clients
+web et mobile consomment les mêmes endpoints, ce qui permet de repérer rapidement une incohérence de
+contrat.
+
+Quelques règles de validation sont particulièrement importantes :
+
+\begin{itemize}
+    \item les coordonnées GPS doivent rester dans les bornes latitude/longitude ;
+    \item les limites de pagination ne doivent pas accepter des valeurs excessives ;
+    \item les fichiers CSV sont limités à 5 Mo et 5000 lignes ;
+    \item les routes d'administration exigent un compte autorisé ;
+    \item les dates de garde doivent être valides avant l'enregistrement.
+\end{itemize}
+
+\section{Résultats obtenus}
+
+Les tests automatisés existants couvrent les règles les plus critiques du backend. Les tests manuels ont
+confirmé que les parcours principaux sont utilisables : connexion, tableau de bord, gestion des
+pharmacies, import de gardes, recherche mobile, carte, calendrier et catalogue des médicaments.
+
+La validation a aussi permis d'identifier des limites. Certaines vérifications restent manuelles, notamment
+la qualité visuelle de l'interface mobile, le comportement exact de la géolocalisation selon l'appareil et
+les performances sur un volume de données plus grand. Ces points sont acceptables pour une première
+version, mais ils doivent être renforcés avant un déploiement large.
+
+\section{Limites de la validation}
+
+La validation réalisée ne remplace pas une campagne de tests en conditions réelles. Les principales
+limites sont :
+
+\begin{itemize}
+    \item absence de tests automatisés complets côté interface web ;
+    \item absence de tests end-to-end couvrant mobile, API et base simultanément ;
+    \item données de test encore limitées par rapport à un usage national ;
+    \item comportement GPS dépendant de l'appareil, du système et des permissions ;
+    \item pas encore de tests de charge poussés sur les endpoints publics.
+\end{itemize}
+
+\section{Conclusion}
+
+La phase de tests a permis de sécuriser les fonctionnalités importantes du backend et de valider les
+parcours principaux des interfaces. Le projet dispose d'une base de tests utile, surtout pour l'audit, les
+imports, les régions et les analytics. Pour une version de production, il serait pertinent d'ajouter des
+tests end-to-end, des tests de charge et une validation mobile sur plusieurs appareils.

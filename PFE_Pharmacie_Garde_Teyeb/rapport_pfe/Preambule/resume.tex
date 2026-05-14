@@ -1,0 +1,23 @@
+Ce projet de fin d'études porte sur la conception et la réalisation de \textbf{PharmacieConnect}, une
+plateforme web et mobile destinée à faciliter la recherche de pharmacies, la consultation des pharmacies
+de garde et l'administration des données pharmaceutiques. Le sujet répond à un besoin concret : les
+informations de garde sont parfois dispersées, mises à jour manuellement et peu pratiques à consulter
+depuis un téléphone, alors qu'elles sont souvent recherchées dans des situations urgentes.
+
+Pour traiter ce besoin, PharmacieConnect s'appuie sur trois composants complémentaires. Le backend
+constitue le noyau technique de la plateforme. Il utilise \textbf{FastAPI} pour regrouper l'accès aux
+données, les règles métier, les endpoints REST et les mécanismes de sécurité fondés sur les jetons JWT et
+le contrôle des rôles. Du côté de l'administration, le tableau de bord \textbf{React}/\textbf{Vite} offre
+un espace centralisé pour maintenir les pharmacies, les plannings de garde, les médicaments, les
+utilisateurs autorisés, les imports CSV, les indicateurs et les journaux d'audit. L'application mobile,
+réalisée avec \textbf{Expo} et \textbf{React Native}, se concentre sur les besoins du citoyen : rechercher
+une pharmacie, consulter les gardes par date, utiliser la géolocalisation et accéder au catalogue des
+médicaments.
+
+La réalisation ne se limite pas aux interfaces visibles. Elle intègre aussi plusieurs aspects de génie
+logiciel : modélisation des données avec SQLAlchemy, validation des entrées, contrôle d'accès basé sur les
+rôles, journalisation des actions sensibles, tests backend et séparation entre les interfaces clientes, les
+services métier et la couche de persistance.
+
+\textbf{Mots-clés :} pharmacie de garde, FastAPI, React, Vite, Expo, React Native, JWT, API REST,
+SQLAlchemy, tableau de bord, application mobile.

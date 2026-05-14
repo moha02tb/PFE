@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Calendar, FileText, AlertCircle, Check } from 'lucide-react';
+import { FileText, AlertCircle } from 'lucide-react';
 import api from '../lib/api';
 import {
   Badge,
-  Button,
   Card,
   CardContent,
   CardHeader,
@@ -56,16 +55,21 @@ const AuditLogViewer = () => {
 
     try {
       const skip = (page - 1) * PAGE_SIZE;
-      const params = new URLSearchParams({
-        skip,
-        limit: PAGE_SIZE,
-      });
+      const filters = new URLSearchParams();
 
-      if (actionFilter) params.append('action_type', actionFilter);
-      if (entityFilter) params.append('entity_type', entityFilter);
+      if (actionFilter) filters.append('action_type', actionFilter);
+      if (entityFilter) filters.append('entity_type', entityFilter);
+      if (dateFrom) filters.append('date_from', dateFrom);
+      if (dateTo) filters.append('date_to', dateTo);
+
+      const params = new URLSearchParams(filters);
+      params.set('skip', skip);
+      params.set('limit', PAGE_SIZE);
+
+      const countQuery = filters.toString();
 
       const [countResponse, logsResponse] = await Promise.all([
-        api.get('/api/admin/audit-logs/count'),
+        api.get(`/api/admin/audit-logs/count${countQuery ? `?${countQuery}` : ''}`),
         api.get(`/api/admin/audit-logs?${params}`),
       ]);
 
@@ -76,7 +80,7 @@ const AuditLogViewer = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, actionFilter, entityFilter, t]);
+  }, [page, actionFilter, entityFilter, dateFrom, dateTo, t]);
 
   useEffect(() => {
     loadLogs();
@@ -115,14 +119,6 @@ const AuditLogViewer = () => {
     return new Date(dateString).toLocaleString();
   };
 
-  const parseDetails = (detailsJson) => {
-    try {
-      return typeof detailsJson === 'string' ? JSON.parse(detailsJson) : detailsJson;
-    } catch {
-      return null;
-    }
-  };
-
   return (
     <div className="space-y-6 p-6">
       <SectionHeader
@@ -154,14 +150,20 @@ const AuditLogViewer = () => {
             <Input
               type="date"
               value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
+              onChange={(e) => {
+                setDateFrom(e.target.value);
+                setPage(1);
+              }}
               placeholder={t('audit.dateFrom')}
             />
 
             <Input
               type="date"
               value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
+              onChange={(e) => {
+                setDateTo(e.target.value);
+                setPage(1);
+              }}
               placeholder={t('audit.dateTo')}
             />
           </div>

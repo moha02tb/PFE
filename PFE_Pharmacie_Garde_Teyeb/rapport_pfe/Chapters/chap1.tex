@@ -1,0 +1,274 @@
+\chapter{Cadre conceptuel et étude de l'existant}
+\label{ch:cadre-conceptuel}
+\minitoc
+\clearpage
+
+\section{Introduction}
+
+Avant d'aborder les choix techniques, il est nécessaire de replacer PharmacieConnect dans son contexte.
+Le chapitre commence par le domaine pharmaceutique et le cadre du stage, puis analyse les difficultés
+observées dans la consultation des pharmacies de garde et les limites des solutions existantes. Il
+introduit enfin les objectifs du projet et les grandes lignes de la solution retenue.
+
+\section{Présentation du domaine pharmaceutique}
+
+La pharmacie occupe une place importante dans l'accès aux médicaments et dans l'orientation du patient.
+En dehors des horaires habituels, les pharmacies de garde assurent la continuité du service, notamment la
+nuit, les week-ends et les jours fériés.
+
+Dans ce contexte, la qualité de l'information devient essentielle. Une adresse incorrecte, un numéro de
+téléphone absent ou un horaire non actualisé peut empêcher l'utilisateur de trouver la pharmacie
+recherchée. La mise à jour des données fait donc partie intégrante du service, au même titre que leur
+consultation.
+
+\section{Contexte général}
+
+PharmacieConnect regroupe les informations liées aux pharmacies, aux plannings de garde et aux
+médicaments. La plateforme s'adresse principalement à deux profils. Le citoyen utilise l'application
+mobile pour chercher une pharmacie, consulter les gardes ou accéder au catalogue de médicaments.
+L'administrateur utilise le tableau de bord web pour gérer, vérifier et mettre à jour les données.
+
+Le backend constitue la couche centrale de la plateforme. Il regroupe la validation, la sécurité et les
+règles métier, tout en évitant aux interfaces clientes d'accéder directement à la base de données.
+
+\section{Cadre du stage externe et organisme d'accueil}
+
+Le projet a été réalisé dans le cadre d'un stage externe au sein de \textbf{IT-STORM Consulting}. Le sujet
+officiel concerne le développement d'une application mobile permettant aux citoyens de consulter les
+pharmacies de garde en Tunisie. Les principaux besoins portent sur la recherche par géolocalisation ou
+par saisie manuelle, l'affichage en liste et sur carte, la consultation des coordonnées et l'accès rapide
+aux informations utiles.
+
+Le stage s'est déroulé du 07/02/2026 au 07/06/2026, sous l'encadrement professionnel de
+\textbf{Achraf BCHIRI}. Ce cadre externe a orienté le projet vers une solution exploitable, structurée
+autour d'une API REST, d'une base de données, d'une application mobile et d'une interface
+d'administration pour la mise à jour des données.
+
+\begin{table}[H]
+    \centering
+    \caption{Cadre institutionnel du projet}
+    \begin{tabular}{L{4.5cm}L{8.5cm}}
+        \toprule
+        \textbf{Élément} & \textbf{Description} \\
+        \midrule
+        Organisme d'accueil & IT-STORM Consulting. \\
+        Adresse & 12 Rue Jean Pacilly, 91120 Palaiseau, France. \\
+        Encadrant professionnel & Achraf BCHIRI. \\
+        Période & Du 07/02/2026 au 07/06/2026. \\
+        Nature du projet & Projet de fin d'études externe orienté conception et réalisation logicielle. \\
+        Domaine & Santé numérique, accès aux pharmacies, gardes et données pharmaceutiques. \\
+        Périmètre technique & API backend, tableau de bord administrateur, application mobile et base de données. \\
+        Encadrement & Suivi professionnel, suivi académique, revues d'avancement et validation des livrables. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Ce cadre a orienté la démarche vers un prototype complet et vérifiable. La priorité a été donnée aux
+fonctionnalités essentielles de recherche mobile, à la séparation des responsabilités, à la fiabilité des
+données et à la traçabilité des actions administratives.
+
+\section{Problèmes et défis}
+
+Les problèmes observés concernent principalement la disponibilité, la fiabilité et l'exploitation des
+données. Les informations peuvent être publiées sous des formats différents, mises à jour avec retard ou
+présentées d'une manière peu adaptée à une recherche mobile.
+
+Les défis retenus pour le projet sont les suivants :
+
+\begin{itemize}
+    \item centraliser les informations sur les pharmacies et les gardes ;
+    \item rendre la recherche simple pour un utilisateur mobile ;
+    \item permettre la consultation par date et par proximité ;
+    \item faciliter l'import de volumes de données à travers des fichiers \gls{csv} ;
+    \item sécuriser l'administration et limiter les actions selon les rôles ;
+    \item garder une trace des actions sensibles pour améliorer la traçabilité.
+\end{itemize}
+
+\section{Étude de l'existant}
+
+Les informations sur les pharmacies de garde peuvent être consultées à travers plusieurs supports. Les
+listes statiques, publiées sous forme de page web, d'image ou de document, restent simples à diffuser.
+Elles deviennent cependant moins pratiques lorsqu'il faut rechercher par ville, par date ou par position.
+
+La recherche manuelle, par appels téléphoniques, réseaux sociaux ou sources locales, peut parfois donner
+une réponse rapide. Elle reste toutefois dépendante de la disponibilité des personnes et de la fiabilité des
+informations partagées.
+
+Les applications ou sites spécialisés offrent une expérience plus adaptée, surtout lorsqu'ils proposent la
+géolocalisation ou la recherche par date. Leur efficacité dépend néanmoins de la qualité de la base de
+données, de la fréquence des mises à jour et de l'existence d'un véritable processus d'administration.
+
+\section{Analyse du marché et solutions existantes}
+
+Pour mieux situer PharmacieConnect, plusieurs familles de solutions ont été comparées. Les sources
+institutionnelles, comme le Conseil National de l'Ordre des Pharmaciens de Tunisie, constituent une
+référence pour les informations professionnelles et réglementaires \cite{cnopt}. Des annuaires médicaux
+comme Med.tn publient aussi des pages de pharmacies de garde, avec des informations pratiques et des
+coordonnées \cite{medtn}. Les solutions cartographiques comme Google Maps ou OpenStreetMap facilitent la
+localisation d'une pharmacie, mais elles ne couvrent pas toujours le planning de garde ni les workflows
+d'administration métier \cite{googlemaps,openstreetmap}. Enfin, l'application Apothicare, publiée par le
+Conseil national de l'ordre des pharmaciens de Tunisie, montre l'intérêt d'un accès mobile aux pharmacies
+ouvertes et de garde \cite{apothicare}.
+
+\begin{table}[H]
+    \centering
+    \caption{Comparaison des solutions existantes}
+    \begin{tabular}{L{3.2cm}L{4.6cm}L{5.2cm}}
+        \toprule
+        \textbf{Solution} & \textbf{Avantages} & \textbf{Limites} \\
+        \midrule
+        Sources institutionnelles & Source de référence, légitimité des informations, contact officiel & Consultation parfois centrée sur l'information institutionnelle, intégration directe limitée dans une application tierce \\
+        Annuaires médicaux en ligne & Recherche publique, fiches avec coordonnées, accès sans installation & Données dépendantes de la mise à jour de l'annuaire, peu de contrôle sur le workflow interne d'administration \\
+        Cartographie généraliste & Localisation, itinéraires et recherche par proximité & Pas spécialisée dans les gardes, absence de validation métier et de gestion de plannings \\
+        Applications mobiles spécialisées & Accès mobile, consultation plus rapide, notifications possibles & Dépendance à la couverture fonctionnelle de l'application et à la disponibilité des données \\
+        Listes statiques ou publications locales & Simples à diffuser, utilisables sans compte & Recherche difficile, mise à jour manuelle, faible adaptation aux filtres par date ou par position \\
+        PharmacieConnect & Centralisation, administration, imports CSV, audit, rôles, recherche mobile et garde par date & Nécessite une alimentation régulière de la base et une validation continue des données \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\section{Critique de l'existant}
+
+L'étude de l'existant montre que la difficulté ne se limite pas à l'affichage des données. Les informations
+peuvent être dispersées, présentées sous des formats différents ou mises à jour de manière irrégulière.
+Pour un utilisateur mobile, cette situation rend la recherche moins fluide, surtout lorsqu'il souhaite
+filtrer par gouvernorat, par date ou par proximité.
+
+La même difficulté apparaît côté administration. Lorsque le volume de données augmente, la saisie
+manuelle devient plus difficile à contrôler. Sans import, validation, gestion des rôles et journalisation,
+il devient compliqué de garder une base cohérente et de suivre les modifications effectuées.
+
+\section{Solution proposée : PharmacieConnect}
+
+\textbf{PharmacieConnect} est structurée autour de trois composants complémentaires, chacun associé à un
+rôle précis dans le parcours global :
+
+\begin{itemize}
+    \item une API backend FastAPI qui centralise les données, gère l'authentification, applique les règles
+    métier et expose les endpoints \gls{rest} ;
+    \item un tableau de bord administrateur React/Vite qui offre aux administrateurs un espace de gestion
+    pour les pharmacies, les gardes, les médicaments, les imports \gls{csv}, les assistants régionaux, les
+    indicateurs et les journaux d'audit ;
+    \item une application mobile Expo/React Native centrée sur le citoyen, avec la recherche de
+    pharmacies, la consultation des gardes, la géolocalisation et l'accès au catalogue de médicaments.
+\end{itemize}
+
+Cette organisation répond directement aux limites observées dans les solutions existantes, notamment la
+dispersion des informations, la difficulté de mise à jour et l'absence d'un workflow administratif complet.
+Les données sont centralisées, les accès sont contrôlés et les interfaces sont adaptées aux deux usages
+principaux : la consultation mobile et l'administration.
+
+\section{Objectifs}
+
+Les objectifs fonctionnels et techniques du projet sont :
+
+\begin{itemize}
+    \item offrir une recherche rapide des pharmacies ;
+    \item afficher les pharmacies de garde selon une date donnée ;
+    \item permettre une recherche par proximité géographique ;
+    \item administrer les pharmacies, les gardes, les médicaments et les comptes autorisés ;
+    \item importer des fichiers \gls{csv} en contrôlant la qualité des données ;
+    \item sécuriser les accès à travers l'authentification, les rôles et la validation côté serveur ;
+    \item produire des journaux d'audit et des indicateurs utiles à l'administration.
+\end{itemize}
+
+\section{Acteurs}
+
+Les acteurs principaux sont l'administrateur, l'assistant autorisé, l'utilisateur mobile et le système. Le
+chapitre suivant détaille leurs rôles, mais cette première identification permet déjà d'orienter la
+modélisation générale.
+
+\section{Besoins fonctionnels}
+
+Les besoins fonctionnels globaux peuvent être regroupés en quatre familles :
+
+\begin{itemize}
+    \item besoins de consultation : recherche, filtres, détails, carte et calendrier des gardes ;
+    \item besoins d'administration : création, modification, suppression, import et suivi des données ;
+    \item besoins de sécurité : connexion, renouvellement de session, rôles et périmètres régionaux ;
+    \item besoins de suivi : audit, indicateurs et contrôle des actions sensibles.
+\end{itemize}
+
+\section{Besoins non fonctionnels}
+
+Les besoins non fonctionnels concernent la qualité attendue du système :
+
+\begin{itemize}
+    \item \textbf{sécurité} : protection des routes administratives, hachage des mots de passe et contrôle des rôles ;
+    \item \textbf{performance} : pagination, limitation des imports et réponses adaptées aux usages mobiles ;
+    \item \textbf{ergonomie} : interfaces simples, lisibles et adaptées aux tâches fréquentes ;
+    \item \textbf{maintenabilité} : séparation entre backend, tableau de bord, application mobile et base de données ;
+    \item \textbf{fiabilité} : validation des données et gestion claire des erreurs.
+\end{itemize}
+
+\section{Méthodologie de développement}
+
+La réalisation a suivi une démarche itérative inspirée de Scrum \cite{scrumguide}. Dans le cadre d'un
+PFE, les rôles ont été adaptés : l'étudiant a assuré la conception et le développement, tandis que
+l'encadrement a apporté les orientations et les validations nécessaires. Chaque cycle a donné lieu à un
+résultat vérifiable avant de passer à l'étape suivante.
+
+\begin{table}[H]
+    \centering
+    \caption{Organisation des sprints de réalisation}
+    \begin{tabular}{L{2.6cm}L{5.1cm}L{5.3cm}}
+        \toprule
+        \textbf{Sprint} & \textbf{Objectif} & \textbf{Livrables principaux} \\
+        \midrule
+        Sprint 1 & Analyse et cadrage & Besoins, acteurs, règles de gestion, étude de l'existant. \\
+        Sprint 2 & Conception technique & Architecture, modèle de données, sécurité, contrats API. \\
+        Sprint 3 & Backend & Routes FastAPI, services métier, authentification, imports et audit. \\
+        Sprint 4 & Administration web & Pages React/Vite, tableaux, formulaires, indicateurs et gestion des droits. \\
+        Sprint 5 & Application mobile & Recherche, carte, gardes, médicaments, paramètres et langues. \\
+        Sprint 6 & Intégration et validation & Tests, build, corrections, rapport et annexes. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Cette méthode a limité les risques liés à une intégration tardive. Les modules sensibles, notamment
+l'authentification, les imports CSV, les restrictions régionales et les journaux d'audit, ont été vérifiés
+progressivement par des tests automatisés ou des scénarios fonctionnels.
+
+\section{Diagramme de cas d'utilisation}
+
+Le diagramme de cas d'utilisation général met en relation les acteurs principaux avec les fonctionnalités
+majeures de PharmacieConnect.
+
+\visualslot{Diagramme de cas d'utilisation général}
+{Diagramme UML final à insérer après export depuis l'outil de modélisation.}
+{fig:chap1-use-case}
+
+\section{Planification technique}
+
+La planification technique reprend les principales étapes de réalisation. Elle commence par l'analyse du
+besoin, puis enchaîne avec la conception, le développement du backend, la réalisation des deux
+interfaces, l'intégration, les tests et la rédaction.
+
+\begin{table}[H]
+    \centering
+    \caption{Planification technique synthétique}
+    \begin{tabular}{L{4.5cm}L{8.5cm}}
+        \toprule
+        \textbf{Phase} & \textbf{Travaux réalisés} \\
+        \midrule
+        Analyse & Étude du domaine, identification des acteurs et définition des besoins. \\
+        Conception & Architecture globale, modèle de données, sécurité et contrats API. \\
+        Backend & Développement FastAPI, services métier, authentification, imports et audit. \\
+        Tableau de bord & Développement React/Vite, gestion des données, indicateurs et journaux. \\
+        Mobile & Développement Expo/React Native, recherche, carte, gardes et médicaments. \\
+        Tests & Tests backend, tests API et validation manuelle des parcours principaux. \\
+        Rédaction & Structuration du rapport, annexes, bibliographie et finalisation. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\visualslot{Planning de réalisation}
+{Planning final ou diagramme de Gantt à insérer après validation des dates.}
+{fig:planning-technique}
+
+\section{Conclusion}
+
+Ce premier chapitre a permis de préciser le contexte du projet, le domaine pharmaceutique et les limites
+des solutions existantes. Il montre également pourquoi PharmacieConnect repose sur une séparation entre
+backend, administration web et application mobile. Le chapitre suivant détaille les besoins qui découlent
+de ce cadrage.

@@ -1,0 +1,197 @@
+\chapter{Annexes}
+\label{ch:annexes}
+
+\section{Descriptions complémentaires des cas d'utilisation}
+
+Cette annexe regroupe des éléments complémentaires utiles à la lecture du rapport : correspondance avec
+les cas d'utilisation, emplacements réservés aux visuels, commandes de lancement, commandes de test,
+résultats de validation et exemples de structure CSV.
+
+\begin{longtable}{L{4cm}L{10cm}}
+    \caption{Cas d'utilisation et éléments de validation}\\
+    \toprule
+    \textbf{Cas d'utilisation} & \textbf{Complément attendu} \\
+    \midrule
+    \endfirsthead
+    \toprule
+    \textbf{Cas d'utilisation} & \textbf{Complément attendu} \\
+    \midrule
+    \endhead
+    Authentification & Décrite par un cas d'utilisation textuel et un diagramme de séquence JWT au chapitre Conception. \\
+    Recherche de pharmacie & Décrite par un cas d'utilisation textuel, un diagramme de séquence et une vue mobile de recherche. \\
+    Consultation des gardes & Décrite dans les besoins fonctionnels, les intégrations API et la vue mobile du calendrier. \\
+    Gestion des pharmacies & Décrite dans les besoins administrateur, la réalisation web et la vue de gestion des pharmacies. \\
+    Import CSV & Décrit dans la réalisation backend, la stratégie de validation et les exemples de structure CSV. \\
+    Audit logs & Décrit dans la sécurité, les tests backend et les indicateurs du tableau de bord. \\
+    \bottomrule
+\end{longtable}
+
+\section{État des captures et diagrammes}
+
+\begin{longtable}{L{5cm}L{9cm}}
+    \caption{Éléments visuels à insérer}\\
+    \toprule
+    \textbf{Élément} & \textbf{Statut} \\
+    \midrule
+    \endfirsthead
+    \toprule
+    \textbf{Élément} & \textbf{Statut} \\
+    \midrule
+    \endhead
+    Diagramme de cas d'utilisation & Emplacement réservé ; insérer le diagramme final exporté. \\
+    Diagramme de classes & Emplacement réservé ; insérer le diagramme final exporté. \\
+    Diagramme de séquence authentification JWT & Emplacement réservé ; insérer le diagramme final exporté. \\
+    Diagramme de séquence recherche pharmacie & Emplacement réservé ; insérer le diagramme final exporté. \\
+    Diagramme d'activité import CSV & Emplacement réservé ; insérer le diagramme final exporté. \\
+    Diagramme de composants & Emplacement réservé ; insérer le diagramme final exporté. \\
+    Diagramme de déploiement & Emplacement réservé ; insérer le diagramme final exporté. \\
+    Planning de réalisation & Emplacement réservé ; insérer le planning final exporté. \\
+    Capture tableau de bord administrateur & Emplacement réservé ; insérer la capture réelle. \\
+    Capture gestion des pharmacies & Emplacement réservé ; insérer la capture réelle. \\
+    Capture accueil mobile & Emplacement réservé ; insérer la capture réelle. \\
+    Capture calendrier des gardes & Emplacement réservé ; insérer la capture réelle. \\
+    Capture catalogue médicaments & Emplacement réservé ; insérer la capture réelle. \\
+    \bottomrule
+\end{longtable}
+
+\section{Commandes de lancement}
+
+\subsection*{Backend}
+
+\begin{lstlisting}
+cd backend_pharmacie
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --reload
+\end{lstlisting}
+
+\subsection*{Interface d'administration}
+
+\begin{lstlisting}
+cd admin_pharmacie
+npm install
+npm run dev
+\end{lstlisting}
+
+\subsection*{Application mobile}
+
+\begin{lstlisting}
+cd ouerkema-pharmacieconnect-4c94773cce7d
+npm install
+npm start
+\end{lstlisting}
+
+\section{Commandes de test}
+
+\subsection*{Backend}
+
+\begin{lstlisting}
+cd backend_pharmacie
+source venv/bin/activate
+pytest
+\end{lstlisting}
+
+\begin{lstlisting}
+python -m pytest tests/test_analytics_dashboard.py \
+  tests/test_assistant_regions.py \
+  tests/test_audit_logs.py --tb=short
+\end{lstlisting}
+
+\subsection*{Administration web}
+
+\begin{lstlisting}
+cd admin_pharmacie
+npm run lint
+npm run build
+\end{lstlisting}
+
+\subsection*{Application mobile}
+
+\begin{lstlisting}
+cd ouerkema-pharmacieconnect-4c94773cce7d
+npm test
+npm run lint
+\end{lstlisting}
+
+\section{Résultats de validation du 13 mai 2026}
+
+\begin{longtable}{L{4cm}L{5cm}L{5cm}}
+    \caption{Résultats détaillés des commandes exécutées}\\
+    \toprule
+    \textbf{Commande} & \textbf{Objectif} & \textbf{Résultat} \\
+    \midrule
+    \endfirsthead
+    \toprule
+    \textbf{Commande} & \textbf{Objectif} & \textbf{Résultat} \\
+    \midrule
+    \endhead
+    \texttt{pytest} ciblé backend & Vérifier les indicateurs, l'audit et les restrictions régionales & 14 tests réussis, 21 avertissements, 4,45 s. \\
+    \texttt{npm run build} & Vérifier la génération de l'administration web & Build réussi, artefacts générés dans \texttt{dist/}. \\
+    \texttt{npm test -- --runInBand} & Vérifier les tests unitaires mobiles & 7 tests réussis sur la recherche mobile par localisation. \\
+    \texttt{pytest} upload médicaments & Vérifier l'import des médicaments & Timeout après 20 s ; correction ou isolation nécessaire avant validation exhaustive. \\
+    \bottomrule
+\end{longtable}
+
+\section{Variables d'environnement}
+
+\begin{table}[H]
+    \centering
+    \caption{Variables d'environnement utilisées par le backend}
+    \begin{tabular}{L{6.2cm}L{6.8cm}}
+        \toprule
+        \textbf{Variable} & \textbf{Rôle} \\
+        \midrule
+        \texttt{DATABASE\_URL} & Chaîne de connexion à la base de données. \\
+        \texttt{SECRET\_KEY} & Clé de signature des jetons JWT. \\
+        \texttt{ALGORITHM} & Algorithme de signature des jetons. \\
+        \texttt{ACCESS\_TOKEN\_EXPIRE\_MINUTES} & Durée de validité du jeton d'accès. \\
+        \texttt{REFRESH\_TOKEN\_EXPIRE\_DAYS} & Durée de validité du jeton de rafraîchissement. \\
+        \texttt{FRONTEND\_URL} & Origine autorisée pour l'interface web. \\
+        \texttt{TRUSTED\_HOSTS} & Hôtes autorisés par le backend. \\
+        \texttt{REDIS\_URL} & URL du service Redis lorsque le cache est utilisé. \\
+        \texttt{ENABLE\_REDIS\_CACHE} & Active ou désactive le cache Redis si configuré. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\section{Exemples CSV}
+
+\subsection*{Pharmacies}
+
+\begin{table}[H]
+    \centering
+    \caption{Exemple de structure CSV pour les pharmacies}
+    \begin{tabular}{L{4cm}L{9cm}}
+        \toprule
+        \textbf{Colonne} & \textbf{Description} \\
+        \midrule
+        \texttt{name} & Nom de la pharmacie. \\
+        \texttt{latitude} & Latitude GPS. \\
+        \texttt{longitude} & Longitude GPS. \\
+        \texttt{address} & Adresse complète ou approximative. \\
+        \texttt{phone} & Numéro de téléphone. \\
+        \texttt{governorate} & Gouvernorat utilisé pour le filtrage régional. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection*{Médicaments}
+
+\begin{table}[H]
+    \centering
+    \caption{Exemple de structure CSV pour les médicaments}
+    \begin{tabular}{L{5.2cm}L{7.8cm}}
+        \toprule
+        \textbf{Colonne} & \textbf{Description} \\
+        \midrule
+        \texttt{code\_pct} & Identifiant métier du médicament. \\
+        \texttt{nom\_commercial} & Nom commercial. \\
+        \texttt{prix\_public\_dt} & Prix public en dinars. \\
+        \texttt{tarif\_reference\_dt} & Tarif de référence. \\
+        \texttt{categorie\_remboursement} & Catégorie de remboursement. \\
+        \texttt{dci} & Dénomination commune internationale. \\
+        \texttt{ap} & Autorisation ou indicateur AP selon la source de données. \\
+        \bottomrule
+    \end{tabular}
+\end{table}

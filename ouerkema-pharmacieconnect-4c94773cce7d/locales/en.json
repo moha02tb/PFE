@@ -114,6 +114,15 @@
     "assistant": "Assistant",
     "you": "You",
     "bubbleLabel": "Open first aid assistant",
+    "thinking": "Checking first-aid guidance...",
+    "topic": "Topic",
+    "confidence": "Confidence",
+    "emptyAnswer": "I could not find a reliable first-aid answer for that question.",
+    "errors": {
+      "timeout": "The assistant did not respond in time. Please check the connection and try again.",
+      "network": "The first-aid assistant service is unreachable right now. Please try again when the service is online.",
+      "generic": "The assistant could not answer right now. Please try again."
+    },
     "prompts": {
       "burn": "Burn",
       "bleeding": "Bleeding",
