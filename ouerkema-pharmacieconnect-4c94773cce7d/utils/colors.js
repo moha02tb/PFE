@@ -131,6 +131,14 @@ export const BADGE_COLORS = {
     light: { background: '#E8F0FF', text: '#004AB7', border: '#C7D9FF' },
     dark: { background: 'rgba(0,74,183,0.24)', text: '#AFC8FF', border: 'rgba(127,167,255,0.28)' },
   },
+  garde: {
+    light: { background: '#FFF0DF', text: '#A75A00', border: '#FFD7AE' },
+    dark: { background: 'rgba(245,124,0,0.2)', text: '#FFC57F', border: 'rgba(255,170,69,0.26)' },
+  },
+  night: {
+    light: { background: '#E8D9FF', text: '#5D3FA7', border: '#D4BAFD' },
+    dark: { background: 'rgba(139,92,246,0.2)', text: '#D8B4FE', border: 'rgba(167,139,250,0.32)' },
+  },
 };
 
 export const getColors = (isDarkMode = false) => (isDarkMode ? DARK_THEME : LIGHT_THEME);

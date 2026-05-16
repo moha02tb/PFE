@@ -21,7 +21,9 @@ import {
   StatusBadge,
 } from '../components/design-system';
 import { loadPharmaciesAsync } from '../utils/pharmacyDataLoader';
+import { geocodePlace } from '../utils/geocodingUtils';
 import { useAppTheme } from '../utils/theme';
+import { getPharmacyOpenStatus } from '../utils/pharmacySchedule';
 
 const DEFAULT_REGION = {
   latitude: 36.8065,
@@ -137,10 +139,9 @@ const getDistanceKm = (from, to) => {
 };
 
 const getStatus = (pharmacy) => {
-  if (pharmacy?.isOpen === false) return 'closed';
-  if (pharmacy?.emergency) return 'emergency';
-  if (pharmacy?.is_on_duty || pharmacy?.onDuty || pharmacy?.garde) return 'onDuty';
-  return 'open';
+  // Use new Tunisian schedule logic
+  const status = getPharmacyOpenStatus(pharmacy);
+  return status.statusType;
 };
 
 const createLeafletMapHtml = (initialRegion, palette) => {
@@ -187,21 +188,7 @@ const createLeafletMapHtml = (initialRegion, palette) => {
       border: 0 !important;
     }
 
-    .pharmacy-marker {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: var(--marker-color);
-      border: 3px solid #ffffff;
-      box-shadow: 0 6px 16px rgba(16, 35, 58, 0.22);
-      box-sizing: border-box;
-    }
 
-    .pharmacy-marker.is-selected {
-      width: 30px;
-      height: 30px;
-      box-shadow: 0 0 0 6px rgba(0, 102, 204, 0.18), 0 8px 18px rgba(16, 35, 58, 0.28);
-    }
 
     .user-location-marker {
       width: 20px;
@@ -271,19 +258,43 @@ const createLeafletMapHtml = (initialRegion, palette) => {
       }
 
       function markerColor(status, isSelected) {
-        if (isSelected) return palette.primary || '#0066cc';
-        if (status === 'closed') return palette.error || '#d92d20';
-        if (status === 'emergency' || status === 'onDuty') return palette.warning || '#b54708';
-        return palette.success || '#14804a';
+        // If selected, always show blue
+        if (isSelected) return '#2563EB'; // Blue for selected
+        
+        // Status-based colors
+        switch (status) {
+          case 'open':
+            return '#10B981'; // Green - Open
+          case 'closed':
+            return '#EF4444'; // Red - Closed
+          case 'garde':
+            return '#F97316'; // Orange - On duty
+          case 'night':
+            return '#A78BFA'; // Purple - Night pharmacy
+          default:
+            return '#9CA3AF'; // Gray - Unknown
+        }
       }
 
       function createMarkerIcon(status, isSelected) {
         var color = markerColor(status, isSelected);
-        var className = isSelected ? 'pharmacy-marker is-selected' : 'pharmacy-marker';
-        var size = isSelected ? 30 : 24;
+        var size = isSelected ? 40 : 32;
+        
+        // Inline SVG pharmacy marker with medical cross icon
+        var svgHtml = '<svg width="' + size + '" height="' + size + '" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));">' +
+          // Circle background with border
+          '<circle cx="20" cy="20" r="18" fill="' + color + '" />' +
+          '<circle cx="20" cy="20" r="18" fill="none" stroke="white" stroke-width="2.5" />' +
+          // White pharmacy cross/plus icon
+          '<g fill="white">' +
+          '<rect x="17" y="10" width="6" height="20" rx="1" />' +
+          '<rect x="10" y="17" width="20" height="6" rx="1" />' +
+          '</g>' +
+          '</svg>';
+        
         return L.divIcon({
           className: '',
-          html: '<div class="' + className + '" style="--marker-color:' + color + '"></div>',
+          html: svgHtml,
           iconSize: [size, size],
           iconAnchor: [size / 2, size / 2]
         });
@@ -448,6 +459,8 @@ export default function MapboxMapScreen({ route }) {
   const lastLocationRequestIdRef = useRef(null);
   const lastRouteParamsRef = useRef(null);
   const lastNearbyRequestRef = useRef(null);
+  const routeAbortControllerRef = useRef(null);
+  const currentRoutePharmacyRef = useRef(null);
   const { t } = useTranslation();
   const { isRTL } = useLanguage();
   const insets = useSafeAreaInsets();
@@ -479,6 +492,9 @@ export default function MapboxMapScreen({ route }) {
   const [routeDuration, setRouteDuration] = useState(null);
   const [routeError, setRouteError] = useState('');
   const [isRouting, setIsRouting] = useState(false);
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [geocodingError, setGeocodingError] = useState('');
+  const [activeSearchLocation, setActiveSearchLocation] = useState(null);
 
   const mapHtml = useMemo(
     () =>
@@ -621,6 +637,86 @@ export default function MapboxMapScreen({ route }) {
     }
   }, [centerOnCoordinate, loadNearby, t]);
 
+  const handleSearchPlace = useCallback(
+    async (placeName) => {
+      const trimmedPlace = `${placeName || ''}`.trim();
+
+      // Clear previous geocoding error
+      setGeocodingError('');
+
+      // If search is empty, just filter existing pharmacies
+      if (!trimmedPlace) {
+        setActiveSearchLocation(null);
+        return;
+      }
+
+      // If search term is very short, just filter existing pharmacies
+      if (trimmedPlace.length < 2) {
+        return;
+      }
+
+      // Try to geocode the place
+      setIsGeocoding(true);
+      try {
+        const coordinates = await geocodePlace(trimmedPlace);
+
+        if (coordinates) {
+          // Successfully geocoded - load nearby pharmacies
+          setActiveSearchLocation({
+            name: trimmedPlace,
+            ...coordinates,
+          });
+
+          // Center map on the geocoded location
+          centerOnCoordinate(coordinates, 0.12);
+
+          // Load nearby pharmacies at the geocoded location
+          const nearbyPharmacies = await loadNearby(coordinates);
+
+          if (!Array.isArray(nearbyPharmacies) || nearbyPharmacies.length === 0) {
+            setGeocodingError(
+              t('map.noPharmaciesNearby', 'No pharmacies found near {{place}}', {
+                place: trimmedPlace,
+              })
+            );
+          }
+        } else {
+          // Geocoding failed - show error
+          setGeocodingError(
+            t('map.placeNotFound', 'Could not find "{{place}}" on the map', {
+              place: trimmedPlace,
+            })
+          );
+          setActiveSearchLocation(null);
+        }
+      } catch (error) {
+        logger.warn('MapboxMapScreen', 'Geocoding error', error);
+        setGeocodingError(
+          t('map.geocodingError', 'Error searching for location. Try again.')
+        );
+        setActiveSearchLocation(null);
+      } finally {
+        setIsGeocoding(false);
+      }
+    },
+    [centerOnCoordinate, loadNearby, t]
+  );
+
+  // Debounce the search to avoid too many API calls (600ms)
+  useEffect(() => {
+    let timeoutId;
+
+    const debouncedSearch = () => {
+      handleSearchPlace(searchTerm);
+    };
+
+    timeoutId = setTimeout(debouncedSearch, 600);
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [searchTerm, handleSearchPlace]);
+
   const clearRoute = useCallback(() => {
     setRouteCoordinates([]);
     setRouteDistance(null);
@@ -634,6 +730,13 @@ export default function MapboxMapScreen({ route }) {
       const destination = pharmacy?.markerCoordinate || getPharmacyCoordinate(pharmacy);
       if (!destination) return;
 
+      // Cancel any previous OSRM request
+      if (routeAbortControllerRef.current) {
+        routeAbortControllerRef.current.abort();
+      }
+      routeAbortControllerRef.current = new AbortController();
+      currentRoutePharmacyRef.current = pharmacy?.id;
+
       setRouteError('');
       setRouteCoordinates([]);
       setRouteDistance(null);
@@ -641,7 +744,7 @@ export default function MapboxMapScreen({ route }) {
       setIsRouting(true);
 
       try {
-        const origin = originOverride || userLocation || await requestLocation();
+        const origin = activeSearchLocation || originOverride || userLocation || await requestLocation();
         if (!origin) {
           setRouteError(t('map.locationNeededForRoute', 'Enable location to show the road in the app.'));
           return;
@@ -649,7 +752,7 @@ export default function MapboxMapScreen({ route }) {
 
         const response = await fetch(
           `https://router.project-osrm.org/route/v1/driving/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}?overview=full&geometries=geojson`,
-          { headers: { Accept: 'application/json' } }
+          { headers: { Accept: 'application/json' }, signal: routeAbortControllerRef.current.signal }
         );
 
         if (!response.ok) {
@@ -668,11 +771,19 @@ export default function MapboxMapScreen({ route }) {
           throw new Error('Route service returned no geometry');
         }
 
-        setRouteCoordinates(nextRouteCoordinates);
-        setRouteDistance(typeof route.distance === 'number' ? route.distance / 1000 : null);
-        setRouteDuration(typeof route.duration === 'number' ? route.duration / 60 : null);
-        fitMapToCoordinates([origin, ...nextRouteCoordinates, destination]);
+        // Only apply if this is still the requested pharmacy (ignore stale responses)
+        if (currentRoutePharmacyRef.current === pharmacy?.id) {
+          setRouteCoordinates(nextRouteCoordinates);
+          setRouteDistance(typeof route.distance === 'number' ? route.distance / 1000 : null);
+          setRouteDuration(typeof route.duration === 'number' ? route.duration / 60 : null);
+          fitMapToCoordinates([origin, ...nextRouteCoordinates, destination]);
+        }
       } catch (error) {
+        // Silently ignore abort errors (user switched pharmacy)
+        if (error.name === 'AbortError') {
+          logger.debug('MapboxMapScreen', 'Route request cancelled (pharmacy switched)');
+          return;
+        }
         logger.warn('MapboxMapScreen', 'In-app route fetch failed', error);
         setRouteCoordinates([]);
         setRouteDistance(null);
@@ -682,7 +793,7 @@ export default function MapboxMapScreen({ route }) {
         setIsRouting(false);
       }
     },
-    [fitMapToCoordinates, requestLocation, t, userLocation]
+    [fitMapToCoordinates, requestLocation, t, userLocation, activeSearchLocation]
   );
 
   const selectPharmacy = useCallback(
@@ -900,27 +1011,65 @@ export default function MapboxMapScreen({ route }) {
               </View>
             </View>
 
-            <SearchBar
-              value={searchTerm}
-              onChangeText={setSearchTerm}
-              placeholder={t('map.searchPlaceholder', 'Search by pharmacy or area')}
-              style={styles.search}
-            />
+            <View style={styles.searchContainer}>
+              <SearchBar
+                value={searchTerm}
+                onChangeText={setSearchTerm}
+                placeholder={t(
+                  'map.cartePlaceholder',
+                  'Search city name or place'
+                )}
+                style={styles.search}
+              />
+              {isGeocoding && (
+                <ActivityIndicator
+                  size="small"
+                  color={colors.primary}
+                  style={styles.geocodingLoader}
+                />
+              )}
+            </View>
+
+            {geocodingError ? (
+              <AppText
+                variant="bodySmall"
+                color={colors.warning}
+                style={styles.noticeText}
+              >
+                {geocodingError}
+              </AppText>
+            ) : null}
 
             {permissionMessage ? (
-              <AppText variant="bodySmall" color={colors.warning} style={styles.noticeText}>
+              <AppText
+                variant="bodySmall"
+                color={colors.warning}
+                style={styles.noticeText}
+              >
                 {permissionMessage}
               </AppText>
             ) : null}
 
-            {fetchState === 'empty' ? (
-              <AppText variant="bodySmall" color={colors.textSecondary} style={styles.noticeText}>
-                {t('map.noNearbyFallback', 'No nearby pharmacies found for this location.')}
+            {fetchState === 'empty' && activeSearchLocation ? (
+              <AppText
+                variant="bodySmall"
+                color={colors.textSecondary}
+                style={styles.noticeText}
+              >
+                {t(
+                  'map.noPharmaciesAtLocation',
+                  'No pharmacies found in {{place}}',
+                  { place: activeSearchLocation.name }
+                )}
               </AppText>
             ) : null}
 
             {routeError ? (
-              <AppText variant="bodySmall" color={colors.error} style={styles.noticeText}>
+              <AppText
+                variant="bodySmall"
+                color={colors.error}
+                style={styles.noticeText}
+              >
                 {routeError}
               </AppText>
             ) : null}
@@ -1218,5 +1367,15 @@ const createStyles = (colors, radius, shadows, isRTL, insets) =>
     },
     actionButton: {
       flex: 1,
+    },
+    searchContainer: {
+      position: 'relative',
+      marginBottom: 0,
+    },
+    geocodingLoader: {
+      position: 'absolute',
+      right: 12,
+      top: '50%',
+      marginTop: -10,
     },
   });

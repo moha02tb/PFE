@@ -69,9 +69,10 @@ app.add_middleware(
         "127.0.0.1:8000",
         "127.0.0.1",
         "localhost",
-        "192.168.1.6:5173",  # Mobile app development
-        "192.168.1.6:8000",  # Mobile app HTTP endpoint
-        "192.168.1.6:3000",  # Alternative development URL
+        "192.168.0.192:5173",  # Admin panel
+        "192.168.0.192:8000",  # Backend API port (actual machine IP)
+        "192.168.0.192:8001",  # Chatbot API port
+        "192.168.0.192:3000",  # Alternative development URL
         "*",  # Allow all in development (don't use in production)
     ]
     + os.getenv("TRUSTED_HOSTS", "localhost").split(","),
@@ -91,10 +92,11 @@ app.add_middleware(
         "http://127.0.0.1:8000",
         "http://localhost",
         "http://127.0.0.1",
-        "http://192.168.1.6:5173",  # Mobile app development
-        "http://192.168.1.6:5174",  # Vite dev server alternate port
-        "http://192.168.1.6:8000",  # Mobile app connections
-        "http://192.168.1.6:3000",  # Alternative development URL
+        "http://192.168.0.192:5173",  # Admin panel
+        "http://192.168.0.192:5174",  # Vite dev server alternate port
+        "http://192.168.0.192:8000",  # Backend API
+        "http://192.168.0.192:8001",  # Chatbot API
+        "http://192.168.0.192:3000",  # Alternative debug port
         os.getenv("FRONTEND_URL", "http://localhost:5173"),
     ],
     allow_credentials=True,  # REQUIRED for cookies
@@ -310,6 +312,7 @@ async def get_nearby_pharmacies(
     Get nearby pharmacies sorted by distance from user location.
 
     Public endpoint intended for mobile nearby-search use cases.
+    Uses bounding box approximation for efficient database filtering.
     """
     if lat < -90 or lat > 90:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid latitude")
@@ -327,7 +330,12 @@ async def get_nearby_pharmacies(
         )
 
     try:
-        cache_key = f"pharmacies:nearby:{lat}:{lon}:{radius_km}:{limit}"
+        # Round coordinates for better cache hit rate
+        lat_rounded = round(lat, 2)
+        lon_rounded = round(lon, 2)
+        radius_rounded = round(radius_km, 1)
+        cache_key = f"pharmacies:nearby:{lat_rounded}:{lon_rounded}:{radius_rounded}:{limit}"
+        
         cached = cache_service.get_json(cache_key)
         if cached is not None:
             nearest_governorate = cached[0]["governorate"] if cached else None
@@ -342,12 +350,26 @@ async def get_nearby_pharmacies(
             )
             return cached
 
+        # Approximate bounding box (1 degree ≈ 111 km)
+        # This filters at the database level for efficiency
+        lat_delta = radius_km / 111.0
+        lon_delta = radius_km / (111.0 * cos(radians(lat)))
+        
+        # Query with bounding box filter first (efficient database filter)
+        # Then apply exact distance calculation on smaller subset
         pharmacies = (
             db.query(models.Pharmacie)
-            .filter(models.Pharmacie.latitude.isnot(None), models.Pharmacie.longitude.isnot(None))
+            .filter(models.Pharmacie.latitude.isnot(None))
+            .filter(models.Pharmacie.longitude.isnot(None))
+            .filter(models.Pharmacie.latitude >= lat - lat_delta)
+            .filter(models.Pharmacie.latitude <= lat + lat_delta)
+            .filter(models.Pharmacie.longitude >= lon - lon_delta)
+            .filter(models.Pharmacie.longitude <= lon + lon_delta)
+            .limit(limit * 5)  # Fetch more to account for bounding box overage
             .all()
         )
 
+        # Apply exact distance calculation on the filtered subset
         nearby = []
         for pharmacy in pharmacies:
             distance = _distance_km(lat, lon, pharmacy.latitude, pharmacy.longitude)

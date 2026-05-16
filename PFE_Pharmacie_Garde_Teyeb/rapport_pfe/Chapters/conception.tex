@@ -16,9 +16,12 @@ administrateur ne communiquent pas directement avec la base de données : toutes
 par l'API backend. Cette couche commune concentre la validation, la sécurité et les règles métier, ce qui
 évite de dupliquer ces responsabilités dans les interfaces clientes.
 
-\visualslot{Architecture globale de PharmacieConnect}
-{Schéma d'architecture final à insérer après export.}
-{fig:architecture-globale}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{plantuml/architecture_globale}
+    \caption{Architecture globale de PharmacieConnect}
+    \label{fig:architecture-globale}
+\end{figure}
 
 L'application mobile utilise principalement les endpoints publics et les services liés au compte
 utilisateur. Le tableau de bord administrateur s'appuie sur des endpoints protégés pour les opérations de
@@ -137,22 +140,31 @@ résumées dans le tableau suivant.
 Le diagramme de classes doit représenter les entités principales, leurs attributs utiles et les relations
 entre les comptes, les pharmacies, les gardes, les médicaments et les journaux d'audit.
 
-\visualslot{Diagramme de classes}
-{Diagramme de classes final à insérer après export depuis l'outil de modélisation.}
-{fig:class-diagram}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{plantuml/class_diagram}
+    \caption{Diagramme de classes}
+    \label{fig:class-diagram}
+\end{figure}
 
 \section{Diagrammes de séquence}
 
 Les diagrammes de séquence servent à décrire les échanges entre les interfaces clientes, le backend, les
 services métier et la base de données.
 
-\visualslot{Diagramme de séquence : authentification JWT}
-{Diagramme de séquence final à insérer après export depuis l'outil de modélisation.}
-{fig:sequence-auth}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{plantuml/sequence_auth_jwt}
+    \caption{Diagramme de séquence : authentification JWT}
+    \label{fig:sequence-auth}
+\end{figure}
 
-\visualslot{Diagramme de séquence : recherche d'une pharmacie}
-{Diagramme de séquence final à insérer après export depuis l'outil de modélisation.}
-{fig:sequence-search}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{plantuml/sequence_pharmacy_search}
+    \caption{Diagramme de séquence : recherche d'une pharmacie}
+    \label{fig:sequence-search}
+\end{figure}
 
 \section{Diagramme d'activité}
 
@@ -160,9 +172,12 @@ Le diagramme d'activité prévu détaille le traitement d'un import CSV. Ce scé
 regroupe plusieurs règles sensibles : contrôle du fichier, validation des colonnes, vérification des lignes,
 enregistrement des données valides et journalisation du résultat.
 
-\visualslot{Diagramme d'activité : import CSV contrôlé}
-{Diagramme d'activité final à insérer après export depuis l'outil de modélisation.}
-{fig:activity-import-csv}
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=0.85\textheight,keepaspectratio]{plantuml/activity_csv_import}
+    \caption{Diagramme d'activité : import CSV contrôlé}
+    \label{fig:activity-import-csv}
+\end{figure}
 
 \section{Diagramme de composants et de déploiement}
 
@@ -170,13 +185,19 @@ Les diagrammes de composants et de déploiement complètent la vision technique.
 modules logiciels, tandis que le second présente la répartition logique entre les clients, le serveur
 backend, la base de données et la configuration.
 
-\visualslot{Diagramme de composants}
-{Diagramme de composants final à insérer après export depuis l'outil de modélisation.}
-{fig:component-diagram}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{plantuml/component_diagram}
+    \caption{Diagramme de composants}
+    \label{fig:component-diagram}
+\end{figure}
 
-\visualslot{Diagramme de déploiement}
-{Diagramme de déploiement final à insérer après export depuis l'outil de modélisation.}
-{fig:deployment-diagram}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{plantuml/deployment_diagram}
+    \caption{Diagramme de déploiement}
+    \label{fig:deployment-diagram}
+\end{figure}
 
 \section{Sécurité}
 

@@ -8,6 +8,49 @@ const NEARBY_FALLBACK_LIMIT = 500;
 
 console.log(`[Pharmacy Loader] Initialized with API URL: ${API_BASE_URL}`);
 
+/**
+ * Retry wrapper for axios requests with exponential backoff
+ * @param {Function} requestFn - Async function that makes the axios request
+ * @param {number} maxRetries - Maximum number of retry attempts
+ * @param {number} baseDelay - Base delay in milliseconds (will be multiplied by attempt number)
+ * @returns {Promise} Response from the request
+ */
+const withRetry = async (requestFn, maxRetries = 3, baseDelay = 1000) => {
+  let lastError = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await requestFn();
+    } catch (error) {
+      lastError = error;
+      
+      // Don't retry on client errors (4xx) unless it's a timeout
+      if (
+        error.response?.status &&
+        error.response.status < 500 &&
+        error.code !== 'ECONNABORTED'
+      ) {
+        throw error;
+      }
+
+      // If this is the last attempt, throw
+      if (attempt === maxRetries) {
+        break;
+      }
+
+      // Calculate exponential backoff with jitter
+      const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
+      console.log(
+        `[Pharmacy Loader] Retry attempt ${attempt + 1}/${maxRetries} after ${Math.round(delay)}ms`
+      );
+      
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+
+  throw lastError;
+};
+
 const parseCoordinate = (value) => {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   if (typeof value === 'string' && value.trim()) {
@@ -154,10 +197,14 @@ export const fetchPharmaciesFromAPI = async (skip = 0, limit = 100) => {
   try {
     console.log(`[API] Fetching pharmacies from: ${API_BASE_URL}${API_CONFIG.endpoints.pharmacies}`);
     
-    const response = await axios.get(`${API_BASE_URL}${API_CONFIG.endpoints.pharmacies}`, {
-      params: { skip, limit },
-      timeout: API_CONFIG.timeout,
-    });
+    const response = await withRetry(
+      () => axios.get(`${API_BASE_URL}${API_CONFIG.endpoints.pharmacies}`, {
+        params: { skip, limit },
+        timeout: API_CONFIG.timeout,
+      }),
+      API_CONFIG.retry.maxRetries,
+      API_CONFIG.retry.retryDelay
+    );
 
     console.log(`[API] Successfully fetched ${response.data?.length || 0} pharmacies`);
     
@@ -189,14 +236,18 @@ export const searchPharmaciesFromAPI = async (
   try {
     console.log(`[API] Searching pharmacies from: ${API_BASE_URL}${API_CONFIG.endpoints.pharmaciesSearch}`);
 
-    const response = await axios.get(`${API_BASE_URL}${API_CONFIG.endpoints.pharmaciesSearch}`, {
-      params: {
-        query: normalizedQuery || undefined,
-        governorate: normalizedGovernorate || undefined,
-        limit,
-      },
-      timeout: API_CONFIG.timeout,
-    });
+    const response = await withRetry(
+      () => axios.get(`${API_BASE_URL}${API_CONFIG.endpoints.pharmaciesSearch}`, {
+        params: {
+          query: normalizedQuery || undefined,
+          governorate: normalizedGovernorate || undefined,
+          limit,
+        },
+        timeout: API_CONFIG.timeout,
+      }),
+      API_CONFIG.retry.maxRetries,
+      API_CONFIG.retry.retryDelay
+    );
 
     console.log(`[API] Successfully searched ${response.data?.length || 0} pharmacies`);
     return response.data.map((pharmacy) => mapApiPharmacy(pharmacy));
@@ -232,15 +283,19 @@ export const fetchNearbyPharmaciesFromAPI = async (
       `[API] Fetching nearby pharmacies from: ${API_BASE_URL}${API_CONFIG.endpoints.pharmaciesNearby}`
     );
 
-    const response = await axios.get(`${API_BASE_URL}${API_CONFIG.endpoints.pharmaciesNearby}`, {
-      params: {
-        lat: latitude,
-        lon: longitude,
-        radius_km: radiusKm,
-        limit,
-      },
-      timeout: API_CONFIG.timeout,
-    });
+    const response = await withRetry(
+      () => axios.get(`${API_BASE_URL}${API_CONFIG.endpoints.pharmaciesNearby}`, {
+        params: {
+          lat: latitude,
+          lon: longitude,
+          radius_km: radiusKm,
+          limit,
+        },
+        timeout: API_CONFIG.timeout,
+      }),
+      API_CONFIG.retry.maxRetries,
+      API_CONFIG.retry.retryDelay
+    );
 
     console.log(`[API] Successfully fetched ${response.data?.length || 0} nearby pharmacies`);
 
@@ -267,20 +322,24 @@ export const trackSearchEvent = async ({
   resultCount = null,
 }) => {
   try {
-    await axios.post(
-      `${API_BASE_URL}${API_CONFIG.endpoints.analyticsSearchEvents}`,
-      {
-        event_type: eventType,
-        query_text: queryText,
-        location_label: locationLabel,
-        governorate,
-        latitude,
-        longitude,
-        result_count: resultCount,
-      },
-      {
-        timeout: API_CONFIG.timeout,
-      }
+    await withRetry(
+      () => axios.post(
+        `${API_BASE_URL}${API_CONFIG.endpoints.analyticsSearchEvents}`,
+        {
+          event_type: eventType,
+          query_text: queryText,
+          location_label: locationLabel,
+          governorate,
+          latitude,
+          longitude,
+          result_count: resultCount,
+        },
+        {
+          timeout: API_CONFIG.timeout,
+        }
+      ),
+      API_CONFIG.retry.maxRetries,
+      API_CONFIG.retry.retryDelay
     );
   } catch (error) {
     console.warn('[Analytics] Failed to track search event:', {
@@ -296,10 +355,14 @@ export const fetchCalendarPharmaciesFromAPI = async (date) => {
     const dateParam = formatDateParam(date);
     console.log(`[API] Fetching garde schedule from: ${API_BASE_URL}${API_CONFIG.endpoints.gardes}`);
 
-    const response = await axios.get(`${API_BASE_URL}${API_CONFIG.endpoints.gardes}`, {
-      params: { date_value: dateParam, limit: 200 },
-      timeout: API_CONFIG.timeout,
-    });
+    const response = await withRetry(
+      () => axios.get(`${API_BASE_URL}${API_CONFIG.endpoints.gardes}`, {
+        params: { date_value: dateParam, limit: 200 },
+        timeout: API_CONFIG.timeout,
+      }),
+      API_CONFIG.retry.maxRetries,
+      API_CONFIG.retry.retryDelay
+    );
 
     console.log(`[API] Successfully fetched ${response.data?.length || 0} garde rows`);
 

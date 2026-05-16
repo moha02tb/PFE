@@ -1,0 +1,49 @@
+@startuml
+!pragma layout smetana
+left to right direction
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam dpi 180
+skinparam packageStyle rectangle
+skinparam componentStyle rectangle
+skinparam linetype ortho
+
+actor "Administrateur web" as web_user
+actor "Utilisateur mobile" as mobile_user
+
+rectangle "Admin web app\nReact + Vite" as admin_app
+rectangle "Mobile app\nExpo / React Native" as mobile_app
+rectangle "Main API\nFastAPI :8000" as main_api
+rectangle "First-aid assistant API\nFastAPI :8001" as chatbot_api
+database "Database\nPostgreSQL / SQLite" as db
+database "Redis cache" as redis
+cloud "SMTP service" as smtp
+artifact "Local model files\nfirstaid_chatbot_model/" as model_files
+
+web_user --> admin_app
+mobile_user --> mobile_app
+
+admin_app --> main_api : REST + JWT
+mobile_app --> main_api : public + auth APIs
+mobile_app --> chatbot_api : first-aid Q&A
+
+main_api --> db : SQLAlchemy
+main_api --> redis : cache
+main_api --> smtp : verification mail
+
+chatbot_api --> model_files : retrieval pipeline
+
+note right of main_api
+Routers: auth, admin, analytics,
+public API endpoints
+Services: auth, pharmacy, garde,
+medicine, admin, audit, cache, email
+end note
+
+note right of chatbot_api
+GET /health
+GET /ready
+POST /answer
+end note
+
+@enduml

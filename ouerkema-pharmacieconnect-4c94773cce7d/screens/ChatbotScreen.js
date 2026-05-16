@@ -1,10 +1,22 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '../utils/theme';
 import { AppButton, AppCard, AppInput, AppText } from '../components/design-system';
-import { askFirstAidAssistant } from '../utils/chatbotApi';
+import {
+  askFirstAidAssistant,
+  CHATBOT_MIN_QUERY_LENGTH,
+  getChatbotReadiness,
+} from '../utils/chatbotApi';
 
 const QUICK_PROMPTS = [
   { key: 'burn', query: 'What should I do for a burn?' },
@@ -16,6 +28,13 @@ const QUICK_PROMPTS = [
 const buildAssistantError = (error, t) => {
   const isTimeout = error?.code === 'ECONNABORTED' || /timeout/i.test(error?.message || '');
   const isNetwork = error?.code === 'ERR_NETWORK' || error?.message === 'Network Error';
+
+  if (error?.code === 'CHATBOT_QUERY_TOO_SHORT') {
+    return t(
+      'chatbot.errors.tooShort',
+      'Please describe the first-aid situation with a little more detail.'
+    );
+  }
 
   if (isTimeout) {
     return t(
@@ -39,9 +58,22 @@ const buildAssistantError = (error, t) => {
   );
 };
 
+const getServiceStatusCopy = (status, t) => {
+  if (status === 'ready') {
+    return t('chatbot.serviceReady', 'Assistant service ready');
+  }
+
+  if (status === 'offline') {
+    return t('chatbot.serviceOffline', 'Assistant service offline');
+  }
+
+  return t('chatbot.serviceChecking', 'Checking assistant service');
+};
+
 export default function ChatbotScreen() {
   const { t } = useTranslation();
   const { colors, radius, shadows, isRTL } = useAppTheme();
+  const insets = useSafeAreaInsets();
   const styles = useMemo(
     () => createStyles(colors, radius, shadows, isRTL),
     [colors, radius, shadows, isRTL]
@@ -49,7 +81,10 @@ export default function ChatbotScreen() {
   const scrollRef = useRef(null);
 
   const [draft, setDraft] = useState('');
+  const [draftError, setDraftError] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [serviceStatus, setServiceStatus] = useState('checking');
+  const [serviceInfo, setServiceInfo] = useState(null);
   const [messages, setMessages] = useState([
     {
       id: 'welcome',
@@ -61,6 +96,23 @@ export default function ChatbotScreen() {
     },
   ]);
 
+  const checkServiceStatus = useCallback(async() => {
+    setServiceStatus('checking');
+
+    try {
+      const readiness = await getChatbotReadiness();
+      setServiceInfo(readiness);
+      setServiceStatus(readiness?.status === 'ready' ? 'ready' : 'offline');
+    } catch (error) {
+      setServiceInfo(null);
+      setServiceStatus('offline');
+    }
+  }, []);
+
+  useEffect(() => {
+    checkServiceStatus();
+  }, [checkServiceStatus]);
+
   useEffect(() => {
     const scrollTimer = setTimeout(() => {
       scrollRef.current?.scrollToEnd?.({ animated: true });
@@ -69,9 +121,18 @@ export default function ChatbotScreen() {
     return () => clearTimeout(scrollTimer);
   }, [messages.length, isSending]);
 
-  const sendMessage = async (value, displayValue = null) => {
+  const sendMessage = async(value, displayValue = null) => {
     const content = (value ?? draft).trim();
     if (!content || isSending) return;
+    if (content.length < CHATBOT_MIN_QUERY_LENGTH) {
+      setDraftError(
+        t(
+          'chatbot.errors.tooShort',
+          'Please describe the first-aid situation with a little more detail.'
+        )
+      );
+      return;
+    }
 
     const timestamp = Date.now();
     setMessages((current) => [
@@ -79,10 +140,14 @@ export default function ChatbotScreen() {
       { id: `u-${timestamp}`, role: 'user', text: displayValue || content },
     ]);
     setDraft('');
+    setDraftError('');
     setIsSending(true);
 
     try {
       const result = await askFirstAidAssistant(content);
+      if (serviceStatus !== 'ready') {
+        setServiceStatus('ready');
+      }
       setMessages((current) => [
         ...current,
         {
@@ -100,6 +165,9 @@ export default function ChatbotScreen() {
         },
       ]);
     } catch (error) {
+      if (error?.code === 'ERR_NETWORK' || error?.message === 'Network Error') {
+        setServiceStatus('offline');
+      }
       setMessages((current) => [
         ...current,
         {
@@ -114,8 +182,29 @@ export default function ChatbotScreen() {
     }
   };
 
+  const handleDraftChange = (value) => {
+    setDraft(value);
+    if (draftError) {
+      setDraftError('');
+    }
+  };
+
+  const submitDisabled = isSending || draft.trim().length < CHATBOT_MIN_QUERY_LENGTH;
+  const serviceStatusColor =
+    serviceStatus === 'ready'
+      ? colors.success
+      : serviceStatus === 'offline'
+        ? colors.error
+        : colors.textSecondary;
+  const serviceStatusIcon =
+    serviceStatus === 'ready' ? 'check-circle' : serviceStatus === 'offline' ? 'wifi-off' : 'clock';
+
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}
+    >
       <View style={styles.hero}>
         <View style={styles.heroBadge}>
           <Feather name="heart" size={16} color="#FFFFFF" />
@@ -144,6 +233,29 @@ export default function ChatbotScreen() {
             )}
           </AppText>
         </View>
+        <View style={styles.statusRow}>
+          <Feather
+            name={serviceStatusIcon}
+            size={15}
+            color={serviceStatusColor}
+          />
+          <AppText variant="labelSmall" color={serviceStatusColor} style={{ flex: 1 }}>
+            {getServiceStatusCopy(serviceStatus, t)}
+            {serviceInfo?.documents ? ` - ${serviceInfo.documents}` : ''}
+          </AppText>
+          {serviceStatus === 'offline' ? (
+            <TouchableOpacity
+              onPress={checkServiceStatus}
+              style={styles.retryButton}
+              accessibilityRole="button"
+              accessibilityLabel={t('chatbot.retry', 'Retry')}
+            >
+              <AppText variant="labelSmall" color={colors.primary}>
+                {t('chatbot.retry', 'Retry')}
+              </AppText>
+            </TouchableOpacity>
+          ) : null}
+        </View>
       </AppCard>
 
       <ScrollView
@@ -162,6 +274,9 @@ export default function ChatbotScreen() {
                 style={[styles.promptChip, isSending ? styles.disabledPrompt : null]}
                 onPress={() => sendMessage(prompt.query, promptLabel)}
                 disabled={isSending}
+                activeOpacity={0.76}
+                accessibilityRole="button"
+                accessibilityLabel={promptLabel}
               >
                 <AppText variant="labelMedium" color={colors.text}>
                   {promptLabel}
@@ -224,26 +339,29 @@ export default function ChatbotScreen() {
         ) : null}
       </ScrollView>
 
-      <View style={styles.composer}>
+      <View style={[styles.composer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
         <AppInput
           placeholder={t('chatbot.placeholder', 'Describe the first-aid situation...')}
           value={draft}
-          onChangeText={setDraft}
+          onChangeText={handleDraftChange}
           editable={!isSending}
+          error={draftError}
           returnKeyType="send"
           onSubmitEditing={() => sendMessage()}
+          autoCapitalize="sentences"
+          autoCorrect
           style={{ flex: 1, marginBottom: 0 }}
         />
         <AppButton
           title={t('chatbot.send', 'Send')}
           onPress={() => sendMessage()}
           loading={isSending}
-          disabled={!draft.trim()}
+          disabled={submitDisabled}
           icon={<Feather name="send" size={16} color="#FFFFFF" />}
           style={{ minWidth: 108 }}
         />
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -279,6 +397,22 @@ const createStyles = (colors, radius, shadows, isRTL) =>
       flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'flex-start',
       gap: 10,
+    },
+    statusRow: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginTop: 12,
+      paddingTop: 12,
+      borderTopWidth: 1,
+      borderTopColor: colors.divider,
+    },
+    retryButton: {
+      minHeight: 32,
+      justifyContent: 'center',
+      paddingHorizontal: 10,
+      borderRadius: radius.full,
+      backgroundColor: colors.primaryMuted,
     },
     messages: {
       flex: 1,

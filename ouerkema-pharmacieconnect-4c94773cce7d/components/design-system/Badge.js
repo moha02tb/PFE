@@ -28,6 +28,8 @@ export default function StatusBadge({
     closed: t('home.closed', 'Closed'),
     emergency: t('home.emergency', 'Emergency'),
     onDuty: t('home.onDuty', 'On duty'),
+    garde: t('home.garde', 'De garde'),
+    night: t('home.night', 'Pharmacie de nuit'),
   };
 
   const styles = StyleSheet.create({

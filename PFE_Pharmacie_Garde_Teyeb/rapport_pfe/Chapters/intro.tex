@@ -15,9 +15,12 @@ jour manuellement. Cette dispersion complique la recherche depuis un téléphone
 l'utilisateur ne connaît pas bien la ville ou le gouvernorat concerné.
 
 Le projet \textbf{PharmacieConnect} s'inscrit dans ce contexte. Il associe une API backend FastAPI, un
-tableau de bord administrateur React/Vite et une application mobile Expo/React Native. Le backend porte
-la logique commune, tandis que les deux interfaces répondent à des usages complémentaires : la
-consultation citoyenne et l'administration des données.
+tableau de bord administrateur React/Vite, une application mobile Expo/React Native et un assistant
+conversationnel spécialisé en premiers secours. Le backend porte la logique commune, tandis que les
+interfaces répondent à des usages complémentaires : la consultation citoyenne, l'administration des
+données et l'assistance médicale d'urgence. L'assistant conversationnel enrichit l'application mobile en
+fournissant des réponses rapides et fiables aux questions de premiers secours, complément naturel au
+repérage des pharmacies de garde.
 
 \section*{Problématique}
 \addcontentsline{toc}{section}{Problématique}
@@ -34,18 +37,18 @@ des actions importantes.
 \section*{Objectifs du projet}
 \addcontentsline{toc}{section}{Objectifs du projet}
 
-Le projet vise à réaliser une plateforme complète autour des pharmacies et des pharmacies de garde. Les
-objectifs retenus sont les suivants :
+Le projet vise à réaliser une plateforme complète autour des pharmacies et des pharmacies de garde, enrichie par un assistant de premiers secours. Les objectifs retenus sont les suivants :
 
 \begin{itemize}
     \item concevoir une API backend centralisant les données et les règles métier ;
     \item mettre en place une authentification sécurisée avec des jetons \gls{jwt} ;
     \item mettre à disposition une interface web pour gérer les pharmacies, les gardes, les médicaments et les utilisateurs autorisés ;
     \item réaliser une application mobile orientée vers la recherche de pharmacies, la consultation des gardes et l'accès au catalogue de médicaments ;
+    \item intégrer un assistant conversationnel spécialisé en premiers secours utilisant la récupération d'informations hybride ;
     \item intégrer une recherche par proximité à partir des coordonnées \gls{gps} ;
     \item prendre en charge l'import de fichiers \gls{csv} avec validation des données et retour d'erreurs ;
     \item ajouter des journaux d'audit, des indicateurs et un contrôle d'accès basé sur les rôles ;
-    \item tester les fonctionnalités principales à travers des tests backend et des scénarios fonctionnels.
+    \item tester les fonctionnalités principales, y compris l'assistant et ses mécanismes de sécurité, à travers des tests backend et des scénarios fonctionnels.
 \end{itemize}
 
 \section*{Méthodologie adoptée}
@@ -72,7 +75,9 @@ proximité et des principaux parcours utilisateur.
 
 Le rapport est organisé en quatre chapitres. Le premier situe le projet dans son cadre général, présente
 le domaine pharmaceutique et analyse l'existant. Le deuxième précise les acteurs, les besoins
-fonctionnels, les besoins non fonctionnels et les règles de gestion. Le troisième est consacré à la
-conception : architecture, modèle de données, diagrammes \gls{uml} et sécurité. Le quatrième décrit la
-réalisation technique, l'intégration API, la configuration, les tests et les difficultés rencontrées. Une
-conclusion générale, une bibliographie et des annexes complètent le document.
+fonctionnels et non fonctionnels, y compris les besoins relatifs à l'assistant de premiers secours, et expose
+les règles de gestion. Le troisième est consacré à la conception : architecture globale, architecture de
+l'assistant, modèle de données, diagrammes \gls{uml} et sécurité. Le quatrième décrit la réalisation
+technique du backend, du tableau de bord, de l'application mobile et de l'assistant, ainsi que
+l'intégration, la configuration, les tests et les difficultés rencontrées. Une conclusion générale, une
+bibliographie et des annexes complètent le document.

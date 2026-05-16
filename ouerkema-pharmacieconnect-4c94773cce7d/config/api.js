@@ -15,7 +15,7 @@ const CHATBOT_API_PORT = '8001';
 const ANDROID_EMULATOR_HOST = '10.0.2.2';
 const LOCALHOST_HOST = '127.0.0.1';
 
-const normalizeBaseURL = (url) => url.replace(/\/+$/, '');
+const normalizeBaseURL = (url) => `${url || ''}`.trim().replace(/\/+$/, '');
 
 const getExpoHostIp = () => {
   const hostUri =
@@ -29,9 +29,9 @@ const getExpoHostIp = () => {
 };
 
 const resolveBaseURL = (explicitUrl, port) => {
-  const explicit = explicitUrl;
+  const explicit = normalizeBaseURL(explicitUrl);
   if (explicit) {
-    return normalizeBaseURL(explicit);
+    return explicit;
   }
 
   const expoHostIp = getExpoHostIp();
@@ -71,12 +71,12 @@ export const API_CONFIG = {
   },
 
   // Request timeout in milliseconds
-  timeout: 10000,
+  timeout: 30000,
 
   // Retry configuration
   retry: {
     maxRetries: 3,
-    retryDelay: 1000, // 1 second
+    retryDelay: 1000, // 1 second base delay (exponential backoff)
   },
 };
 

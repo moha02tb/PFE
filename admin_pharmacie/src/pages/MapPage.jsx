@@ -16,6 +16,7 @@ import 'leaflet/dist/leaflet.css';
 import api from '../lib/api';
 import { Button, EmptyState, Input } from '../components/ui';
 import { useLanguage } from '../context/LanguageContext';
+import { getPharmacyOpenStatus } from '../lib/pharmacySchedule';
 
 const TUNISIA_CENTER = [36.8065, 10.1815];
 const TUNISIA_DEFAULT_ZOOM = 6;
@@ -86,20 +87,33 @@ const normalizePharmacy = (item) => {
   };
 };
 
-// Create custom marker icons
-const greenMarkerIcon = new L.Icon({
-  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMjQgMkMxNy4zNzMgMiAxMiA3LjM3MyAxMiAxNGMwIDEwLjEyNSAxMiAzMiAxMiAzMnMxMi0yMS44NzUgMTItMzJjMC02LjYyNy01LjM3My0xMi0xMi0xMnoiIGZpbGw9IiMxMEI5ODEiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg==',
-  iconSize: [32, 40],
-  popupAnchor: [0, -40],
-  className: 'map-marker-green',
-});
+// Create custom marker icon generator
+const createMarkerIcon = (color) => {
+  const svgUrl = `data:image/svg+xml;base64,${btoa(
+    `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M24 2C17.373 2 12 7.373 12 14c0 10.125 12 32 12 32s12-21.875 12-32c0-6.627-5.373-12-12-12z" fill="${color}" stroke="white" stroke-width="2"/>
+    </svg>`
+  )}`;
+  return new L.Icon({
+    iconUrl: svgUrl,
+    iconSize: [32, 40],
+    popupAnchor: [0, -40],
+    className: `map-marker-${color.replace('#', '')}`,
+  });
+};
 
-const blueMarkerIcon = new L.Icon({
-  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMjQgMkMxNy4zNzMgMiAxMiA3LjM3MyAxMiAxNGMwIDEwLjEyNSAxMiAzMiAxMiAzMnMxMi0yMS44NzUgMTItMzJjMC02LjYyNy01LjM3My0xMi0xMi0xMnoiIGZpbGw9IiMyMzYzRUEiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg==',
-  iconSize: [32, 40],
-  popupAnchor: [0, -40],
-  className: 'map-marker-blue',
-});
+// Create custom marker icons for each status
+const markerIcons = {
+  open: createMarkerIcon('#10B981'),     // Green
+  closed: createMarkerIcon('#EF4444'),   // Red
+  garde: createMarkerIcon('#F97316'),    // Orange
+  night: createMarkerIcon('#A78BFA'),    // Purple
+  selected: createMarkerIcon('#2563EB'), // Blue (for selected)
+};
+
+// Backward compatibility - keep original icons
+const greenMarkerIcon = markerIcons.open;
+const blueMarkerIcon = markerIcons.selected;
 
 // Map controller component
 const MapController = ({ center, zoom, onCenterChange, onZoomChange }) => {
@@ -127,12 +141,26 @@ const MapController = ({ center, zoom, onCenterChange, onZoomChange }) => {
 
 const DirectoryItem = ({ pharmacy, selected, onClick }) => {
   const { t } = useLanguage();
+  const status = getPharmacyOpenStatus(pharmacy);
+  const statusColors = {
+    open: 'text-green-600',
+    closed: 'text-red-600',
+    garde: 'text-orange-600',
+    night: 'text-purple-600',
+  };
+  const statusLabels = {
+    open: t('map.openNow', 'Open'),
+    closed: t('map.closed', 'Closed'),
+    garde: t('map.garde', 'On duty'),
+    night: t('map.night', 'Night pharmacy'),
+  };
+  
   return (
     <button type="button" onClick={onClick} className={selected ? 'map-directory-item map-directory-item--selected' : 'map-directory-item'}>
       <div className="mb-1 flex items-start justify-between gap-3">
         <h3 className="font-display text-sm font-bold text-foreground">{pharmacy.name}</h3>
-        <span className={selected ? 'registry-status registry-status--garde' : 'registry-status registry-status--active'}>
-          {selected ? t('map.nightGuard') : t('common.active')}
+        <span className={`registry-status registry-status--${status.statusType} ${statusColors[status.statusType]}`}>
+          {statusLabels[status.statusType]}
         </span>
       </div>
       <p className="mb-2 flex items-center gap-1 text-xs text-muted-foreground">
@@ -142,7 +170,7 @@ const DirectoryItem = ({ pharmacy, selected, onClick }) => {
       <div className="flex items-center gap-4 text-[0.6875rem] font-bold uppercase tracking-[0.06em] text-muted-foreground">
         <span className="flex items-center gap-1">
           <Clock3 className="h-3.5 w-3.5" />
-          {selected ? t('map.alwaysOpen') : '08:00 - 20:00'}
+          {status.label}
         </span>
         <span className="flex items-center gap-1">
           <Navigation className="h-3.5 w-3.5" />
@@ -306,23 +334,30 @@ const MapPage = () => {
               minZoom={MIN_ZOOM}
             />
             <MapController center={center} zoom={zoom} onCenterChange={setCenter} onZoomChange={setZoom} />
-            {filteredPharmacies.map((marker) => (
-              <Marker
-                key={marker.id}
-                position={[marker.latitude, marker.longitude]}
-                icon={marker.id === selectedPharmacy?.id ? blueMarkerIcon : greenMarkerIcon}
-                eventHandlers={{
-                  click: () => focusPharmacy(marker),
-                }}
-              >
-                <Popup>
-                  <div className="text-sm">
-                    <h3 className="font-bold">{marker.name}</h3>
-                    <p className="text-xs text-gray-600">{marker.address}</p>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
+            {filteredPharmacies.map((marker) => {
+              const status = getPharmacyOpenStatus(marker);
+              const isSelected = marker.id === selectedPharmacy?.id;
+              const icon = isSelected ? markerIcons.selected : markerIcons[status.statusType];
+              
+              return (
+                <Marker
+                  key={marker.id}
+                  position={[marker.latitude, marker.longitude]}
+                  icon={icon}
+                  eventHandlers={{
+                    click: () => focusPharmacy(marker),
+                  }}
+                >
+                  <Popup>
+                    <div className="text-sm">
+                      <h3 className="font-bold">{marker.name}</h3>
+                      <p className="text-xs text-gray-600">{marker.address}</p>
+                      <p className="mt-1 text-xs font-medium">{status.label}</p>
+                    </div>
+                  </Popup>
+                </Marker>
+              );
+            })}
           </MapContainer>
         )}
 
@@ -347,16 +382,24 @@ const MapPage = () => {
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-8 text-xs">
-              <span className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4 fill-emerald-500 text-emerald-500" /> {t('map.openFacility')}</span>
-              <strong>{Math.max(0, pharmacies.length - (selectedPharmacy ? 1 : 0))}</strong>
+              <span className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4 fill-green-500 text-green-500" /> {t('map.openNow', 'Open')}</span>
+              <strong>{pharmacies.filter(p => getPharmacyOpenStatus(p).statusType === 'open').length}</strong>
             </div>
             <div className="flex items-center justify-between gap-8 text-xs">
-              <span className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4 fill-blue-500 text-blue-500" /> {t('map.onCallGarde')}</span>
+              <span className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4 fill-orange-500 text-orange-500" /> {t('map.garde', 'On duty')}</span>
+              <strong>{pharmacies.filter(p => getPharmacyOpenStatus(p).statusType === 'garde').length}</strong>
+            </div>
+            <div className="flex items-center justify-between gap-8 text-xs">
+              <span className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4 fill-purple-500 text-purple-500" /> {t('map.night', 'Night')}</span>
+              <strong>{pharmacies.filter(p => getPharmacyOpenStatus(p).statusType === 'night').length}</strong>
+            </div>
+            <div className="flex items-center justify-between gap-8 text-xs">
+              <span className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4 fill-red-500 text-red-500" /> {t('map.closed', 'Closed')}</span>
+              <strong>{pharmacies.filter(p => getPharmacyOpenStatus(p).statusType === 'closed').length}</strong>
+            </div>
+            <div className="flex items-center justify-between gap-8 text-xs">
+              <span className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4 fill-blue-500 text-blue-500" /> {t('map.selected', 'Selected')}</span>
               <strong>{selectedPharmacy ? 1 : 0}</strong>
-            </div>
-            <div className="flex items-center justify-between gap-8 text-xs">
-              <span className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4 fill-slate-400 text-slate-400" /> {t('map.closed')}</span>
-              <strong>0</strong>
             </div>
           </div>
         </div>
@@ -364,10 +407,11 @@ const MapPage = () => {
         {selectedPharmacy ? (
           <div className="map-popover">
             <div className="mb-1 flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-blue-500" />
+              <span className={`h-2 w-2 rounded-full`} style={{ backgroundColor: getPharmacyOpenStatus(selectedPharmacy).color }} />
               <h3 className="font-display text-sm font-bold text-foreground">{selectedPharmacy.name}</h3>
             </div>
             <p className="mb-3 text-xs text-muted-foreground">{selectedPharmacy.address || t('map.selectedForNightDuty')}</p>
+            <p className="mb-2 text-xs font-medium text-foreground">{getPharmacyOpenStatus(selectedPharmacy).label}</p>
             <Button className="w-full" size="sm">{t('map.viewFullRecords')}</Button>
             <span className="map-popover-arrow" />
           </div>

@@ -1,0 +1,50 @@
+{
+  "errors": [],
+  "stats": {
+    "duplicate_id_count": 0,
+    "duplicate_question_count": 0,
+    "safety_counts": {
+      "emergency": 1040,
+      "low": 110,
+      "moderate": 115,
+      "out_of_scope": 65,
+      "urgent": 685
+    },
+    "topic_counts": {
+      "allergic_reaction": 65,
+      "anaphylaxis": 65,
+      "animal_bite": 65,
+      "bleeding": 65,
+      "breathing_difficulty": 65,
+      "burns": 65,
+      "choking_adult": 65,
+      "choking_child": 65,
+      "choking_infant": 65,
+      "cpr": 65,
+      "drug_exposure": 65,
+      "electrical_burns": 65,
+      "eye_injury": 65,
+      "fainting": 65,
+      "foreign_object": 65,
+      "fracture": 65,
+      "frostbite": 65,
+      "heart_attack": 65,
+      "heat_exhaustion": 65,
+      "heat_stroke": 65,
+      "hypothermia": 65,
+      "insect_sting": 65,
+      "nosebleed": 65,
+      "poisoning": 65,
+      "seizure": 65,
+      "shock": 65,
+      "sprain": 65,
+      "stroke_symptoms": 65,
+      "unconscious_person": 65,
+      "unsafe_or_out_of_scope": 65,
+      "wounds": 65
+    },
+    "total_examples": 2015,
+    "weak_topics": []
+  },
+  "warnings": []
+}

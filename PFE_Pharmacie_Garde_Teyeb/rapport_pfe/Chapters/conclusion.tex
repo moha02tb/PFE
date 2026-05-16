@@ -6,31 +6,43 @@
 
 Ce projet de fin d'études a abouti à la réalisation de \textbf{PharmacieConnect}, une plateforme web et
 mobile répondant à un besoin concret : faciliter l'accès aux informations sur les pharmacies et les
-pharmacies de garde, tout en proposant un espace de gestion pour les administrateurs. La solution
-s'appuie sur une API backend, un tableau de bord administrateur et une application mobile.
+pharmacies de garde, tout en proposant un espace de gestion pour les administrateurs et une assistance
+conversationnelle pour les premiers secours. La solution s'appuie sur une API backend, un tableau de bord
+administrateur, une application mobile et un assistant de premiers secours basé sur la récupération
+d'informations hybride.
 
 \section*{Résultats obtenus}
 \addcontentsline{toc}{section}{Résultats obtenus}
 
 Les objectifs principaux ont été atteints. L'utilisateur mobile peut rechercher des pharmacies, utiliser la
-géolocalisation, consulter les pharmacies de garde par date et accéder au catalogue de médicaments.
-L'administrateur peut gérer les pharmacies, les gardes, les médicaments, les utilisateurs autorisés, les
-imports CSV, les indicateurs et les journaux d'audit. Le backend assure la centralisation des données,
-l'authentification, le contrôle des rôles, la validation des API et la traçabilité des actions sensibles.
+géolocalisation, consulter les pharmacies de garde par date et accéder au catalogue de médicaments. Il
+peut également consulter l'assistant de premiers secours pour obtenir des réponses fiables et sûres à des
+questions d'urgence médicale. L'administrateur peut gérer les pharmacies, les gardes, les médicaments,
+les utilisateurs autorisés, les imports CSV, les indicateurs et les journaux d'audit. Le backend assure la
+centralisation des données, l'authentification, le contrôle des rôles, la validation des API et la traçabilité
+des actions sensibles. L'assistant offre une récupération précise d'informations avec un Recall@5 de 94.38\%,
+une fusion hybride BM25/sémantique et des mécanismes de confiance et de sécurité pour éviter les
+hallucinations et ajouter les mises en garde appropriées pour les urgences.
 
 Sur le plan technique, ce travail a mobilisé plusieurs compétences : conception d'API REST,
 développement backend avec FastAPI, modélisation SQLAlchemy, développement web avec React et Vite,
-développement mobile avec Expo et React Native, authentification JWT, validation de fichiers CSV,
+développement mobile avec Expo et React Native, architecture de récupération d'informations hybride,
+entraînement et optimisation de pipelines NLP, authentification JWT, validation de fichiers CSV,
 journalisation, indicateurs et tests automatisés. Il a également montré l'intérêt d'une séparation claire
-entre les routes, les services, les modèles, les interfaces clientes et la base de données.
+entre les routes, les services, les modèles, les interfaces clientes, la base de données et les services
+spécialisés comme l'assistant.
 
 \section*{Limites}
 \addcontentsline{toc}{section}{Limites}
 
 Certaines limites restent à prendre en compte. Le catalogue des médicaments ne représente pas encore le
 stock réel de chaque pharmacie. Les données de garde dépendent toujours de la qualité des fichiers
-importés. Les tests bout en bout et les tests de charge doivent encore être renforcés. L'application mobile
-devra aussi être testée sur davantage d'appareils et dans différents contextes de connexion.
+importés. L'assistant, bien que performant sur la récupération, pourrait bénéficier d'une amélioration de la
+sélection de spans (F1 = 0.2990 contre une cible de 0.35), possibilité de réentraînement avec des
+données d'entraînement enrichies pour affiner davantage l'extraction. Les tests bout en bout et les tests
+de charge doivent encore être renforcés. L'application mobile devra aussi être testée sur davantage
+d'appareils et dans différents contextes de connexion. L'intégration de l'assistant au sein de l'application
+mobile nécessite des tests supplémentaires pour assurer la cohérence de l'expérience utilisateur.
 
 \section*{Perspectives}
 \addcontentsline{toc}{section}{Perspectives}
@@ -42,11 +54,17 @@ Les perspectives d'amélioration sont les suivantes :
     \item permettre aux pharmacies de mettre à jour directement certaines informations sous contrôle ;
     \item envoyer des notifications lorsque les gardes changent ;
     \item améliorer la recherche par synonymes, erreurs de frappe ou noms commerciaux proches ;
-    \item intégrer des tests bout en bout couvrant l'application mobile, le tableau de bord et l'API ;
-    \item renforcer le déploiement par une configuration de production, une supervision et des sauvegardes ;
-    \item enrichir les indicateurs pour mieux suivre les recherches et la couverture territoriale.
+    \item améliorer l'extraction de spans de réponse de l'assistant grâce à un reclassement plus fin ou un rétiquetage des données ;
+    \item étendre la base de connaissance de l'assistant à d'autres sujets médicaux pertinents pour les pharmacies ;
+    \item ajouter des capacités multilingues robustes à l'assistant (tests sur l'arabe et l'anglais) ;
+    \item intégrer des tests bout en bout couvrant l'application mobile, le tableau de bord, l'API et l'assistant ;
+    \item renforcer le déploiement par une configuration de production, une supervision, des sauvegardes et un monitoring de l'assistant ;
+    \item enrichir les indicateurs pour mieux suivre les recherches, la couverture territoriale et l'utilisation de l'assistant ;
+    \item construire une interface d'administration pour gérer les données d'entraînement et les performances de l'assistant.
 \end{itemize}
 
-Ainsi, PharmacieConnect constitue une base fonctionnelle pour une solution de gestion pharmaceutique. Le
-projet peut encore évoluer, mais il montre déjà qu'une architecture bien organisée peut répondre à la fois
-aux besoins du citoyen et aux besoins de l'administration.
+Ainsi, PharmacieConnect constitue une base fonctionnelle pour une solution complète de gestion
+pharmaceutique avec assistance intelligente. Le projet peut encore évoluer, mais il montre déjà qu'une
+architecture bien organisée, associée à des techniques modernes comme la récupération hybride
+d'informations, peut répondre à la fois aux besoins du citoyen, aux besoins de l'administration et aux
+besoins d'assistance médicale d'urgence.

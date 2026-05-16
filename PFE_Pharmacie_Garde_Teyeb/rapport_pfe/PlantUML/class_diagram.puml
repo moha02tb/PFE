@@ -1,0 +1,135 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam dpi 180
+skinparam classAttributeIconSize 0
+hide methods
+hide empty members
+
+package "Accounts" {
+  class Administrateur {
+    id : Integer
+    nomUtilisateur : String
+    email : String
+    motDePasse : String
+    role : AdminRoleEnum
+    region_scope : String
+    is_active : Boolean
+    created_by : Integer
+    created_at : DateTime
+    last_login : DateTime
+  }
+
+  class Utilisateur {
+    id : Integer
+    nomUtilisateur : String
+    email : String
+    motDePasse : String
+    email_verified : Boolean
+    source : SourceEnum
+    is_active : Boolean
+    created_at : DateTime
+    last_login : DateTime
+  }
+
+  class RefreshToken {
+    id : Integer
+    entity_type : String
+    entity_id : Integer
+    token_jti : String
+    expires_at : DateTime
+  }
+
+  class LoginAttempt {
+    id : Integer
+    email : String
+    entity_type : String
+    ip_address : String
+    success : Boolean
+    attempted_at : DateTime
+  }
+}
+
+package "Operations" {
+  class Pharmacie {
+    id : Integer
+    osm_id : BigInteger
+    name : String
+    governorate : String
+    latitude : Float
+    longitude : Float
+    created_by : Integer
+    created_at : DateTime
+  }
+
+  class GardeSchedule {
+    id : Integer
+    date : Date
+    pharmacy_name : String
+    start_time : String
+    end_time : String
+    governorate : String
+    created_by : Integer
+    created_at : DateTime
+  }
+
+  class Medicine {
+    id : Integer
+    code_pct : String
+    nom_commercial : String
+    dci : String
+    ap : String
+    created_by : Integer
+    created_at : DateTime
+  }
+
+  class AuditLog {
+    id : Integer
+    action : AuditActionEnum
+    entity_type : String
+    entity_id : Integer
+    actor_id : Integer
+    actor_type : String
+    status : String
+    created_at : DateTime
+  }
+
+  class SearchEvent {
+    id : Integer
+    event_type : String
+    query_text : String
+    location_label : String
+    governorate : String
+    result_count : Integer
+    created_at : DateTime
+  }
+}
+
+Administrateur "1" <-- "0..*" Administrateur : created_by
+Administrateur "1" <-- "0..*" Pharmacie : created_by
+Administrateur "1" <-- "0..*" GardeSchedule : created_by
+Administrateur "1" <-- "0..*" Medicine : created_by
+
+note right of RefreshToken
+Polymorphic link:
+entity_type + entity_id
+-> Administrateur or Utilisateur
+end note
+
+note right of LoginAttempt
+Tracks auth attempts
+for admins and users
+end note
+
+note right of AuditLog
+Stores sensitive actions,
+actors and targets
+end note
+
+note bottom of GardeSchedule
+pharmacy_name is resolved
+at query time
+end note
+
+@enduml

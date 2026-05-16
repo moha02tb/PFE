@@ -3,6 +3,7 @@ import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import { Entypo, Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useAppTheme } from '../../utils/theme';
+import { getPharmacyOpenStatus } from '../../utils/pharmacySchedule';
 import AppButton from './Button';
 import AppCard from './Card';
 import AppText from './Text';
@@ -24,6 +25,9 @@ export default function PharmacyListItem({
 }) {
   const { t } = useTranslation();
   const { colors, radius, isRTL } = useAppTheme();
+
+  // Determine pharmacy status using Tunisian schedule
+  const pharmacyStatus = getPharmacyOpenStatus(item);
 
   const styles = StyleSheet.create({
     card: {
@@ -125,7 +129,7 @@ export default function PharmacyListItem({
         </View>
 
         <View style={styles.metaRow}>
-          <StatusBadge status={item.isOpen ? 'open' : 'closed'} />
+          <StatusBadge status={pharmacyStatus.statusType} />
           {item.emergency ? (
             <StatusBadge status="onDuty">{t('home.onDuty', 'On duty')}</StatusBadge>
           ) : null}

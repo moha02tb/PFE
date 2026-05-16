@@ -1,31 +1,37 @@
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.1}Introduction}{\reset@font\mtcSfont 32}{section.4.1}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.2}Environnement matériel et logiciel}{\reset@font\mtcSfont 32}{section.4.2}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.3}Technologies utilisées}{\reset@font\mtcSfont 32}{section.4.3}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.4}Organisation du dépôt}{\reset@font\mtcSfont 33}{section.4.4}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.5}Réalisation backend}{\reset@font\mtcSfont 34}{section.4.5}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.5.1}Endpoints publics}{\reset@font\mtcSSfont 34}{subsection.4.5.1}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.5.2}Authentification et sessions}{\reset@font\mtcSSfont 35}{subsection.4.5.2}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.5.3}Services métier}{\reset@font\mtcSSfont 35}{subsection.4.5.3}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.5.4}Imports CSV}{\reset@font\mtcSSfont 35}{subsection.4.5.4}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.5.5}Audit et indicateurs}{\reset@font\mtcSSfont 36}{subsection.4.5.5}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.6}Réalisation du tableau de bord administrateur}{\reset@font\mtcSfont 36}{section.4.6}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.6.1}Pages principales}{\reset@font\mtcSSfont 36}{subsection.4.6.1}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.6.2}Gestion des sessions côté administration}{\reset@font\mtcSSfont 36}{subsection.4.6.2}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.7}Réalisation application mobile}{\reset@font\mtcSfont 36}{section.4.7}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.7.1}Recherche et détail des pharmacies}{\reset@font\mtcSSfont 37}{subsection.4.7.1}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.7.2}Carte et géolocalisation}{\reset@font\mtcSSfont 37}{subsection.4.7.2}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.7.3}Calendrier des gardes}{\reset@font\mtcSSfont 37}{subsection.4.7.3}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.7.4}Catalogue de médicaments}{\reset@font\mtcSSfont 37}{subsection.4.7.4}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.7.5}Paramètres, langues et thème}{\reset@font\mtcSSfont 37}{subsection.4.7.5}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.8}Captures d'écran}{\reset@font\mtcSfont 37}{section.4.8}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.9}Intégration API}{\reset@font\mtcSfont 39}{section.4.9}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.10}Déploiement et configuration}{\reset@font\mtcSfont 39}{section.4.10}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.11}Tests unitaires, API et manuels}{\reset@font\mtcSfont 40}{section.4.11}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.11.1}Stratégie de test}{\reset@font\mtcSSfont 40}{subsection.4.11.1}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.11.2}Résultats de validation automatisée}{\reset@font\mtcSSfont 41}{subsection.4.11.2}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.11.3}Tests automatisés du backend}{\reset@font\mtcSSfont 42}{subsection.4.11.3}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.11.4}Tests API}{\reset@font\mtcSSfont 42}{subsection.4.11.4}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.11.5}Validation du déploiement local}{\reset@font\mtcSSfont 42}{subsection.4.11.5}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.11.6}Validation fonctionnelle}{\reset@font\mtcSSfont 43}{subsection.4.11.6}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.12}Difficultés rencontrées et solutions adoptées}{\reset@font\mtcSfont 43}{section.4.12}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.13}Conclusion}{\reset@font\mtcSfont 44}{section.4.13}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.1}Introduction}{\reset@font\mtcSfont 35}{section.4.1}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.2}Environnement matériel et logiciel}{\reset@font\mtcSfont 35}{section.4.2}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.3}Technologies utilisées}{\reset@font\mtcSfont 35}{section.4.3}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.4}Organisation du dépôt}{\reset@font\mtcSfont 36}{section.4.4}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.5}Réalisation backend}{\reset@font\mtcSfont 37}{section.4.5}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.5.1}Endpoints publics}{\reset@font\mtcSSfont 37}{subsection.4.5.1}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.5.2}Authentification et sessions}{\reset@font\mtcSSfont 37}{subsection.4.5.2}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.5.3}Services métier}{\reset@font\mtcSSfont 38}{subsection.4.5.3}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.5.4}Imports CSV}{\reset@font\mtcSSfont 38}{subsection.4.5.4}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.5.5}Audit et indicateurs}{\reset@font\mtcSSfont 38}{subsection.4.5.5}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.6}Réalisation du tableau de bord administrateur}{\reset@font\mtcSfont 39}{section.4.6}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.6.1}Pages principales}{\reset@font\mtcSSfont 39}{subsection.4.6.1}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.6.2}Gestion des sessions côté administration}{\reset@font\mtcSSfont 39}{subsection.4.6.2}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.7}Réalisation application mobile}{\reset@font\mtcSfont 39}{section.4.7}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.7.1}Recherche et détail des pharmacies}{\reset@font\mtcSSfont 39}{subsection.4.7.1}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.7.2}Carte et géolocalisation}{\reset@font\mtcSSfont 40}{subsection.4.7.2}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.7.3}Calendrier des gardes}{\reset@font\mtcSSfont 40}{subsection.4.7.3}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.7.4}Catalogue de médicaments}{\reset@font\mtcSSfont 40}{subsection.4.7.4}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.7.5}Paramètres, langues et thème}{\reset@font\mtcSSfont 40}{subsection.4.7.5}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.8}Réalisation de l'assistant conversationnel de premiers secours}{\reset@font\mtcSfont 40}{section.4.8}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.8.1}Architecture générale}{\reset@font\mtcSSfont 40}{subsection.4.8.1}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.8.2}Données d'apprentissage et nettoyage}{\reset@font\mtcSSfont 41}{subsection.4.8.2}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.8.3}Entraînement et métriques de performance}{\reset@font\mtcSSfont 41}{subsection.4.8.3}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.8.4}API et intégration avec l'application mobile}{\reset@font\mtcSSfont 42}{subsection.4.8.4}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.8.5}Tests et validation}{\reset@font\mtcSSfont 43}{subsection.4.8.5}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.9}Captures d'écran}{\reset@font\mtcSfont 43}{section.4.9}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.10}Intégration API}{\reset@font\mtcSfont 44}{section.4.10}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.11}Déploiement et configuration}{\reset@font\mtcSfont 45}{section.4.11}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.12}Tests unitaires, API et manuels}{\reset@font\mtcSfont 46}{section.4.12}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.12.1}Stratégie de test}{\reset@font\mtcSSfont 46}{subsection.4.12.1}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.12.2}Résultats de validation automatisée}{\reset@font\mtcSSfont 46}{subsection.4.12.2}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.12.3}Tests automatisés du backend}{\reset@font\mtcSSfont 47}{subsection.4.12.3}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.12.4}Tests API}{\reset@font\mtcSSfont 47}{subsection.4.12.4}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.12.5}Validation du déploiement local}{\reset@font\mtcSSfont 47}{subsection.4.12.5}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.12.6}Validation fonctionnelle}{\reset@font\mtcSSfont 48}{subsection.4.12.6}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.13}Difficultés rencontrées et solutions adoptées}{\reset@font\mtcSfont 49}{section.4.13}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.14}Conclusion}{\reset@font\mtcSfont 49}{section.4.14}}

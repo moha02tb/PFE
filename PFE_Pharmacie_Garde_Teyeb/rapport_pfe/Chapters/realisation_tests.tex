@@ -63,7 +63,10 @@ recherche, la carte et la consultation des gardes.
     React Native & Création des écrans et composants mobiles. \\
     i18next & Gestion de l'internationalisation. \\
     OpenStreetMap / Nominatim & Référence cartographique et géocodage lorsque l'enrichissement des coordonnées est nécessaire \cite{nominatim}. \\
-    Pytest & Tests automatisés du backend \cite{pytest}. \\
+    BM25 (Okapi) & Algorithme de récupération lexicale pour l'assistant de premiers secours. \\
+    Sentence Transformers & Modèle d'embeddings sémantiques (\texttt{all-MiniLM-L6-v2}) pour la récupération dense. \\
+    Retrieval Pipeline & Pipeline hybride de fusion lexicale/sémantique avec reclassement et extraction de réponses. \\
+    Pytest & Tests automatisés du backend et de l'assistant \cite{pytest}. \\
     Jest & Tests automatisés côté application mobile \cite{jest}. \\
     \bottomrule
 \end{longtable}
@@ -77,14 +80,15 @@ clients et le backend.
 \begin{table}[H]
     \centering
     \caption{Organisation générale du dépôt}
-    \begin{tabular}{L{5.6cm}L{7.4cm}}
+    \begin{tabular}{L{4.4cm}L{8.6cm}}
         \toprule
         \textbf{Dossier} & \textbf{Contenu} \\
         \midrule
-        \path{backend_pharmacie/} & API FastAPI, modèles SQLAlchemy, services métier, migrations, sécurité et tests. \\
-        \path{admin_pharmacie/} & Tableau de bord React/Vite destiné à l'administration. \\
-        \begin{minipage}[t]{5.4cm}\ttfamily\small ouerkema-pharmacieconnect-\linebreak 4c94773cce7d/\end{minipage} & Application mobile Expo/React Native destinée aux utilisateurs finaux. \\
-        \path{docs/} & Documentation technique liée à l'architecture, l'API, le backend, le web admin et le mobile. \\
+        backend & API FastAPI, modèles, services, migrations \\
+        admin & Tableau de bord React/Vite \\
+        mobile & Application mobile Expo/React Native \\
+        chatbot & Assistant avec pipeline hybride \\
+        docs & Documentation technique \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -222,6 +226,129 @@ L'application prend en charge le français, l'anglais et l'arabe. Le choix de l'
 Les paramètres regroupent aussi le thème, les notifications, les favoris et certaines préférences
 utilisateur.
 
+\section{Réalisation de l'assistant conversationnel de premiers secours}
+
+L'assistant conversationnel constitue une valeur ajoutée importante de la plateforme PharmacieConnect. Il
+fournit des réponses rapides, fiables et sûres aux questions de premiers secours, complétant harmonieusement
+la recherche de pharmacies de garde. L'assistant repose sur une architecture de récupération d'informations
+hybride (lexicale et sémantique) plutôt que sur la génération, afin de garantir des réponses basées sur des
+preuves et d'éliminer les risques d'hallucination.
+
+\subsection{Architecture générale}
+
+L'architecture de l'assistant suit un pipeline en plusieurs étapes :
+
+\begin{enumerate}
+    \item \textbf{Analyse de la requête} : Normalisation, tokenisation, détection de type et sujet.
+    \item \textbf{Récupération parallèle} : Deux algorithmes complémentaires :
+        \begin{itemize}
+            \item \textbf{BM25 (Okapi)} : Récupération lexicale basée sur fréquence des termes ;
+            \item \textbf{Embeddings sémantiques} : Modèle \texttt{all-MiniLM-L6-v2} pour capturer le sens.
+        \end{itemize}
+    \item \textbf{Fusion hybride} : Normalisation et fusion des scores :
+        \begin{itemize}
+            \item 0.55 pour BM25 (lexical) ;
+            \item 0.35 pour embeddings sémantiques ;
+            \item 0.10 pour bonus de correspondance thématique.
+        \end{itemize}
+    \item \textbf{Reclassement et extraction} : Reclassement par similarité, alignement thématique et couverture. Réponse extractive composée du texte récupéré.
+    \item \textbf{Contrôle de confiance} : Calcul multi-signaux (score, similarité, cohérence). Fallback sur confiance insuffisante.
+    \item \textbf{Sécurité médicale} : Avertissement auto pour sujets à risque (étouffement, choc, hémorragie).
+\end{enumerate}
+
+\subsection{Données d'apprentissage et nettoyage}
+
+Le jeu de données initial repose sur FirstAidQA, enrichi et nettoyé pour améliorer la qualité. Les processus
+de qualification et d'augmentation sont décrits ci-après.
+
+\begin{table}[H]
+    \centering
+    \caption{Statistiques du jeu de données de l'assistant}
+    \begin{tabular}{L{6.5cm}L{6.5cm}}
+        \toprule
+        \textbf{Métrique} & \textbf{Valeur} \\
+        \midrule
+        Questions/réponses brutes & 3,914 paires \\
+        Documents indexés (chunks) & 5,270 segments \\
+        Sources uniques & 3,898 documents \\
+        Sujets (catégories) & 13 catégories (étouffement, saignements, brûlures, etc.) \\
+        Ensemble d'entraînement nettoyé & 3,901 paires \\
+        Ensemble de validation nettoyé & 409 paires \\
+        Changements de labels (audit) & 1,841 sur l'entraînement, 165 sur la validation \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Le nettoyage des données a utilisé un audit automatisé (\texttt{data\_quality.py}) qui détecte et corrige les étiquettes erronées assignées d'après les termes de réponse, préserve les étiquettes originales dans \texttt{original\_topic} pour examen ultérieur, et génère un rapport d'audit détaillé avec traces de modification. L'augmentation ciblée de données a renforcé les sujets faibles (premiers secours généraux, saignements, morsures) en générant 60 exemples synthétiques pour améliorer la couverture et la robustesse.
+
+\subsection{Entraînement et métriques de performance}
+
+L'entraînement est piloté par le script \texttt{train\_firstaid\_chatbot.py}, qui construit le pipeline complet
+et évalue les performances selon plusieurs métriques.
+
+\begin{table}[H]
+    \centering
+    \caption{Performances de l'assistant après entraînement}
+    \begin{tabular}{L{3.5cm}L{2.2cm}L{2.0cm}L{4.3cm}}
+        \toprule
+        \textbf{Métrique} & \textbf{Valeur} & \textbf{Cible} & \textbf{Interprétation} \\
+        \midrule
+        Hit Rate / Recall@1 & 79.71\% & $\geq 75\%$ & Juste au rang 1 \\
+        Recall@3 & 90.95\% & - & Juste dans top-3 \\
+        Recall@5 & 94.38\% & $\geq 90\%$ & Juste dans top-5 \\
+        MRR & 0.8627 & $\geq 0.80$ & Rang moyen inverse \\
+        MAP@5 & 0.8572 & $\geq 0.78$ & Précision moyenne \\
+        Evidence F1 & 0.2990 & $\geq 0.35$ & Extraction de span \\
+        Fallback Rate & 2.69\% & $\leq 5\%$ & Refus confiance faible \\
+        Smoke Tests & 14/14 & 100\% & Cas critiques \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\textbf{Analyse des résultats} :
+\begin{itemize}
+    \item Récupération robuste au niveau document (Recall@5 = 94.38\%) ;
+    \item Classement fiable (MRR = 0.8627), bons documents en haut de la liste ;
+    \item Extraction de spans un point faible (F1 = 0.2990), oracle top-5 F1 = 0.3904 ;
+    \item Limitation due à l'appariement réponse-document, non à couverture de récupération ;
+    \item Fallback mesuré (2.69\%) confirme bon fonctionnement du mécanisme de confiance.
+\end{itemize}
+
+\subsection{API et intégration avec l'application mobile}
+
+L'assistant est exposé via une API FastAPI dédiée, lancée sur un port séparé (8001 par défaut) pour éviter
+le conflit avec l'API principale de pharmacies (8000).
+
+\begin{lstlisting}[caption={Exemple de requete a l'API de l'assistant}]
+POST /answer
+Content-Type: application/json
+
+{
+  "query": "Comment faire face a l'ettouffement?",
+  "top_k": 5
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Structure de la reponse de l'assistant}]
+{
+  "query": "Comment faire face a l'ettouffement?",
+  "answer": "Faites-le tousser vigoureusement.",
+  "confidence": 0.92,
+  "evidence_sources": [docid_1, docid_2],
+  "safety_notice": "APPEL D'URGENCE REQUIS",
+  "topic": "choking"
+}
+\end{lstlisting}
+
+L'intégration côté mobile ajoute un onglet ou un écran dédié à l'assistant, permettant aux utilisateurs de
+poser des questions de premiers secours tout en accédant à localisateurs de pharmacies de garde. Les
+requêtes utilisateur sont envoyées à l'API de l'assistant, qui retourne la réponse enrichie avec confiance,
+sources et avertissements de sécurité.
+
+\subsection{Tests et validation}
+
+L'assistant bénéficie de deux suites de tests : (1) Smoke Tests avec 14 scénarios pour urgences courantes (étouffement, choc, perte de conscience), tous passant à 100\% ; (2) Tests unitaires avec 3 suites couvrant normalisation, fusion hybride et confiance calculée. Le système fonctionne de manière fiable et aucune hallucination ne peut survenir (extraction basée sur texte récupéré).
+
 \section{Captures d'écran}
 
 Les captures réelles seront ajoutées après export depuis l'administration web et l'application mobile. Les
@@ -247,22 +374,27 @@ emplacements suivants conservent la structure du rapport sans utiliser de vues s
 {Capture réelle à insérer depuis l'application mobile.}
 {fig:screenshot-mobile-medicines}
 
+\visualslot{Écran mobile de l'assistant de premiers secours}
+{Capture réelle à insérer depuis l'application mobile montrant une question et une réponse de l'assistant.}
+{fig:screenshot-mobile-chatbot}
+
 \section{Intégration API}
 
-L'intégration API relie les deux interfaces au backend. Le tableau de bord administrateur utilise Axios,
-tandis que l'application mobile possède sa propre configuration d'appel API. Les deux clients consomment
-les endpoints FastAPI selon leurs besoins.
+L'intégration API relie les trois interfaces (tableau de bord, application mobile et assistant) au backend.
+Le tableau de bord administrateur utilise Axios, tandis que l'application mobile et l'assistant possèdent
+leurs propres configurations d'appel API. Les trois clients consomment les endpoints selon leurs besoins
+définis.
 
 \begin{table}[H]
     \centering
     \caption{Principales intégrations API}
-    \begin{tabular}{L{4cm}L{5cm}L{4cm}}
+    \begin{tabular}{L{3.8cm}L{5.2cm}L{4cm}}
         \toprule
         \textbf{Client} & \textbf{Endpoints utilisés} & \textbf{Objectif} \\
         \midrule
         Application mobile & Pharmacies, gardes, médicaments, authentification & Consultation et parcours citoyen \\
-        Tableau de bord admin & Administration, imports, indicateurs, audit, authentification & Gestion opérationnelle \\
-        Backend & Base de données, services métier, sécurité & Centralisation et validation \\
+        Tableau de bord admin & Administration, imports, indicateurs, audit & Gestion opérationnelle \\
+        Assistant QA & Récupération et classement de documents & Urgences médicales \\
         \bottomrule
     \end{tabular}
 \end{table}

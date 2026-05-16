@@ -11,7 +11,7 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, pool
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import declarative_base
 
@@ -36,10 +36,22 @@ if (
         SQLALCHEMY_DATABASE_URL = f"sqlite:///{(BASE_DIR / sqlite_path).as_posix()}"
 
 connect_args = {}
+pool_kwargs = {"pool_pre_ping": True}
+
 if SQLALCHEMY_DATABASE_URL.startswith("sqlite:"):
     connect_args = {"check_same_thread": False}
+    # SQLite uses NullPool by default
+    pool_kwargs = {}
+else:
+    # PostgreSQL: use connection pooling with optimized settings
+    pool_kwargs = {
+        "pool_size": 10,  # Number of connections to keep in the pool
+        "max_overflow": 20,  # Allow up to 20 additional connections beyond pool_size
+        "pool_pre_ping": True,  # Test connections before using them
+        "pool_recycle": 3600,  # Recycle connections after 1 hour
+    }
 
-engine_kwargs = {"connect_args": connect_args, "pool_pre_ping": True}
+engine_kwargs = {**pool_kwargs, "connect_args": connect_args}
 engine = create_engine(SQLALCHEMY_DATABASE_URL, **engine_kwargs)
 
 

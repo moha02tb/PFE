@@ -1,14 +1,14 @@
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {2.1}Introduction}{\reset@font\mtcSfont 14}{section.2.1}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {2.2}Acteurs}{\reset@font\mtcSfont 14}{section.2.2}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {2.3}Besoins fonctionnels détaillés}{\reset@font\mtcSfont 14}{section.2.3}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {2.4}Besoins non fonctionnels}{\reset@font\mtcSfont 15}{section.2.4}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {2.5}Règles de gestion}{\reset@font\mtcSfont 16}{section.2.5}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {2.6}Descriptions textuelles des cas d'utilisation}{\reset@font\mtcSfont 16}{section.2.6}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {2.6.1}Cas d'utilisation : authentification}{\reset@font\mtcSSfont 16}{subsection.2.6.1}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {2.6.2}Cas d'utilisation : recherche d'une pharmacie}{\reset@font\mtcSSfont 17}{subsection.2.6.2}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {2.6.3}Cas d'utilisation : consultation des pharmacies de garde}{\reset@font\mtcSSfont 17}{subsection.2.6.3}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {2.6.4}Cas d'utilisation : gestion des pharmacies}{\reset@font\mtcSSfont 18}{subsection.2.6.4}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {2.6.5}Cas d'utilisation : import CSV}{\reset@font\mtcSSfont 18}{subsection.2.6.5}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {2.6.6}Cas d'utilisation : gestion des utilisateurs et assistants}{\reset@font\mtcSSfont 19}{subsection.2.6.6}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {2.7}Diagramme de cas d'utilisation}{\reset@font\mtcSfont 19}{section.2.7}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {2.1}Introduction}{\reset@font\mtcSfont 13}{section.2.1}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {2.2}Acteurs}{\reset@font\mtcSfont 13}{section.2.2}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {2.3}Besoins fonctionnels détaillés}{\reset@font\mtcSfont 13}{section.2.3}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {2.4}Besoins non fonctionnels}{\reset@font\mtcSfont 14}{section.2.4}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {2.5}Règles de gestion}{\reset@font\mtcSfont 15}{section.2.5}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {2.6}Descriptions textuelles des cas d'utilisation}{\reset@font\mtcSfont 15}{section.2.6}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {2.6.1}Cas d'utilisation : authentification}{\reset@font\mtcSSfont 15}{subsection.2.6.1}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {2.6.2}Cas d'utilisation : recherche d'une pharmacie}{\reset@font\mtcSSfont 16}{subsection.2.6.2}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {2.6.3}Cas d'utilisation : consultation des pharmacies de garde}{\reset@font\mtcSSfont 16}{subsection.2.6.3}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {2.6.4}Cas d'utilisation : gestion des pharmacies}{\reset@font\mtcSSfont 17}{subsection.2.6.4}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {2.6.5}Cas d'utilisation : import CSV}{\reset@font\mtcSSfont 17}{subsection.2.6.5}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {2.6.6}Cas d'utilisation : gestion des utilisateurs et assistants}{\reset@font\mtcSSfont 18}{subsection.2.6.6}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {2.7}Diagramme de cas d'utilisation}{\reset@font\mtcSfont 18}{section.2.7}}
 {\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {2.8}Conclusion}{\reset@font\mtcSfont 20}{section.2.8}}

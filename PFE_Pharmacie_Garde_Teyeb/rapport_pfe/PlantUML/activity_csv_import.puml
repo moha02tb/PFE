@@ -1,0 +1,52 @@
+@startuml
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam dpi 180
+
+start
+:Select CSV file;
+:Validate file (extension, size, parse, emptiness, row limit);
+
+if (File valid?) then (yes)
+else (no)
+  :Return validation error;
+  stop
+endif
+
+:Resolve required columns;
+
+if (Columns valid?) then (yes)
+else (no)
+  :Return missing columns error;
+  stop
+endif
+
+:Initialize valid rows and error list;
+
+repeat
+  :Read row;
+  :Validate row (coordinates, region, duplicate osm_id);
+
+  if (Row valid?) then (yes)
+    :Append valid pharmacy;
+  else (no)
+    :Add row error;
+  endif
+
+repeat while (More rows?) is (yes)
+
+if (At least one valid row?) then (yes)
+else (no)
+  :Rollback;
+  :Return "No valid pharmacies";
+  stop
+endif
+
+:Insert pharmacies;
+:Commit transaction;
+:Write audit log PHARMACY_BULK_UPLOAD;
+:Invalidate "pharmacies:" cache;
+:Return import summary;
+stop
+
+@enduml

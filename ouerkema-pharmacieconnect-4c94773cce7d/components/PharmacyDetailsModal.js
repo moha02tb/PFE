@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { AppButton, AppCard, AppModal, AppText, StatusBadge } from './design-system';
 import { getColors } from '../utils/colors';
 import { getTheme } from '../utils/theme';
+import { getPharmacyOpenStatus } from '../utils/pharmacySchedule';
 
 export default function PharmacyDetailsModal({
   visible,
@@ -20,6 +21,9 @@ export default function PharmacyDetailsModal({
   const styles = useMemo(() => createStyles(colors, radius, isRTL), [colors, radius, isRTL]);
 
   if (!pharmacy) return null;
+
+  // Determine pharmacy status using Tunisian schedule
+  const pharmacyStatus = getPharmacyOpenStatus(pharmacy);
 
   const callPhone = () => {
     if (!pharmacy.phone) return;
@@ -59,7 +63,7 @@ export default function PharmacyDetailsModal({
           {pharmacy.address}
         </AppText>
         <View style={styles.badges}>
-          <StatusBadge status={pharmacy.isOpen ? 'open' : 'closed'} />
+          <StatusBadge status={pharmacyStatus.statusType} />
           {pharmacy.emergency ? <StatusBadge status="onDuty">{t('home.onDuty', 'On duty')}</StatusBadge> : null}
         </View>
       </View>

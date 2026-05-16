@@ -1,0 +1,117 @@
+@startuml
+!pragma layout smetana
+left to right direction
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam dpi 180
+skinparam packageStyle rectangle
+skinparam componentStyle rectangle
+skinparam linetype ortho
+
+package "Client apps" {
+  [Admin web app] as admin_web
+  [Mobile app] as mobile_app
+}
+
+package "Main FastAPI backend" {
+  package "Public API" {
+    [Public endpoints\n/pharmacies /gardes /medicines] as public_api
+  }
+
+  package "Routers" {
+    [Auth router] as auth_router
+    [Admin router] as admin_router
+    [Analytics router] as analytics_router
+  }
+
+  package "Services" {
+    [AuthService] as auth_service
+    [AdminService] as admin_service
+    [PharmacyService] as pharmacy_service
+    [GardeService] as garde_service
+    [MedicineService] as medicine_service
+    [AuditService] as audit_service
+    [CacheService] as cache_service
+    [EmailService] as email_service
+  }
+
+  package "Core" {
+    [Security] as security
+    [Dependencies] as dependencies
+    [Models] as models
+    [Event bus] as event_bus
+    [Region scope] as region_scope
+  }
+}
+
+package "First-aid assistant API" {
+  [Answer API] as answer_api
+  [Hybrid retrieval engine] as retrieval_engine
+  artifact "Model files" as model_files
+}
+
+database "SQLAlchemy DB" as db
+database "Redis cache" as redis
+cloud "SMTP server" as smtp
+
+admin_web --> auth_router : login / me / profile
+admin_web --> admin_router : management / uploads
+admin_web --> analytics_router : dashboards
+
+mobile_app --> public_api : search / calendar / medicines
+mobile_app --> auth_router : auth + profile
+mobile_app --> answer_api : first-aid Q&A
+
+auth_router --> auth_service
+auth_router --> security
+auth_router --> dependencies
+auth_router --> audit_service
+auth_router --> db
+
+admin_router --> admin_service
+admin_router --> pharmacy_service
+admin_router --> garde_service
+admin_router --> medicine_service
+admin_router --> audit_service
+admin_router --> cache_service
+admin_router --> region_scope
+admin_router --> db
+
+analytics_router --> db
+analytics_router --> models
+
+public_api --> cache_service
+public_api --> pharmacy_service
+public_api --> garde_service
+public_api --> medicine_service
+public_api --> analytics_router
+
+auth_service --> db
+auth_service --> security
+auth_service --> audit_service
+auth_service --> email_service
+auth_service --> event_bus
+
+admin_service --> db
+admin_service --> security
+admin_service --> audit_service
+admin_service --> event_bus
+
+pharmacy_service --> db
+pharmacy_service --> audit_service
+pharmacy_service --> event_bus
+
+garde_service --> db
+garde_service --> audit_service
+
+medicine_service --> db
+medicine_service --> audit_service
+
+cache_service --> redis
+audit_service --> db
+email_service --> smtp
+
+answer_api --> retrieval_engine
+retrieval_engine --> model_files
+
+@enduml

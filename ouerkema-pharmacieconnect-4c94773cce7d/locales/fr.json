@@ -114,10 +114,15 @@
     "you": "Vous",
     "bubbleLabel": "Ouvrir l'assistant de premiers secours",
     "thinking": "Vérification des conseils de premiers secours...",
+    "serviceChecking": "Vérification du service assistant",
+    "serviceReady": "Service assistant prêt",
+    "serviceOffline": "Service assistant hors ligne",
+    "retry": "Réessayer",
     "topic": "Sujet",
     "confidence": "Confiance",
     "emptyAnswer": "Je n'ai pas trouvé de réponse fiable de premiers secours pour cette question.",
     "errors": {
+      "tooShort": "Décrivez la situation de premiers secours avec un peu plus de détails.",
       "timeout": "L'assistant n'a pas répondu à temps. Vérifiez la connexion puis réessayez.",
       "network": "Le service de premiers secours est inaccessible pour le moment. Réessayez quand le service est en ligne.",
       "generic": "L'assistant ne peut pas répondre pour le moment. Réessayez."

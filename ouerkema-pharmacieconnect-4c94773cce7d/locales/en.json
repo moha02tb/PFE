@@ -115,10 +115,15 @@
     "you": "You",
     "bubbleLabel": "Open first aid assistant",
     "thinking": "Checking first-aid guidance...",
+    "serviceChecking": "Checking assistant service",
+    "serviceReady": "Assistant service ready",
+    "serviceOffline": "Assistant service offline",
+    "retry": "Retry",
     "topic": "Topic",
     "confidence": "Confidence",
     "emptyAnswer": "I could not find a reliable first-aid answer for that question.",
     "errors": {
+      "tooShort": "Please describe the first-aid situation with a little more detail.",
       "timeout": "The assistant did not respond in time. Please check the connection and try again.",
       "network": "The first-aid assistant service is unreachable right now. Please try again when the service is online.",
       "generic": "The assistant could not answer right now. Please try again."

@@ -1,0 +1,45 @@
+@startuml
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam dpi 180
+autonumber
+
+actor "Client app" as client
+participant "Auth router\n/api/auth/login" as auth_router
+participant "AuthService" as auth_service
+database "SQLAlchemy DB" as db
+participant "Security" as security
+participant "AuditService" as audit_service
+participant "Dependencies\n/get_current_account" as deps
+
+client -> auth_router : POST login(email, password)
+auth_router -> auth_service : login(credentials, ip, user_agent)
+
+auth_service -> db : find Administrateur by email
+alt admin account + valid password
+  auth_service -> security : verify_password()
+  security --> auth_service : true
+  auth_service -> security : create_access_token()\ncreate_refresh_token()
+  auth_service -> db : insert RefreshToken\ninsert LoginAttempt(success=true)
+  auth_service -> audit_service : log_action(ADMIN_LOGIN)
+  auth_service --> auth_router : TokenResponse
+else user account + valid password
+  auth_service -> db : find Utilisateur by email
+  auth_service -> security : verify_password()
+  security --> auth_service : true
+  auth_service -> auth_service : check email_verified
+  auth_service -> db : insert RefreshToken\ninsert LoginAttempt(success=true)
+  auth_service -> audit_service : log_action(USER_LOGIN)
+  auth_service --> auth_router : TokenResponse
+end
+
+auth_router --> client : access_token + refresh_token
+
+client -> auth_router : GET /api/auth/me
+auth_router -> deps : get_current_account()
+deps -> security : verify_token(access)
+deps -> db : load admin or user
+deps --> auth_router : current account
+auth_router --> client : profile JSON
+
+@enduml

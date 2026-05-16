@@ -1,0 +1,31 @@
+@startuml
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam dpi 180
+autonumber
+
+actor "Mobile app" as client
+participant "Search endpoint\nGET /api/pharmacies/search" as search_api
+participant "CacheService" as cache_service
+database "SQLAlchemy DB" as db
+participant "Analytics helper" as analytics
+database "SearchEvent table" as search_event
+
+client -> search_api : query + governorate + limit
+search_api -> cache_service : get_json(cache_key)
+alt cache hit
+  cache_service --> search_api : cached list
+  search_api -> analytics : record_search_event()
+  analytics -> search_event : insert row
+  search_api --> client : cached results
+else cache miss
+  cache_service --> search_api : null
+  search_api -> db : filter Pharmacie\norder by name\nlimit
+  db --> search_api : pharmacies
+  search_api -> analytics : record_search_event()
+  analytics -> search_event : insert row
+  search_api -> cache_service : set_json(cache_key, payload, ttl=600)
+  search_api --> client : results
+end
+
+@enduml

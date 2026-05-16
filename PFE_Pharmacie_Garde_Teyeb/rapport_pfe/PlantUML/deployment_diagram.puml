@@ -1,0 +1,42 @@
+@startuml
+!pragma layout smetana
+left to right direction
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam dpi 180
+skinparam packageStyle rectangle
+skinparam componentStyle rectangle
+skinparam linetype ortho
+
+node "Web browser" as browser {
+  artifact "Admin SPA\nReact + Vite" as admin_art
+}
+
+node "Mobile device" as phone {
+  artifact "Expo app\nReact Native" as mobile_art
+}
+
+node "Backend server" as backend_node {
+  artifact "FastAPI app\nbackend_pharmacie/main.py\nuvicorn :8000" as backend_art
+}
+
+node "Assistant server" as assistant_node {
+  artifact "First-aid API\nchatbot_PFE/api.py\nuvicorn :8001" as chatbot_art
+  artifact "Model files\nfirstaid_chatbot_model/" as model_art
+}
+
+database "DB server\nPostgreSQL / SQLite" as db
+database "Redis cache" as redis
+cloud "SMTP service" as smtp
+
+browser --> backend_art : HTTPS / JWT
+phone --> backend_art : HTTPS / JWT
+phone --> chatbot_art : HTTPS / JSON
+
+backend_art --> db : SQLAlchemy
+backend_art --> redis : optional cache
+backend_art --> smtp : verification mail
+
+chatbot_art --> model_art : local retrieval
+
+@enduml
