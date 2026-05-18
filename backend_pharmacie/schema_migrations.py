@@ -385,6 +385,21 @@ def _add_medicine_indexes(connection: Connection) -> None:
         connection.execute(text(statement))
 
 
+def _add_pharmacy_location_indexes(connection: Connection) -> None:
+    """Add indexes supporting nearby pharmacy queries."""
+    if "pharmacies" not in set(inspect(connection).get_table_names()):
+        return
+
+    statements = [
+        "CREATE INDEX IF NOT EXISTS idx_pharmacies_latitude_longitude ON pharmacies (latitude, longitude)",
+        "CREATE INDEX IF NOT EXISTS idx_pharmacies_governorate ON pharmacies (governorate)",
+        "CREATE INDEX IF NOT EXISTS idx_pharmacies_name_governorate ON pharmacies (name, governorate)",
+    ]
+
+    for statement in statements:
+        connection.execute(text(statement))
+
+
 def _add_admin_region_scope(connection: Connection) -> None:
     """Add optional regional scope for assistant administrator accounts."""
     inspector = inspect(connection)
@@ -546,5 +561,10 @@ MIGRATIONS = [
         version="2026_05_09_008_harden_assistant_admin_schema",
         description="Add assistant account integrity constraints and last-login tracking",
         apply=_harden_assistant_admin_schema,
+    ),
+    Migration(
+        version="2026_05_18_009_add_pharmacies_location_indexes",
+        description="Add indexes for nearby pharmacy searches",
+        apply=_add_pharmacy_location_indexes,
     ),
 ]

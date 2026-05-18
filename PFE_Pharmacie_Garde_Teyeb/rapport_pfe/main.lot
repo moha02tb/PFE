@@ -29,18 +29,18 @@
 \contentsline {table}{\numberline {4.3}{\ignorespaces Organisation générale du dépôt}}{37}{table.caption.38}%
 \contentsline {table}{\numberline {4.4}{\ignorespaces Statistiques du jeu de données de l'assistant}}{41}{table.caption.39}%
 \contentsline {table}{\numberline {4.5}{\ignorespaces Performances de l'assistant après entraînement}}{42}{table.caption.40}%
-\contentsline {table}{\numberline {4.6}{\ignorespaces Principales intégrations API}}{45}{table.caption.47}%
-\contentsline {table}{\numberline {4.7}{\ignorespaces Variables d'environnement principales}}{45}{table.caption.48}%
-\contentsline {table}{\numberline {4.8}{\ignorespaces Stratégie de validation}}{46}{table.caption.49}%
-\contentsline {table}{\numberline {4.9}{\ignorespaces Résultats de validation exécutés}}{46}{table.4.9}%
-\contentsline {table}{\numberline {4.10}{\ignorespaces Preuves de lancement et de build}}{48}{table.caption.50}%
-\contentsline {table}{\numberline {4.11}{\ignorespaces Scénarios fonctionnels testés}}{48}{table.4.11}%
-\contentsline {table}{\numberline {4.12}{\ignorespaces Difficultés rencontrées et solutions adoptées}}{49}{table.4.12}%
+\contentsline {table}{\numberline {4.6}{\ignorespaces Principales intégrations API}}{49}{table.caption.52}%
+\contentsline {table}{\numberline {4.7}{\ignorespaces Variables d'environnement principales}}{50}{table.caption.53}%
+\contentsline {table}{\numberline {4.8}{\ignorespaces Stratégie de validation}}{51}{table.caption.54}%
+\contentsline {table}{\numberline {4.9}{\ignorespaces Résultats de validation exécutés}}{51}{table.4.9}%
+\contentsline {table}{\numberline {4.10}{\ignorespaces Preuves de lancement et de build}}{52}{table.caption.55}%
+\contentsline {table}{\numberline {4.11}{\ignorespaces Scénarios fonctionnels testés}}{53}{table.4.11}%
+\contentsline {table}{\numberline {4.12}{\ignorespaces Difficultés rencontrées et solutions adoptées}}{53}{table.4.12}%
 \addvspace {10\p@ }
-\contentsline {xchapter}{Annexes}{55}{appendix.A}%
-\contentsline {table}{\numberline {A.1}{\ignorespaces Cas d'utilisation et éléments de validation}}{55}{table.A.1}%
-\contentsline {table}{\numberline {A.2}{\ignorespaces Éléments visuels à insérer}}{56}{table.A.2}%
-\contentsline {table}{\numberline {A.3}{\ignorespaces Résultats détaillés des commandes exécutées}}{58}{table.A.3}%
-\contentsline {table}{\numberline {A.4}{\ignorespaces Variables d'environnement utilisées par le backend}}{58}{table.caption.64}%
-\contentsline {table}{\numberline {A.5}{\ignorespaces Exemple de structure CSV pour les pharmacies}}{59}{table.caption.66}%
-\contentsline {table}{\numberline {A.6}{\ignorespaces Exemple de structure CSV pour les médicaments}}{59}{table.caption.68}%
+\contentsline {xchapter}{Annexes}{60}{appendix.A}%
+\contentsline {table}{\numberline {A.1}{\ignorespaces Cas d'utilisation et éléments de validation}}{60}{table.A.1}%
+\contentsline {table}{\numberline {A.2}{\ignorespaces Éléments visuels à insérer}}{61}{table.A.2}%
+\contentsline {table}{\numberline {A.3}{\ignorespaces Résultats détaillés des commandes exécutées}}{63}{table.A.3}%
+\contentsline {table}{\numberline {A.4}{\ignorespaces Variables d'environnement utilisées par le backend}}{63}{table.caption.69}%
+\contentsline {table}{\numberline {A.5}{\ignorespaces Exemple de structure CSV pour les pharmacies}}{64}{table.caption.71}%
+\contentsline {table}{\numberline {A.6}{\ignorespaces Exemple de structure CSV pour les médicaments}}{64}{table.caption.73}%

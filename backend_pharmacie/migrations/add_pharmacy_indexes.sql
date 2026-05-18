@@ -4,16 +4,16 @@
 
 -- Index on latitude and longitude for bounding box queries
 CREATE INDEX IF NOT EXISTS idx_pharmacie_latitude_longitude 
-ON pharmacie (latitude, longitude);
+ON pharmacies (latitude, longitude);
 
 -- Index on governorate for region-based searches
 CREATE INDEX IF NOT EXISTS idx_pharmacie_governorate 
-ON pharmacie (governorate);
+ON pharmacies (governorate);
 
 -- Composite index for common search patterns
 CREATE INDEX IF NOT EXISTS idx_pharmacie_name_governorate 
-ON pharmacie (name, governorate);
+ON pharmacies (name, governorate);
 
 -- Index for coordinate existence checks
 CREATE INDEX IF NOT EXISTS idx_pharmacie_coords_notnull 
-ON pharmacie (id) WHERE latitude IS NOT NULL AND longitude IS NOT NULL;
+ON pharmacies (id) WHERE latitude IS NOT NULL AND longitude IS NOT NULL;

@@ -6,9 +6,16 @@ React + Vite admin dashboard for PharmacieConnect.
 
 ```bash
 npm install
-npm run dev
+npm.cmd run dev
 npm run build
 npm run lint
+```
+
+If you are using PowerShell and prefer the `npm` wrapper, run this first in the same session:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+npm run dev
 ```
 
 ## Main Directories

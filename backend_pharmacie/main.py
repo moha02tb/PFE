@@ -73,6 +73,8 @@ app.add_middleware(
         "192.168.0.192:8000",  # Backend API port (actual machine IP)
         "192.168.0.192:8001",  # Chatbot API port
         "192.168.0.192:3000",  # Alternative development URL
+        "192.168.1.7:5173",  # Current admin panel origin
+        "192.168.1.7:8000",  # Current backend origin
         "*",  # Allow all in development (don't use in production)
     ]
     + os.getenv("TRUSTED_HOSTS", "localhost").split(","),
@@ -97,6 +99,9 @@ app.add_middleware(
         "http://192.168.0.192:8000",  # Backend API
         "http://192.168.0.192:8001",  # Chatbot API
         "http://192.168.0.192:3000",  # Alternative debug port
+        "http://192.168.1.7:5173",  # Current admin panel origin
+        "http://192.168.1.7:5174",  # Current Vite dev server alternate port
+        "http://192.168.1.7:8000",  # Current backend origin
         os.getenv("FRONTEND_URL", "http://localhost:5173"),
     ],
     allow_credentials=True,  # REQUIRED for cookies

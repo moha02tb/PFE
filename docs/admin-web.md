@@ -12,9 +12,16 @@
 ```bash
 cd admin_pharmacie
 npm install
-npm run dev
+npm.cmd run dev
 npm run build
 npm run lint
+```
+
+If PowerShell blocks `npm`, run this first in the same session and then retry:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+npm run dev
 ```
 
 ## Structure

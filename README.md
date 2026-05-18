@@ -25,10 +25,34 @@ Monorepo for the PharmacieConnect platform.
 ```bash
 cd backend_pharmacie
 python -m venv venv
-source venv/bin/activate
+```
+
+PowerShell:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\venv\Scripts\Activate.ps1
+```
+
+If you prefer not to change the policy in PowerShell, use Command Prompt instead:
+
+```cmd
+.\venv\Scripts\activate.bat
+```
+
+Then install the backend dependencies:
+
+```bash
 pip install -r requirements.txt
 cp .env.example .env
-uvicorn main:app --reload
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+For physical mobile-device testing, the backend must listen on all network
+interfaces. On Windows you can also start it with:
+
+```powershell
+.\start_lan.ps1
 ```
 
 ### Admin Web
@@ -36,6 +60,13 @@ uvicorn main:app --reload
 ```bash
 cd admin_pharmacie
 npm install
+npm.cmd run dev
+```
+
+If you want to use PowerShell's npm wrapper, run this first in the same session:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 npm run dev
 ```
 

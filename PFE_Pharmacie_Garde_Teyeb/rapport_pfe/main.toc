@@ -91,28 +91,28 @@
 \contentsline {subsection}{\numberline {4.8.4}API et intégration avec l'application mobile}{42}{subsection.4.8.4}%
 \contentsline {subsection}{\numberline {4.8.5}Tests et validation}{43}{subsection.4.8.5}%
 \contentsline {section}{\numberline {4.9}Captures d'écran}{43}{section.4.9}%
-\contentsline {section}{\numberline {4.10}Intégration API}{44}{section.4.10}%
-\contentsline {section}{\numberline {4.11}Déploiement et configuration}{45}{section.4.11}%
-\contentsline {section}{\numberline {4.12}Tests unitaires, API et manuels}{46}{section.4.12}%
-\contentsline {subsection}{\numberline {4.12.1}Stratégie de test}{46}{subsection.4.12.1}%
-\contentsline {subsection}{\numberline {4.12.2}Résultats de validation automatisée}{46}{subsection.4.12.2}%
-\contentsline {subsection}{\numberline {4.12.3}Tests automatisés du backend}{47}{subsection.4.12.3}%
-\contentsline {subsection}{\numberline {4.12.4}Tests API}{47}{subsection.4.12.4}%
-\contentsline {subsection}{\numberline {4.12.5}Validation du déploiement local}{47}{subsection.4.12.5}%
-\contentsline {subsection}{\numberline {4.12.6}Validation fonctionnelle}{48}{subsection.4.12.6}%
-\contentsline {section}{\numberline {4.13}Difficultés rencontrées et solutions adoptées}{49}{section.4.13}%
-\contentsline {section}{\numberline {4.14}Conclusion}{49}{section.4.14}%
-\contentsline {chapter}{Conclusion générale}{50}{chapter*.51}%
-\contentsline {section}{Bilan}{50}{section*.52}%
-\contentsline {section}{Résultats obtenus}{50}{section*.53}%
-\contentsline {section}{Limites}{51}{section*.54}%
-\contentsline {section}{Perspectives}{51}{section*.55}%
-\contentsline {chapter}{Bibliographie}{53}{section*.56}%
-\contentsline {chapter}{\numberline {A}Annexes}{55}{appendix.A}%
-\contentsline {section}{\numberline {A.1}Descriptions complémentaires des cas d'utilisation}{55}{section.A.1}%
-\contentsline {section}{\numberline {A.2}État des captures et diagrammes}{55}{section.A.2}%
-\contentsline {section}{\numberline {A.3}Commandes de lancement}{56}{section.A.3}%
-\contentsline {section}{\numberline {A.4}Commandes de test}{57}{section.A.4}%
-\contentsline {section}{\numberline {A.5}Résultats de validation du 13 mai 2026}{58}{section.A.5}%
-\contentsline {section}{\numberline {A.6}Variables d'environnement}{58}{section.A.6}%
-\contentsline {section}{\numberline {A.7}Exemples CSV}{59}{section.A.7}%
+\contentsline {section}{\numberline {4.10}Intégration API}{49}{section.4.10}%
+\contentsline {section}{\numberline {4.11}Déploiement et configuration}{50}{section.4.11}%
+\contentsline {section}{\numberline {4.12}Tests unitaires, API et manuels}{50}{section.4.12}%
+\contentsline {subsection}{\numberline {4.12.1}Stratégie de test}{50}{subsection.4.12.1}%
+\contentsline {subsection}{\numberline {4.12.2}Résultats de validation automatisée}{51}{subsection.4.12.2}%
+\contentsline {subsection}{\numberline {4.12.3}Tests automatisés du backend}{52}{subsection.4.12.3}%
+\contentsline {subsection}{\numberline {4.12.4}Tests API}{52}{subsection.4.12.4}%
+\contentsline {subsection}{\numberline {4.12.5}Validation du déploiement local}{52}{subsection.4.12.5}%
+\contentsline {subsection}{\numberline {4.12.6}Validation fonctionnelle}{53}{subsection.4.12.6}%
+\contentsline {section}{\numberline {4.13}Difficultés rencontrées et solutions adoptées}{53}{section.4.13}%
+\contentsline {section}{\numberline {4.14}Conclusion}{54}{section.4.14}%
+\contentsline {chapter}{Conclusion générale}{55}{chapter*.56}%
+\contentsline {section}{Bilan}{55}{section*.57}%
+\contentsline {section}{Résultats obtenus}{55}{section*.58}%
+\contentsline {section}{Limites}{56}{section*.59}%
+\contentsline {section}{Perspectives}{56}{section*.60}%
+\contentsline {chapter}{Bibliographie}{58}{section*.61}%
+\contentsline {chapter}{\numberline {A}Annexes}{60}{appendix.A}%
+\contentsline {section}{\numberline {A.1}Descriptions complémentaires des cas d'utilisation}{60}{section.A.1}%
+\contentsline {section}{\numberline {A.2}État des captures et diagrammes}{60}{section.A.2}%
+\contentsline {section}{\numberline {A.3}Commandes de lancement}{61}{section.A.3}%
+\contentsline {section}{\numberline {A.4}Commandes de test}{62}{section.A.4}%
+\contentsline {section}{\numberline {A.5}Résultats de validation du 13 mai 2026}{63}{section.A.5}%
+\contentsline {section}{\numberline {A.6}Variables d'environnement}{63}{section.A.6}%
+\contentsline {section}{\numberline {A.7}Exemples CSV}{64}{section.A.7}%

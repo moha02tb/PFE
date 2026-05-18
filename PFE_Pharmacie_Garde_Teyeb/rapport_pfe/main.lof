@@ -17,11 +17,20 @@
 \contentsline {figure}{\numberline {3.7}{\ignorespaces Diagramme de déploiement}}{30}{figure.caption.36}%
 \addvspace {10\p@ }
 \contentsline {xchapter}{Réalisation et tests}{33}{chapter.4}%
-\contentsline {figure}{\numberline {4.1}{\ignorespaces Vue du tableau de bord administrateur}}{43}{figure.caption.41}%
-\contentsline {figure}{\numberline {4.2}{\ignorespaces Vue de gestion des pharmacies}}{43}{figure.caption.42}%
-\contentsline {figure}{\numberline {4.3}{\ignorespaces Vue mobile d'accueil et de recherche}}{44}{figure.caption.43}%
-\contentsline {figure}{\numberline {4.4}{\ignorespaces Vue mobile du calendrier des gardes}}{44}{figure.caption.44}%
-\contentsline {figure}{\numberline {4.5}{\ignorespaces Vue mobile du catalogue de médicaments}}{44}{figure.caption.45}%
-\contentsline {figure}{\numberline {4.6}{\ignorespaces Écran mobile de l'assistant de premiers secours}}{44}{figure.caption.46}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Ecran de connexion du tableau de bord administrateur}}{43}{figure.caption.41}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Vue du tableau de bord administrateur}}{44}{figure.caption.42}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Vue du registre des pharmacies}}{44}{figure.caption.43}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Vue de gestion des pharmacies et des gardes}}{45}{figure.caption.44}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces Vue du calendrier des gardes}}{45}{figure.caption.45}%
+\contentsline {figure}{\numberline {4.6}{\ignorespaces Vue cartographique du reseau de pharmacies}}{46}{figure.caption.46}%
+\contentsline {figure}{\numberline {4.7}{\ignorespaces Interface d'import des pharmacies}}{46}{figure.caption.47}%
+\contentsline {figure}{\numberline {4.8}{\ignorespaces Interface d'import du planning de garde}}{47}{figure.caption.48}%
+\contentsline {figure}{\numberline {4.9}{\ignorespaces Vue des journaux d'audit}}{47}{figure.caption.49}%
+\contentsline {figure}{\numberline {4.10}{\ignorespaces Connexion mobile}}{48}{figure.caption.50}%
+\contentsline {figure}{\numberline {4.11}{\ignorespaces Accueil et recherche mobile}}{48}{figure.caption.50}%
+\contentsline {figure}{\numberline {4.12}{\ignorespaces Carte mobile des pharmacies}}{48}{figure.caption.50}%
+\contentsline {figure}{\numberline {4.13}{\ignorespaces Calendrier mobile des gardes}}{49}{figure.caption.51}%
+\contentsline {figure}{\numberline {4.14}{\ignorespaces Catalogue mobile des medicaments}}{49}{figure.caption.51}%
+\contentsline {figure}{\numberline {4.15}{\ignorespaces Assistant mobile de premiers secours}}{49}{figure.caption.51}%
 \addvspace {10\p@ }
-\contentsline {xchapter}{Annexes}{55}{appendix.A}%
+\contentsline {xchapter}{Annexes}{60}{appendix.A}%

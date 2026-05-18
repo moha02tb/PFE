@@ -5,6 +5,8 @@ import { API_CONFIG } from '../config/api';
 // Get API base URL from configuration
 const API_BASE_URL = API_CONFIG.baseURL;
 const NEARBY_FALLBACK_LIMIT = 500;
+const API_MAX_RETRIES = API_CONFIG.retry?.maxRetries ?? 3;
+const API_RETRY_DELAY = API_CONFIG.retry?.retryDelay ?? 1000;
 
 console.log(`[Pharmacy Loader] Initialized with API URL: ${API_BASE_URL}`);
 
@@ -23,7 +25,7 @@ const withRetry = async (requestFn, maxRetries = 3, baseDelay = 1000) => {
       return await requestFn();
     } catch (error) {
       lastError = error;
-      
+
       // Don't retry on client errors (4xx) unless it's a timeout
       if (
         error.response?.status &&
@@ -33,17 +35,15 @@ const withRetry = async (requestFn, maxRetries = 3, baseDelay = 1000) => {
         throw error;
       }
 
-      // If this is the last attempt, throw
       if (attempt === maxRetries) {
         break;
       }
 
-      // Calculate exponential backoff with jitter
       const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
       console.log(
         `[Pharmacy Loader] Retry attempt ${attempt + 1}/${maxRetries} after ${Math.round(delay)}ms`
       );
-      
+
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
@@ -202,8 +202,8 @@ export const fetchPharmaciesFromAPI = async (skip = 0, limit = 100) => {
         params: { skip, limit },
         timeout: API_CONFIG.timeout,
       }),
-      API_CONFIG.retry.maxRetries,
-      API_CONFIG.retry.retryDelay
+      API_MAX_RETRIES,
+      API_RETRY_DELAY
     );
 
     console.log(`[API] Successfully fetched ${response.data?.length || 0} pharmacies`);
@@ -245,8 +245,8 @@ export const searchPharmaciesFromAPI = async (
         },
         timeout: API_CONFIG.timeout,
       }),
-      API_CONFIG.retry.maxRetries,
-      API_CONFIG.retry.retryDelay
+      API_MAX_RETRIES,
+      API_RETRY_DELAY
     );
 
     console.log(`[API] Successfully searched ${response.data?.length || 0} pharmacies`);
@@ -291,10 +291,10 @@ export const fetchNearbyPharmaciesFromAPI = async (
           radius_km: radiusKm,
           limit,
         },
-        timeout: API_CONFIG.timeout,
+        timeout: Math.min(API_CONFIG.timeout, 15000),
       }),
-      API_CONFIG.retry.maxRetries,
-      API_CONFIG.retry.retryDelay
+      0,
+      API_RETRY_DELAY
     );
 
     console.log(`[API] Successfully fetched ${response.data?.length || 0} nearby pharmacies`);
@@ -311,7 +311,6 @@ export const fetchNearbyPharmaciesFromAPI = async (
     return null;
   }
 };
-
 export const trackSearchEvent = async ({
   eventType,
   queryText = null,
@@ -338,8 +337,8 @@ export const trackSearchEvent = async ({
           timeout: API_CONFIG.timeout,
         }
       ),
-      API_CONFIG.retry.maxRetries,
-      API_CONFIG.retry.retryDelay
+      API_MAX_RETRIES,
+      API_RETRY_DELAY
     );
   } catch (error) {
     console.warn('[Analytics] Failed to track search event:', {
@@ -360,8 +359,8 @@ export const fetchCalendarPharmaciesFromAPI = async (date) => {
         params: { date_value: dateParam, limit: 200 },
         timeout: API_CONFIG.timeout,
       }),
-      API_CONFIG.retry.maxRetries,
-      API_CONFIG.retry.retryDelay
+      API_MAX_RETRIES,
+      API_RETRY_DELAY
     );
 
     console.log(`[API] Successfully fetched ${response.data?.length || 0} garde rows`);

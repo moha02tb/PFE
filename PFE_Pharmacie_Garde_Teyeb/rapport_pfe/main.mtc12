@@ -24,14 +24,14 @@
 {\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.8.4}API et intégration avec l'application mobile}{\reset@font\mtcSSfont 42}{subsection.4.8.4}}
 {\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.8.5}Tests et validation}{\reset@font\mtcSSfont 43}{subsection.4.8.5}}
 {\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.9}Captures d'écran}{\reset@font\mtcSfont 43}{section.4.9}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.10}Intégration API}{\reset@font\mtcSfont 44}{section.4.10}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.11}Déploiement et configuration}{\reset@font\mtcSfont 45}{section.4.11}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.12}Tests unitaires, API et manuels}{\reset@font\mtcSfont 46}{section.4.12}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.12.1}Stratégie de test}{\reset@font\mtcSSfont 46}{subsection.4.12.1}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.12.2}Résultats de validation automatisée}{\reset@font\mtcSSfont 46}{subsection.4.12.2}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.12.3}Tests automatisés du backend}{\reset@font\mtcSSfont 47}{subsection.4.12.3}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.12.4}Tests API}{\reset@font\mtcSSfont 47}{subsection.4.12.4}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.12.5}Validation du déploiement local}{\reset@font\mtcSSfont 47}{subsection.4.12.5}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.12.6}Validation fonctionnelle}{\reset@font\mtcSSfont 48}{subsection.4.12.6}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.13}Difficultés rencontrées et solutions adoptées}{\reset@font\mtcSfont 49}{section.4.13}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.14}Conclusion}{\reset@font\mtcSfont 49}{section.4.14}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.10}Intégration API}{\reset@font\mtcSfont 49}{section.4.10}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.11}Déploiement et configuration}{\reset@font\mtcSfont 50}{section.4.11}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.12}Tests unitaires, API et manuels}{\reset@font\mtcSfont 50}{section.4.12}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.12.1}Stratégie de test}{\reset@font\mtcSSfont 50}{subsection.4.12.1}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.12.2}Résultats de validation automatisée}{\reset@font\mtcSSfont 51}{subsection.4.12.2}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.12.3}Tests automatisés du backend}{\reset@font\mtcSSfont 52}{subsection.4.12.3}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.12.4}Tests API}{\reset@font\mtcSSfont 52}{subsection.4.12.4}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.12.5}Validation du déploiement local}{\reset@font\mtcSSfont 52}{subsection.4.12.5}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.12.6}Validation fonctionnelle}{\reset@font\mtcSSfont 53}{subsection.4.12.6}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.13}Difficultés rencontrées et solutions adoptées}{\reset@font\mtcSfont 53}{section.4.13}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.14}Conclusion}{\reset@font\mtcSfont 54}{section.4.14}}
