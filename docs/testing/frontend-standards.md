@@ -498,4 +498,4 @@ function PharmacyCard({ pharmacy }) {
 
 ---
 
-For questions, refer to [CODE_STANDARDS.md](./CODE_STANDARDS.md) or [CONTRIBUTING.md](./CONTRIBUTING.md).
+For questions, refer to [Code Standards](./code-standards.md) or the [Contributing Guide](./contributing.md).

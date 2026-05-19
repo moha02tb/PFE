@@ -12,11 +12,25 @@ Monorepo for the PharmacieConnect platform.
 ## Start Here
 
 - Project docs: [docs/README.md](./docs/README.md)
-- Backend guide: [docs/backend-api.md](./docs/backend-api.md)
-- Admin web guide: [docs/admin-web.md](./docs/admin-web.md)
-- Mobile app guide: [docs/mobile-app.md](./docs/mobile-app.md)
-- Architecture: [docs/architecture.md](./docs/architecture.md)
-- Troubleshooting: [docs/troubleshooting.md](./docs/troubleshooting.md)
+- Getting started: [docs/deployment/getting-started.md](./docs/deployment/getting-started.md)
+- Architecture overview: [docs/architecture/overview.md](./docs/architecture/overview.md)
+- Backend API guide: [docs/api/backend-api.md](./docs/api/backend-api.md)
+- API reference: [docs/api/api-reference.md](./docs/api/api-reference.md)
+- Admin web guide: [docs/deployment/admin-web.md](./docs/deployment/admin-web.md)
+- Mobile app guide: [docs/deployment/mobile-app.md](./docs/deployment/mobile-app.md)
+- Troubleshooting: [docs/deployment/troubleshooting.md](./docs/deployment/troubleshooting.md)
+
+## Documentation
+
+Detailed documentation is organized by topic under `docs/`:
+
+- [Architecture](./docs/architecture/) - system overview, backend architecture, and design system notes
+- [API](./docs/api/) - backend API guide and endpoint reference
+- [Deployment](./docs/deployment/) - local setup, admin web, mobile app, and troubleshooting
+- [Performance](./docs/performance/) - timeout, connectivity, caching, and query optimization notes
+- [Security](./docs/security/) - backend security and FastAPI standards
+- [Testing](./docs/testing/) - contribution workflow, code standards, frontend standards, and mobile fix logs
+- [UML](./docs/uml/) - diagram index and technical diagram reference material
 
 ## Development Workflow
 

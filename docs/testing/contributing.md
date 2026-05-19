@@ -202,8 +202,8 @@ All code must follow project standards before submission:
 
 ### Detailed Standards
 
-- **Backend**: See [BACKEND_STANDARDS.md](./BACKEND_STANDARDS.md)
-- **Frontend**: See [FRONTEND_STANDARDS.md](./FRONTEND_STANDARDS.md)
+- **Backend**: See [Backend Standards](../security/backend-standards.md)
+- **Frontend**: See [Frontend Standards](./frontend-standards.md)
 
 ### Quick Formatting
 
@@ -456,9 +456,9 @@ kill -9 <PID>
 
 ## Getting Help
 
-1. **Documentation**: Check [CODE_STANDARDS.md](./CODE_STANDARDS.md)
-2. **Backend**: See [BACKEND_STANDARDS.md](./BACKEND_STANDARDS.md)
-3. **Frontend**: See [FRONTEND_STANDARDS.md](./FRONTEND_STANDARDS.md)
+1. **Documentation**: Check [Code Standards](./code-standards.md)
+2. **Backend**: See [Backend Standards](../security/backend-standards.md)
+3. **Frontend**: See [Frontend Standards](./frontend-standards.md)
 4. **Issues**: Open an issue on GitHub
 5. **Team**: Ask in the team Slack channel
 

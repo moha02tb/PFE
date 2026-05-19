@@ -228,7 +228,7 @@ def get_pharmacy(session: Session, pharmacy_id: int):
 
 ## Testing Standards
 
-See [Phase 5 Testing Enhancement](./IMPLEMENTATION_PLAN.md#phase-5-testing-enhancement)
+For test planning, use the repository test suites and the quality guidance in [Code Standards](../testing/code-standards.md).
 
 ### Test File Structure
 
@@ -342,4 +342,4 @@ database_url = os.getenv("DATABASE_URL")
 
 ---
 
-For questions, refer to [CODE_STANDARDS.md](./CODE_STANDARDS.md) or [CONTRIBUTING.md](./CONTRIBUTING.md).
+For questions, refer to [Code Standards](../testing/code-standards.md) or the [Contributing Guide](../testing/contributing.md).

@@ -494,7 +494,7 @@ const theme = createTheme(isDarkMode);
 
 ### Token Changes
 
-1. Update DESIGN_TOKENS.md with new values
+1. Update [design-tokens.md](./design-tokens.md) with new values
 2. Update both web and mobile token files
 3. Run cross-platform visual regression tests
 4. Document breaking changes in CHANGELOG
@@ -507,6 +507,6 @@ Current Version: **1.0.0** (Initial unified system)
 
 ## Related Documentation
 
-- [BRAND_GUIDELINES.md](./BRAND_GUIDELINES.md) — Brand identity and usage rules
-- [admin_pharmacie/README.md](./admin_pharmacie/README.md) — Web app implementation
-- [ouerkema-pharmacieconnect-4c94773cce7d/README.md](./ouerkema-pharmacieconnect-4c94773cce7d/README.md) — Mobile app implementation
+- [brand-guidelines.md](./brand-guidelines.md) - brand identity and usage rules
+- [Admin web guide](../../deployment/admin-web.md) - web app implementation
+- [Mobile app guide](../../deployment/mobile-app.md) - mobile app implementation

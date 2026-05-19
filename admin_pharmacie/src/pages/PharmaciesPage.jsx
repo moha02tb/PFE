@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   AlertTriangle,
@@ -126,20 +126,42 @@ const PharmaciesPage = () => {
     };
   }, [page]);
 
-  const governorates = Array.from(new Set(pharmacies.map((item) => item.governorate).filter(Boolean)));
-  const filteredPharmacies = pharmacies.filter((item) => {
-    const matchesSearch =
-      !search ||
-      [item.name, item.address, item.phone, item.governorate]
-        .filter(Boolean)
-        .some((value) => value.toLowerCase().includes(search.toLowerCase()));
-    const matchesGovernorate = governorate === 'all' || item.governorate === governorate;
-    return matchesSearch && matchesGovernorate;
-  });
+  const governorates = useMemo(
+    () => Array.from(new Set(pharmacies.map((item) => item.governorate).filter(Boolean))),
+    [pharmacies]
+  );
+  const filteredPharmacies = useMemo(() => {
+    const normalizedSearch = search.toLowerCase();
+    return pharmacies.filter((item) => {
+      const matchesSearch =
+        !normalizedSearch ||
+        [item.name, item.address, item.phone, item.governorate]
+          .filter(Boolean)
+          .some((value) => value.toLowerCase().includes(normalizedSearch));
+      const matchesGovernorate = governorate === 'all' || item.governorate === governorate;
+      return matchesSearch && matchesGovernorate;
+    });
+  }, [governorate, pharmacies, search]);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const mappedCount = pharmacies.filter((item) => typeof item.latitude === 'number' && typeof item.longitude === 'number').length;
-  const phoneCount = pharmacies.filter((item) => item.phone).length;
-  const addressCount = pharmacies.filter((item) => item.address).length;
+  const { mappedCount, phoneCount, addressCount } = useMemo(
+    () =>
+      pharmacies.reduce(
+        (acc, item) => {
+          if (typeof item.latitude === 'number' && typeof item.longitude === 'number') {
+            acc.mappedCount += 1;
+          }
+          if (item.phone) {
+            acc.phoneCount += 1;
+          }
+          if (item.address) {
+            acc.addressCount += 1;
+          }
+          return acc;
+        },
+        { mappedCount: 0, phoneCount: 0, addressCount: 0 }
+      ),
+    [pharmacies]
+  );
   const readiness = pharmacies.length
     ? Math.round(((mappedCount + phoneCount + addressCount) / (pharmacies.length * 3)) * 100)
     : 0;

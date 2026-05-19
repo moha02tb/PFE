@@ -205,15 +205,18 @@ class MedicineService:
             self.db.rollback()
             return None, f"No valid medicines found in CSV. {len(errors)} rows had errors."
 
+        existing_by_code = {
+            medicine.code_pct: medicine
+            for medicine in self.db.query(models.Medicine)
+            .filter(models.Medicine.code_pct.in_(list(latest_by_code.keys())))
+            .all()
+        }
+
         successful = 0
         try:
             for code_pct, record in latest_by_code.items():
                 payload = record["payload"]
-                existing = (
-                    self.db.query(models.Medicine)
-                    .filter(models.Medicine.code_pct == code_pct)
-                    .first()
-                )
+                existing = existing_by_code.get(code_pct)
                 if existing:
                     existing.nom_commercial = payload["nom_commercial"]
                     existing.prix_public_dt = Decimal(str(payload["prix_public_dt"]))

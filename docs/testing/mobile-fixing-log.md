@@ -14,7 +14,7 @@ This document tracks all modifications made to improve code quality and robustne
 Created a centralized logging utility that provides consistent log formatting with level support and environment awareness across the application.
 
 ### Files Created
-- **[utils/logger.js](ouerkema-pharmacieconnect-4c94773cce7d/utils/logger.js)** - New centralized logger utility
+- **`ouerkema-pharmacieconnect-4c94773cce7d/utils/logger.js`** - New centralized logger utility
 
 ### Implementation Details
 
@@ -44,28 +44,28 @@ Created a centralized logging utility that provides consistent log formatting wi
 
 ### Files Updated with Logger
 
-#### [screens/HomeScreen.js](ouerkema-pharmacieconnect-4c94773cce7d/screens/HomeScreen.js)
+#### `ouerkema-pharmacieconnect-4c94773cce7d/screens/HomeScreen.js`
 - **2 console.* calls replaced:**
   - Line 37: `console.error('Error loading pharmacies data:', error)` → `logger.error('HomeScreen', 'Error loading pharmacies data', error)`
   - Line 90: `console.error('Erreur lors de l'appel', err)` → `logger.error('HomeScreen', 'Erreur lors de l'appel', err)`
 
-#### [screens/MapScreen.js](ouerkema-pharmacieconnect-4c94773cce7d/screens/MapScreen.js)
+#### `ouerkema-pharmacieconnect-4c94773cce7d/screens/MapScreen.js`
 - **2 console.* calls replaced:**
   - Line 79: `console.error(error)` → `logger.error('MapScreen', 'Error getting location', error)`
   - Line 129: `console.warn('Place search failed', e)` → `logger.warn('MapScreen', 'Place search failed', e)`
 
-#### [screens/MapboxMapScreen.js](ouerkema-pharmacieconnect-4c94773cce7d/screens/MapboxMapScreen.js)
+#### `ouerkema-pharmacieconnect-4c94773cce7d/screens/MapboxMapScreen.js`
 - **1 console.* call replaced:**
   - Line 73: `console.error(error)` → `logger.error('MapboxMapScreen', 'Error getting location', error)`
 
-#### [screens/CalendarScreen.js](ouerkema-pharmacieconnect-4c94773cce7d/screens/CalendarScreen.js)
+#### `ouerkema-pharmacieconnect-4c94773cce7d/screens/CalendarScreen.js`
 - **4 console.* calls replaced:**
   - Line 48: `console.error('Error loading pharmacies data:', error)` → `logger.error('CalendarScreen', 'Error loading pharmacies data', error)`
   - Line 57: `console.error('Erreur lors de l'appel', err)` → `logger.error('CalendarScreen', 'Erreur lors de l'appel', err)`
   - Line 68: `console.error("Erreur lors de l'ouverture de la carte", err)` → `logger.error('CalendarScreen', 'Erreur lors de l'ouverture de la carte', err)`
   - Line 114: `console.warn('Date locale not supported, falling back to French:', error)` → `logger.warn('CalendarScreen', 'Date locale not supported, falling back to French', error)`
 
-#### [screens/SettingsScreen.js](ouerkema-pharmacieconnect-4c94773cce7d/screens/SettingsScreen.js)
+#### `ouerkema-pharmacieconnect-4c94773cce7d/screens/SettingsScreen.js`
 - **4 console.* calls replaced:**
   - Line 56: `console.error('Error handling notification toggle:', error)` → `logger.error('SettingsScreen', 'Error handling notification toggle', error)`
   - Line 68: `console.error('Error sending test notification:', error)` → `logger.error('SettingsScreen', 'Error sending test notification', error)`
@@ -90,7 +90,7 @@ Replaced unsafe error throws with fail-safe behavior, implementing defensive che
 
 ### Files Updated
 
-#### [screens/LanguageContext.js](ouerkema-pharmacieconnect-4c94773cce7d/screens/LanguageContext.js)
+#### `ouerkema-pharmacieconnect-4c94773cce7d/screens/LanguageContext.js`
 
 **Import Addition:**
 ```javascript
@@ -145,7 +145,7 @@ export const useLanguage = () => {
 - Requirement documentation for LanguageProvider wrapper
 - Fail-safe behavior explanation
 
-#### [screens/NotificationContext.js](ouerkema-pharmacieconnect-4c94773cce7d/screens/NotificationContext.js)
+#### `ouerkema-pharmacieconnect-4c94773cce7d/screens/NotificationContext.js`
 
 **Import Addition:**
 ```javascript
@@ -324,7 +324,7 @@ Added ESLint and Jest configuration with npm scripts for automated code quality 
 
 ### Files Updated
 
-#### [package.json](ouerkema-pharmacieconnect-4c94773cce7d/package.json)
+#### `ouerkema-pharmacieconnect-4c94773cce7d/package.json`
 
 **New npm scripts added:**
 ```json

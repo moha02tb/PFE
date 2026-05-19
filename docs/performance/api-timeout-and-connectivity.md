@@ -1,5 +1,7 @@
 # API Timeout Troubleshoot & Fix Guide
 
+This document merges the former root-level timeout guide and LAN connectivity fix notes.
+
 ## Problem Summary
 The mobile app was experiencing repeated API timeouts (ECONNABORTED, 10000ms exceeded) when:
 - Fetching nearby pharmacies: `GET /api/pharmacies/nearby`
@@ -7,6 +9,25 @@ The mobile app was experiencing repeated API timeouts (ECONNABORTED, 10000ms exc
 - Searching pharmacies: `GET /api/pharmacies/search`
 
 **Root Cause**: The backend was loading ALL pharmacies into memory and filtering client-side (inefficient), combined with a 10-second timeout that was too tight.
+
+## LAN Connectivity Notes
+
+The former connectivity note tracked a local network IP change from `192.168.1.142` to `192.168.0.192`. Treat that value as an example only, because LAN IP addresses change by machine and network.
+
+For local device testing:
+
+- Start the backend with `--host 0.0.0.0`.
+- Set `FRONTEND_URL`, `CORS_ORIGINS`, and `TRUSTED_HOSTS` to include the admin web origin and backend host.
+- Set `VITE_API_URL` in the admin app when the backend is not on `localhost`.
+- Set `EXPO_PUBLIC_API_URL` and `EXPO_PUBLIC_CHATBOT_API_URL` for physical-device testing only when Expo host auto-detection is not enough.
+- Restart Vite and Expo after changing environment files.
+
+Useful checks:
+
+```bash
+curl http://YOUR_LAN_IP:8000/health
+curl http://YOUR_LAN_IP:5173/
+```
 
 ---
 

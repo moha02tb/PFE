@@ -809,7 +809,7 @@ The system supports Arabic with RTL layout. Key considerations:
 Before shipping any UI changes:
 
 ### Visual Design
-- [ ] Colors match DESIGN_TOKENS.md
+- [ ] Colors match [design-tokens.md](./design-tokens.md)
 - [ ] Spacing aligns to 4px grid
 - [ ] Typography hierarchy is clear and semantic
 - [ ] Icons are consistent with existing system
@@ -883,6 +883,6 @@ Before shipping any UI changes:
 
 ## Related Documentation
 
-- [DESIGN_TOKENS.md](./DESIGN_TOKENS.md) — Token definitions and implementation examples
-- [admin_pharmacie/README.md](./admin_pharmacie/README.md) — Web app structure
-- [ouerkema-pharmacieconnect-4c94773cce7d/README.md](./ouerkema-pharmacieconnect-4c94773cce7d/README.md) — Mobile app structure
+- [design-tokens.md](./design-tokens.md) - token definitions and implementation examples
+- [Admin web guide](../../deployment/admin-web.md) - web app structure
+- [Mobile app guide](../../deployment/mobile-app.md) - mobile app structure

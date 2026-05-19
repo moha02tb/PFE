@@ -8,7 +8,7 @@ import { AppCard, AppText, EmptyState, EntranceView, SearchBar } from '../compon
 import { useAppTheme } from '../utils/theme';
 import { fetchMedicineCountFromAPI, fetchMedicinesFromAPI } from '../utils/medicineDataLoader';
 
-const PAGE_SIZE = 500;
+const PAGE_SIZE = 100;
 
 export default function MedicinesScreen({ navigation }) {
   const { t } = useTranslation();
@@ -20,7 +20,9 @@ export default function MedicinesScreen({ navigation }) {
   const [resultCount, setResultCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState('');
+  const [nextSkip, setNextSkip] = useState(0);
   const requestIdRef = useRef(0);
 
   const debouncedSearch = useDebounce(searchTerm, 300);
@@ -29,48 +31,63 @@ export default function MedicinesScreen({ navigation }) {
     [colors, radius, shadows, insets.top]
   );
 
-  const loadMedicines = async ({ forceRefresh = false, query = '' } = {}) => {
+  const loadMedicines = async ({ forceRefresh = false, query = '', append = false } = {}) => {
     const requestId = ++requestIdRef.current;
-    if (!forceRefresh) setLoading(true);
+    if (append) {
+      setLoadingMore(true);
+    } else if (!forceRefresh) {
+      setLoading(true);
+    }
     setError('');
 
     try {
       const normalizedQuery = query.trim();
-      const [total, filteredTotal] = await Promise.all([
-        fetchMedicineCountFromAPI(''),
-        fetchMedicineCountFromAPI(normalizedQuery),
-      ]);
+      const skip = append ? nextSkip : 0;
+      let filteredTotal = resultCount;
 
-      if (requestId !== requestIdRef.current) return;
+      if (!append) {
+        const countRequests = [fetchMedicineCountFromAPI('')];
+        if (normalizedQuery) {
+          countRequests.push(fetchMedicineCountFromAPI(normalizedQuery));
+        }
+        const [total, queryTotal] = await Promise.all(countRequests);
 
-      setCatalogCount(total || 0);
-      setResultCount(filteredTotal || 0);
+        if (requestId !== requestIdRef.current) return;
+
+        filteredTotal = normalizedQuery ? queryTotal : total;
+        setCatalogCount(total || 0);
+        setResultCount(filteredTotal || 0);
+      }
 
       if (!filteredTotal) {
-        setMedicines([]);
+        if (!append) {
+          setMedicines([]);
+          setNextSkip(0);
+        }
         return;
       }
 
-      const pageCount = Math.ceil(filteredTotal / PAGE_SIZE);
-      const pages = await Promise.all(
-        Array.from({ length: pageCount }, (_, index) =>
-          fetchMedicinesFromAPI(normalizedQuery, index * PAGE_SIZE, PAGE_SIZE)
-        )
-      );
-      if (pages.some((page) => page === null)) {
+      const page = await fetchMedicinesFromAPI(normalizedQuery, skip, PAGE_SIZE);
+      if (page === null) {
         throw new Error(t('medicines.loadError', 'Failed to load medicines from the server.'));
       }
 
       if (requestId !== requestIdRef.current) return;
 
-      const items = pages.flat();
-      setMedicines(items);
+      setMedicines((current) => (append ? [...current, ...page] : page));
+      setNextSkip(skip + page.length);
+      if (append && page.length === 0) {
+        setResultCount((currentTotal) => Math.min(currentTotal, skip));
+      }
     } catch (err) {
       if (requestId !== requestIdRef.current) return;
 
-      setMedicines([]);
-      setCatalogCount(0);
-      setResultCount(0);
+      if (!append) {
+        setMedicines([]);
+        setCatalogCount(0);
+        setResultCount(0);
+        setNextSkip(0);
+      }
       setError(
         err.message || t('medicines.loadError', 'Failed to load medicines from the server.')
       );
@@ -78,6 +95,7 @@ export default function MedicinesScreen({ navigation }) {
       if (requestId === requestIdRef.current) {
         setLoading(false);
         setRefreshing(false);
+        setLoadingMore(false);
       }
     }
   };
@@ -89,6 +107,15 @@ export default function MedicinesScreen({ navigation }) {
   const onRefresh = async () => {
     setRefreshing(true);
     await loadMedicines({ forceRefresh: true, query: debouncedSearch });
+  };
+
+  const hasMore = medicines.length < resultCount;
+
+  const handleLoadMore = () => {
+    if (loading || loadingMore || !hasMore) {
+      return;
+    }
+    loadMedicines({ query: debouncedSearch, append: true });
   };
 
   const headerComponent = useMemo(
@@ -234,6 +261,8 @@ export default function MedicinesScreen({ navigation }) {
       data={medicines}
       keyExtractor={(item) => item.code_pct}
       renderItem={renderItem}
+      onEndReached={handleLoadMore}
+      onEndReachedThreshold={0.4}
       ListHeaderComponent={headerComponent}
       ListEmptyComponent={
         <EmptyState
@@ -245,9 +274,19 @@ export default function MedicinesScreen({ navigation }) {
           )}
         />
       }
+      ListFooterComponent={
+        loadingMore ? (
+          <View style={styles.footerLoader}>
+            <ActivityIndicator size="small" color={colors.primary} />
+          </View>
+        ) : null
+      }
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
       }
+      initialNumToRender={12}
+      maxToRenderPerBatch={12}
+      windowSize={7}
       showsVerticalScrollIndicator={false}
     />
   );
@@ -268,6 +307,10 @@ const createStyles = (colors, radius, shadows, topInset) =>
       justifyContent: 'center',
       backgroundColor: colors.background,
       paddingHorizontal: 24,
+    },
+    footerLoader: {
+      alignItems: 'center',
+      paddingVertical: 18,
     },
     heroCard: {
       backgroundColor: colors.primary,

@@ -92,13 +92,13 @@ Before merging any PR:
 
 ## Backend Standards (Python)
 
-See [BACKEND_STANDARDS.md](./BACKEND_STANDARDS.md)
+See [Backend Standards](../security/backend-standards.md)
 
 ---
 
 ## Frontend Standards (JavaScript/React)
 
-See [FRONTEND_STANDARDS.md](./FRONTEND_STANDARDS.md)
+See [Frontend Standards](./frontend-standards.md)
 
 ---
 
@@ -180,6 +180,6 @@ All code pushed to branches is automatically checked via GitHub Actions:
 ## Questions?
 
 Refer to language-specific standards:
-- [Backend Standards](./BACKEND_STANDARDS.md)
-- [Frontend Standards](./FRONTEND_STANDARDS.md)
-- [Contributing Guide](./CONTRIBUTING.md)
+- [Backend Standards](../security/backend-standards.md)
+- [Frontend Standards](./frontend-standards.md)
+- [Contributing Guide](./contributing.md)

@@ -538,6 +538,55 @@ def _harden_assistant_admin_schema(connection: Connection) -> None:
     )
 
 
+def _add_operational_composite_indexes(connection: Connection) -> None:
+    """Add composite indexes matching high-frequency list/count query shapes."""
+    table_names = set(inspect(connection).get_table_names())
+    statements = []
+
+    if "audit_logs" in table_names:
+        statements.extend(
+            [
+                "CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at_desc "
+                "ON audit_logs (created_at DESC)",
+                "CREATE INDEX IF NOT EXISTS idx_audit_logs_action_created_at "
+                "ON audit_logs (action, created_at DESC)",
+                "CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_created_at "
+                "ON audit_logs (entity_type, created_at DESC)",
+            ]
+        )
+    if "login_attempts" in table_names:
+        statements.append(
+            "CREATE INDEX IF NOT EXISTS idx_login_attempts_success_attempted_at "
+            "ON login_attempts (success, attempted_at DESC)"
+        )
+    if "pharmacies" in table_names:
+        statements.extend(
+            [
+                "CREATE INDEX IF NOT EXISTS idx_pharmacies_created_at_desc "
+                "ON pharmacies (created_at DESC)",
+                "CREATE INDEX IF NOT EXISTS idx_pharmacies_governorate_created_at "
+                "ON pharmacies (governorate, created_at DESC)",
+            ]
+        )
+    if "garde_schedules" in table_names:
+        statements.extend(
+            [
+                "CREATE INDEX IF NOT EXISTS idx_garde_schedules_date_start_created "
+                "ON garde_schedules (date, start_time, created_at DESC)",
+                "CREATE INDEX IF NOT EXISTS idx_garde_schedules_governorate_date "
+                "ON garde_schedules (governorate, date DESC)",
+            ]
+        )
+    if "medicines" in table_names:
+        statements.append(
+            "CREATE INDEX IF NOT EXISTS idx_medicines_name_code "
+            "ON medicines (nom_commercial, code_pct)"
+        )
+
+    for statement in statements:
+        connection.execute(text(statement))
+
+
 MIGRATIONS = [
     Migration(
         version="2026_04_13_001_normalize_utilisateurs_verification",
@@ -583,5 +632,10 @@ MIGRATIONS = [
         version="2026_05_18_009_add_pharmacies_location_indexes",
         description="Add indexes for nearby pharmacy searches",
         apply=_add_pharmacy_location_indexes,
+    ),
+    Migration(
+        version="2026_05_19_010_add_operational_composite_indexes",
+        description="Add composite indexes for list, count, and dashboard query patterns",
+        apply=_add_operational_composite_indexes,
     ),
 ]

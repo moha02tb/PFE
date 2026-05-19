@@ -35,3 +35,13 @@ npm run dev
 ## Purpose
 
 The admin app is used for operational workflows such as dashboard analytics, pharmacy data management, uploads, and administrative actions backed by authenticated API calls.
+
+## Local Access
+
+The default Vite URL is `http://127.0.0.1:5173`. For LAN testing, configure Vite to listen on all interfaces and make sure the backend `FRONTEND_URL`, `CORS_ORIGINS`, and `TRUSTED_HOSTS` values include the admin origin.
+
+## Related Docs
+
+- [Getting started](./getting-started.md)
+- [Backend API](../api/backend-api.md)
+- [Troubleshooting](./troubleshooting.md)

@@ -190,6 +190,21 @@ class PharmacyService:
                     f"Required: name, latitude/lat, longitude/lon"
                 )
 
+            existing_osm_ids = set()
+            if "osm_id" in column_mapping:
+                candidate_osm_ids = {
+                    parsed_osm_id
+                    for _, row in df.iterrows()
+                    if (parsed_osm_id := _parse_optional_int(row, column_mapping, "osm_id"))
+                }
+                if candidate_osm_ids:
+                    existing_osm_ids = {
+                        value
+                        for (value,) in self.db.query(models.Pharmacie.osm_id)
+                        .filter(models.Pharmacie.osm_id.in_(candidate_osm_ids))
+                        .all()
+                    }
+
             # 7. Process each row
             seen_osm_ids = set()
             for row_num, (idx, row) in enumerate(df.iterrows(), start=2):
@@ -230,12 +245,7 @@ class PharmacyService:
 
                     # Check if osm_id exists in DB
                     if pharmacy.osm_id:
-                        existing = (
-                            self.db.query(models.Pharmacie)
-                            .filter(models.Pharmacie.osm_id == pharmacy.osm_id)
-                            .first()
-                        )
-                        if existing:
+                        if pharmacy.osm_id in existing_osm_ids:
                             errors.append(
                                 PharmacieUploadErrorDetail(
                                     row_number=row_num,

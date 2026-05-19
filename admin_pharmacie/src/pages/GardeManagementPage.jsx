@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Edit2, Plus, Search, Trash2, Check, AlertCircle, Calendar } from 'lucide-react';
 import api from '../lib/api';
@@ -224,17 +224,23 @@ const GardeManagementPage = () => {
     return date.toISOString().split('-').slice(0, 2).join('-');
   };
 
-  const months = Array.from(new Set(gardes.map((g) => getMonthFromDate(g.date)).filter(Boolean)));
-  const filteredGardes = gardes.filter((item) => {
-    const matchesSearch =
-      !search ||
-      [item.pharmacy_name, item.city, item.governorate, item.shift_type]
-        .filter(Boolean)
-        .some((value) => value.toLowerCase().includes(search.toLowerCase()));
-    const matchesMonth =
-      filterMonth === 'all' || getMonthFromDate(item.date) === filterMonth;
-    return matchesSearch && matchesMonth;
-  });
+  const months = useMemo(
+    () => Array.from(new Set(gardes.map((g) => getMonthFromDate(g.date)).filter(Boolean))),
+    [gardes]
+  );
+  const filteredGardes = useMemo(() => {
+    const normalizedSearch = search.toLowerCase();
+    return gardes.filter((item) => {
+      const matchesSearch =
+        !normalizedSearch ||
+        [item.pharmacy_name, item.city, item.governorate, item.shift_type]
+          .filter(Boolean)
+          .some((value) => value.toLowerCase().includes(normalizedSearch));
+      const matchesMonth =
+        filterMonth === 'all' || getMonthFromDate(item.date) === filterMonth;
+      return matchesSearch && matchesMonth;
+    });
+  }, [filterMonth, gardes, search]);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
