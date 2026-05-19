@@ -19,6 +19,43 @@ from security import verify_token
 from sqlalchemy.orm import Session
 
 
+def _extract_bearer_or_cookie_token(
+    authorization: Optional[str],
+    access_token: Optional[str],
+) -> Optional[str]:
+    token = None
+
+    if authorization:
+        try:
+            scheme, token_value = authorization.split()
+            if scheme.lower() == "bearer":
+                token = token_value
+        except (ValueError, IndexError):
+            pass
+
+    if not token and access_token:
+        token = access_token
+
+    return token
+
+
+def _validate_subject(payload: dict, expected_entity_type: str) -> int:
+    if payload.get("entity_type") != expected_entity_type:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"{expected_entity_type} token required",
+        )
+
+    try:
+        return int(payload.get("sub"))
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token subject",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
 async def get_current_admin(
     access_token: Optional[str] = Cookie(None),
     authorization: Optional[str] = Header(None),
@@ -30,20 +67,7 @@ async def get_current_admin(
     - Validates token and checks user is admin
     - Returns admin user from administrateurs table
     """
-    token = None
-
-    # Try Authorization header first
-    if authorization:
-        try:
-            scheme, token_value = authorization.split()
-            if scheme.lower() == "bearer":
-                token = token_value
-        except (ValueError, IndexError):
-            pass
-
-    # Fall back to cookie
-    if not token and access_token:
-        token = access_token
+    token = _extract_bearer_or_cookie_token(authorization, access_token)
 
     if not token:
         raise HTTPException(
@@ -60,7 +84,7 @@ async def get_current_admin(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    admin_id = int(payload.get("sub"))
+    admin_id = _validate_subject(payload, "administrateur")
     admin = db.query(models.Administrateur).filter(models.Administrateur.id == admin_id).first()
 
     if not admin or not admin.is_active:
@@ -82,20 +106,7 @@ async def get_current_user(
     - Validates token and checks user is regular user
     - Returns user from utilisateurs table
     """
-    token = None
-
-    # Try Authorization header first
-    if authorization:
-        try:
-            scheme, token_value = authorization.split()
-            if scheme.lower() == "bearer":
-                token = token_value
-        except (ValueError, IndexError):
-            pass
-
-    # Fall back to cookie
-    if not token and access_token:
-        token = access_token
+    token = _extract_bearer_or_cookie_token(authorization, access_token)
 
     if not token:
         raise HTTPException(
@@ -112,7 +123,7 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    user_id = int(payload.get("sub"))
+    user_id = _validate_subject(payload, "utilisateur")
     user = db.query(models.Utilisateur).filter(models.Utilisateur.id == user_id).first()
 
     if not user or not user.is_active:
@@ -133,20 +144,7 @@ async def get_current_account(
     - Tries to find in administrateurs first, then utilisateurs
     - Useful for endpoints that work for both types (login, /me, logout)
     """
-    token = None
-
-    # Try Authorization header first
-    if authorization:
-        try:
-            scheme, token_value = authorization.split()
-            if scheme.lower() == "bearer":
-                token = token_value
-        except (ValueError, IndexError):
-            pass
-
-    # Fall back to cookie
-    if not token and access_token:
-        token = access_token
+    token = _extract_bearer_or_cookie_token(authorization, access_token)
 
     if not token:
         raise HTTPException(
@@ -163,15 +161,33 @@ async def get_current_account(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    user_id = int(payload.get("sub"))
+    entity_type = payload.get("entity_type")
+    if entity_type not in {"administrateur", "utilisateur"}:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token account type",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
-    # Try admin first
-    admin = db.query(models.Administrateur).filter(models.Administrateur.id == user_id).first()
+    try:
+        user_id = int(payload.get("sub"))
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token subject",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
-    if admin and admin.is_active:
-        return admin
+    if entity_type == "administrateur":
+        admin = db.query(models.Administrateur).filter(models.Administrateur.id == user_id).first()
 
-    # Try regular user
+        if admin and admin.is_active:
+            return admin
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Admin user not found or inactive",
+        )
+
     user = db.query(models.Utilisateur).filter(models.Utilisateur.id == user_id).first()
 
     if user and user.is_active:

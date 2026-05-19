@@ -4,7 +4,7 @@ Extracted from routers/auth.py to enable testing, reuse, and cleaner separation 
 Handles: login (admin/user), registration, token refresh, profile updates, logout.
 """
 
-import random
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple, Union
 
@@ -29,7 +29,9 @@ from security import (
     REFRESH_TOKEN_EXPIRE_DAYS,
     create_access_token,
     create_refresh_token,
+    hash_secret,
     hash_password,
+    verify_secret,
     verify_password,
     verify_token,
 )
@@ -45,7 +47,7 @@ class AuthService:
 
     def _generate_verification_code(self) -> str:
         """Generate a short numeric verification code."""
-        return f"{random.randint(0, 999999):06d}"
+        return f"{secrets.randbelow(1_000_000):06d}"
 
     def send_verification_email_for_user(self, email: str) -> Optional[str]:
         """Send a verification email for an existing unverified user."""
@@ -61,11 +63,19 @@ class AuthService:
         if user.email_verified:
             return None
 
+        code = self._generate_verification_code()
+        user.email_verification_code = hash_secret(code)
+        user.email_verification_failed_attempts = 0
+        user.email_verification_sent_at = datetime.now(timezone.utc)
+        user.email_verification_expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
+        self.db.add(user)
+        self.db.commit()
+
         try:
             self.email_service.send_verification_email(
                 recipient_email=user.email,
                 username=user.nomUtilisateur,
-                code=user.email_verification_code,
+                code=code,
             )
         except Exception as exc:
             return f"Unable to send verification email: {exc}"
@@ -262,8 +272,8 @@ class AuthService:
         success: bool,
     ) -> dict:
         """Create token pair and log the attempt."""
-        access_token = create_access_token(user_id, role)
-        refresh_token, jti = create_refresh_token(user_id)
+        access_token = create_access_token(user_id, role, entity_type)
+        refresh_token, jti = create_refresh_token(user_id, entity_type)
 
         expires_at = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
         self.db.add(
@@ -345,7 +355,8 @@ class AuthService:
             source="self_registered",
             is_active=True,
             email_verified=False,
-            email_verification_code=verification_code,
+            email_verification_code=hash_secret(verification_code),
+            email_verification_failed_attempts=0,
             email_verification_sent_at=datetime.now(timezone.utc),
             email_verification_expires_at=verification_expires_at,
         )
@@ -408,7 +419,13 @@ class AuthService:
         if user.email_verified:
             return user, None
 
-        if not user.email_verification_code or user.email_verification_code != code.strip():
+        if user.email_verification_failed_attempts >= 5:
+            return None, "Too many invalid verification attempts. Request a new code."
+
+        if not verify_secret(code, user.email_verification_code):
+            user.email_verification_failed_attempts += 1
+            self.db.add(user)
+            self.db.commit()
             return None, "Invalid verification code"
 
         expires_at = user.email_verification_expires_at
@@ -420,6 +437,7 @@ class AuthService:
         user.email_verified = True
         user.email_verified_at = datetime.now(timezone.utc)
         user.email_verification_code = None
+        user.email_verification_failed_attempts = 0
         user.email_verification_sent_at = None
         user.email_verification_expires_at = None
         self.db.add(user)
@@ -441,7 +459,9 @@ class AuthService:
         if user.email_verified:
             return {"message": "Email is already verified"}, None
 
-        user.email_verification_code = self._generate_verification_code()
+        verification_code = self._generate_verification_code()
+        user.email_verification_code = hash_secret(verification_code)
+        user.email_verification_failed_attempts = 0
         user.email_verification_sent_at = datetime.now(timezone.utc)
         user.email_verification_expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
 
@@ -481,6 +501,8 @@ class AuthService:
 
         user_id = int(payload.get("sub"))
         entity_type = revoked.entity_type
+        if payload.get("entity_type") != entity_type:
+            return None, "Invalid refresh token"
 
         # Get user from appropriate table
         if entity_type == "administrateur":
@@ -501,7 +523,7 @@ class AuthService:
         if not user or not user.is_active:
             return None, "User inactive"
 
-        new_access_token = create_access_token(user.id, role)
+        new_access_token = create_access_token(user.id, role, entity_type)
 
         return {
             "access_token": new_access_token,

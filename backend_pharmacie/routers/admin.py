@@ -42,7 +42,7 @@ AUDIT_ENTITY_TYPES = {
 
 
 @router.get("/permissions")
-async def get_permissions():
+async def get_permissions(current_admin: Administrateur = Depends(admin_required)):
     """Get all role-based permissions. Can be accessed by any authenticated user."""
     from permissions import ROLE_PERMISSIONS
     return {
@@ -359,7 +359,12 @@ async def upload_fichier_pharmacies(
     """
     pharmacy_service = PharmacyService(db)
     
-    content = await fichier.read()
+    content = await fichier.read(pharmacy_service.MAX_FILE_SIZE + 1)
+    if len(content) > pharmacy_service.MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="File too large",
+        )
     response_data, error = pharmacy_service.upload_csv(
         content,
         fichier.filename,
@@ -421,7 +426,12 @@ async def upload_garde_planning(
     """Bulk upload garde planning rows from CSV."""
     garde_service = GardeService(db)
 
-    content = await fichier.read()
+    content = await fichier.read(garde_service.MAX_FILE_SIZE + 1)
+    if len(content) > garde_service.MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="File too large",
+        )
     response_data, error = garde_service.upload_csv_for_region(
         content,
         fichier.filename,
@@ -470,7 +480,12 @@ async def upload_medicine_csv(
     """Bulk upload medicines from CSV using code_pct upsert behavior."""
     medicine_service = MedicineService(db)
 
-    content = await fichier.read()
+    content = await fichier.read(medicine_service.MAX_FILE_SIZE + 1)
+    if len(content) > medicine_service.MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="File too large",
+        )
     response_data, error = medicine_service.upload_csv(content, fichier.filename, current_admin.id)
 
     if error:

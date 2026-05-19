@@ -109,7 +109,21 @@ def _normalize_user_verification_schema(connection: Connection) -> None:
         connection.execute(
             text(
                 "ALTER TABLE utilisateurs "
-                "ADD COLUMN email_verification_code VARCHAR(12)"
+                "ADD COLUMN email_verification_code VARCHAR(128)"
+            )
+        )
+    elif connection.dialect.name == "postgresql":
+        connection.execute(
+            text(
+                "ALTER TABLE utilisateurs "
+                "ALTER COLUMN email_verification_code TYPE VARCHAR(128)"
+            )
+        )
+    if "email_verification_failed_attempts" not in existing_columns:
+        connection.execute(
+            text(
+                "ALTER TABLE utilisateurs "
+                "ADD COLUMN email_verification_failed_attempts INTEGER NOT NULL DEFAULT 0"
             )
         )
     if "email_verification_sent_at" not in existing_columns:
@@ -238,7 +252,8 @@ def _rebuild_utilisateurs_for_sqlite(connection: Connection) -> None:
                 "motDePasse" VARCHAR(255) NOT NULL,
                 is_active BOOLEAN,
                 email_verified BOOLEAN NOT NULL DEFAULT 0,
-                email_verification_code VARCHAR(12),
+                email_verification_code VARCHAR(128),
+                email_verification_failed_attempts INTEGER NOT NULL DEFAULT 0,
                 email_verification_sent_at DATETIME,
                 email_verification_expires_at DATETIME,
                 email_verified_at DATETIME,
@@ -263,6 +278,7 @@ def _rebuild_utilisateurs_for_sqlite(connection: Connection) -> None:
                 is_active,
                 email_verified,
                 email_verification_code,
+                email_verification_failed_attempts,
                 email_verification_sent_at,
                 email_verification_expires_at,
                 email_verified_at,
@@ -281,6 +297,7 @@ def _rebuild_utilisateurs_for_sqlite(connection: Connection) -> None:
                 is_active,
                 email_verified,
                 email_verification_code,
+                COALESCE(email_verification_failed_attempts, 0),
                 email_verification_sent_at,
                 email_verification_expires_at,
                 email_verified_at,

@@ -15,7 +15,7 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 
-from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 from region_scope import normalize_region
 
@@ -37,10 +37,11 @@ class LoginRequest(BaseModel):
         description="Account password (6-128 characters)"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {"email": "admin@pharmacie.com", "password": "SecurePassword123"}
         }
+    )
 
 
 class TokenResponse(BaseModel):
@@ -72,7 +73,7 @@ class TokenResponse(BaseModel):
 class TokenRefreshRequest(BaseModel):
     """Refresh token request"""
 
-    refresh_token: str
+    refresh_token: Optional[str] = None
 
 
 class RegisterRequest(BaseModel):
@@ -100,14 +101,15 @@ class RegisterRequest(BaseModel):
         description="Unique username for login (3-100 characters)"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "email": "user@example.com",
                 "password": "Password123",
                 "username": "john_doe",
             }
         }
+    )
 
 
 class RegisterResponse(BaseModel):
@@ -163,8 +165,7 @@ class AdminResponse(BaseModel):
     created_by: Optional[int] = None
     last_login: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserResponse(BaseModel):
@@ -178,8 +179,7 @@ class UserResponse(BaseModel):
     email_verified: bool = False
     source: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AdminCreate(BaseModel):
@@ -252,8 +252,8 @@ class AdminCreate(BaseModel):
             self.region_scope = None
         return self
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "nomUtilisateur": "adminuser",
                 "email": "admin@pharmacie.com",
@@ -262,6 +262,7 @@ class AdminCreate(BaseModel):
                 "region_scope": None,
             }
         }
+    )
 
 
 class AssistantCreate(AdminCreate):
@@ -284,8 +285,8 @@ class AssistantCreate(AdminCreate):
             raise ValueError("Assistant creation only supports the 'assistant' role")
         return role
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "nomUtilisateur": "north_assistant",
                 "email": "assistant.north@pharmacie.com",
@@ -294,6 +295,7 @@ class AssistantCreate(AdminCreate):
                 "region_scope": "north",
             }
         }
+    )
 
 
 class AssistantUpdate(BaseModel):
@@ -333,14 +335,15 @@ class AssistantUpdate(BaseModel):
             raise ValueError("Password must contain at least one digit")
         return v
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "region_scope": "south",
                 "is_active": True,
                 "password": "NewSecurePass123",
             }
         }
+    )
 
 
 class ProfileUpdateRequest(BaseModel):
@@ -358,14 +361,15 @@ class AdminCreateByAdmin(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=6, max_length=128)
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "nomUtilisateur": "newuser",
                 "email": "user@pharmacie.com",
                 "password": "Password123",
             }
         }
+    )
 
 
 class AuditLogResponse(BaseModel):
@@ -381,8 +385,7 @@ class AuditLogResponse(BaseModel):
     status: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ---- EXISTING SCHEMAS ----
@@ -397,8 +400,7 @@ class GardeBase(BaseModel):
 class GardeOut(GardeBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class VilleOut(BaseModel):
@@ -406,8 +408,7 @@ class VilleOut(BaseModel):
     nom: str
     codePostal: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PharmacieOut(BaseModel):
@@ -420,8 +421,7 @@ class PharmacieOut(BaseModel):
     ville: Optional[VilleOut] = None
     gardes: List[GardeOut] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ---- NEW PHARMACY SCHEMAS FOR OSM DATA ----
@@ -439,8 +439,8 @@ class PharmacieCreate(BaseModel):
     latitude: float = Field(..., ge=-90, le=90, description="Latitude coordinate")
     longitude: float = Field(..., ge=-180, le=180, description="Longitude coordinate")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "osm_type": "node",
                 "osm_id": 283583078,
@@ -452,6 +452,7 @@ class PharmacieCreate(BaseModel):
                 "longitude": 10.1809179,
             }
         }
+    )
 
 
 class PharmacieUpdate(BaseModel):
@@ -466,8 +467,8 @@ class PharmacieUpdate(BaseModel):
     osm_type: Optional[str] = Field(None, description="OSM object type")
     osm_id: Optional[int] = Field(None, description="OpenStreetMap ID")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "name": "Updated Pharmacy Name",
                 "phone": "+21674266389",
@@ -476,6 +477,7 @@ class PharmacieUpdate(BaseModel):
                 "longitude": 10.1809179,
             }
         }
+    )
 
 
 class PharmacieResponse(BaseModel):
@@ -493,8 +495,7 @@ class PharmacieResponse(BaseModel):
     created_by: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PharmacieUploadErrorDetail(BaseModel):
@@ -514,8 +515,8 @@ class PharmacieUploadResponse(BaseModel):
         default_factory=list, description="List of errors with row numbers"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "total_rows": 10,
                 "successful": 8,
@@ -529,6 +530,7 @@ class PharmacieUploadResponse(BaseModel):
                 ],
             }
         }
+    )
 
 
 class MedicineUploadIssueDetail(BaseModel):
@@ -562,8 +564,7 @@ class MedicineResponse(BaseModel):
     created_by: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MedicineUploadResponse(BaseModel):
@@ -589,8 +590,8 @@ class GardeScheduleCreate(BaseModel):
     shift_type: Optional[str] = Field(None, description="Shift type")
     notes: Optional[str] = Field(None, description="Additional notes")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "date": "2025-01-15",
                 "pharmacy_name": "الصيدلية المركزية",
@@ -602,6 +603,7 @@ class GardeScheduleCreate(BaseModel):
                 "notes": "Regular shift",
             }
         }
+    )
 
 
 class GardeScheduleUpdate(BaseModel):
@@ -616,13 +618,14 @@ class GardeScheduleUpdate(BaseModel):
     shift_type: Optional[str] = Field(None, description="Shift type")
     notes: Optional[str] = Field(None, description="Additional notes")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "pharmacy_name": "Updated Pharmacy Name",
                 "shift_type": "night_shift",
             }
         }
+    )
 
 
 class GardeScheduleResponse(BaseModel):
@@ -640,5 +643,4 @@ class GardeScheduleResponse(BaseModel):
     created_by: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

@@ -15,6 +15,7 @@ from region_scope import normalize_region
 from schemas import AdminCreate, AdminResponse, AssistantCreate, AssistantUpdate
 from security import hash_password
 from services.audit_service import AuditService
+from permissions import role_value
 
 
 class AdminService:
@@ -55,6 +56,14 @@ class AdminService:
             return None, "Username already taken"
 
         role = str(admin_data.role).strip().lower()
+        creator = (
+            self.db.query(models.Administrateur)
+            .filter(models.Administrateur.id == created_by_admin_id)
+            .first()
+        )
+        if role == "super_admin" and role_value(creator.role if creator else "") != "super_admin":
+            return None, "Only super admins can create super admin accounts"
+
         region_scope = normalize_region(admin_data.region_scope) if role == "assistant" else None
         if role == "assistant" and not region_scope:
             return None, "Assistant accounts must have a valid region scope"
@@ -283,10 +292,26 @@ class AdminService:
 
         return None
 
-    def change_admin_role(self, admin_id: int, new_role: str) -> Optional[str]:
+    def change_admin_role(
+        self,
+        admin_id: int,
+        new_role: str,
+        changed_by_admin_id: Optional[int] = None,
+    ) -> Optional[str]:
         """Change admin's role."""
         if new_role not in {"admin", "super_admin"}:
             return "Invalid role. Must be 'admin' or 'super_admin'"
+
+        if new_role == "super_admin":
+            actor = None
+            if changed_by_admin_id is not None:
+                actor = (
+                    self.db.query(models.Administrateur)
+                    .filter(models.Administrateur.id == changed_by_admin_id)
+                    .first()
+                )
+            if role_value(actor.role if actor else "") != "super_admin":
+                return "Only super admins can promote accounts to super admin"
 
         admin = (
             self.db.query(models.Administrateur)

@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import axios from 'axios';
 import logger from '../utils/logger';
 import { API_CONFIG } from '../config/api';
@@ -13,6 +14,10 @@ const ACCESS_TOKEN_KEY = 'access_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
 const USER_DATA_KEY = 'user_data';
 const GUEST_MODE_KEY = 'guest_mode';
+
+const getStoredToken = (key) => SecureStore.getItemAsync(key);
+const setStoredToken = (key, value) => SecureStore.setItemAsync(key, value);
+const removeStoredToken = (key) => SecureStore.deleteItemAsync(key);
 
 // Create axios instance with auth
 const createApiClient = (accessToken) => {
@@ -58,8 +63,8 @@ export const AuthProvider = ({ children }) => {
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState(null);
 
   const clearAuthState = useCallback(async () => {
-    await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
-    await AsyncStorage.removeItem(REFRESH_TOKEN_KEY);
+    await removeStoredToken(ACCESS_TOKEN_KEY);
+    await removeStoredToken(REFRESH_TOKEN_KEY);
     await AsyncStorage.removeItem(USER_DATA_KEY);
     await AsyncStorage.removeItem(GUEST_MODE_KEY);
     setAccessToken(null);
@@ -73,8 +78,8 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const storedAccessToken = await AsyncStorage.getItem(ACCESS_TOKEN_KEY);
-        const storedRefreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+        const storedAccessToken = await getStoredToken(ACCESS_TOKEN_KEY);
+        const storedRefreshToken = await getStoredToken(REFRESH_TOKEN_KEY);
         const storedUserData = await AsyncStorage.getItem(USER_DATA_KEY);
         const storedGuestMode = await AsyncStorage.getItem(GUEST_MODE_KEY);
 
@@ -113,7 +118,7 @@ export const AuthProvider = ({ children }) => {
                   throw new Error('No access token returned by refresh endpoint');
                 }
 
-                await AsyncStorage.setItem(ACCESS_TOKEN_KEY, newAccessToken);
+                await setStoredToken(ACCESS_TOKEN_KEY, newAccessToken);
                 setAccessToken(newAccessToken);
 
                 const apiClientWithNewToken = createApiClient(newAccessToken);
@@ -162,8 +167,8 @@ export const AuthProvider = ({ children }) => {
       const userData = userResponse.data;
 
       // Store tokens and user data
-      await AsyncStorage.setItem(ACCESS_TOKEN_KEY, newAccessToken);
-      await AsyncStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
+      await setStoredToken(ACCESS_TOKEN_KEY, newAccessToken);
+      await setStoredToken(REFRESH_TOKEN_KEY, newRefreshToken);
       await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
 
       // Update state
@@ -249,7 +254,7 @@ export const AuthProvider = ({ children }) => {
       const { access_token: newAccessToken } = response.data;
 
       // Update stored token
-      await AsyncStorage.setItem(ACCESS_TOKEN_KEY, newAccessToken);
+      await setStoredToken(ACCESS_TOKEN_KEY, newAccessToken);
       setAccessToken(newAccessToken);
 
       return true;

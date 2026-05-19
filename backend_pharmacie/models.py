@@ -109,7 +109,8 @@ class Utilisateur(Base):
 
     is_active = Column(Boolean, default=True, index=True)
     email_verified = Column(Boolean, default=False, index=True, nullable=False)
-    email_verification_code = Column(String(12), nullable=True, index=True)
+    email_verification_code = Column(String(128), nullable=True, index=True)
+    email_verification_failed_attempts = Column(Integer, default=0, nullable=False)
     email_verification_sent_at = Column(DateTime(timezone=True), nullable=True)
     email_verification_expires_at = Column(DateTime(timezone=True), nullable=True)
     email_verified_at = Column(DateTime(timezone=True), nullable=True)

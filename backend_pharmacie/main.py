@@ -10,6 +10,7 @@ Environment:
 """
 
 import os
+import logging
 from datetime import date
 from math import atan2, cos, radians, sin, sqrt
 
@@ -25,11 +26,15 @@ from schema_migrations import run_schema_migrations
 from services import CacheService
 from services.garde_service import GardeService
 from services.medicine_service import MedicineService
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 # Load environment variables
 load_dotenv()
+logger = logging.getLogger(__name__)
 
 # Initialize and normalize the database schema on startup/import.
 run_schema_migrations(engine)
@@ -37,9 +42,69 @@ run_schema_migrations(engine)
 app = FastAPI(
     title="PharmacieConnect API", version="2.0.0", description="Secure pharmacy management API"
 )
+app.state.limiter = auth.limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 cache_service = CacheService()
 register_default_listeners()
+
+
+def _is_production() -> bool:
+    return os.getenv("ENVIRONMENT", os.getenv("APP_ENV", "development")).lower() in {
+        "prod",
+        "production",
+    }
+
+
+def _csv_env(name: str, default: list[str]) -> list[str]:
+    raw = os.getenv(name)
+    if not raw:
+        return default
+    return [item.strip() for item in raw.split(",") if item.strip()]
+
+
+def _cors_origins() -> list[str]:
+    defaults = [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
+    ]
+    origins = _csv_env("CORS_ORIGINS", defaults)
+    frontend_url = os.getenv("FRONTEND_URL")
+    if frontend_url:
+        origins.append(frontend_url.strip())
+
+    if _is_production():
+        bad_origins = [origin for origin in origins if origin == "*" or origin.startswith("http://")]
+        if bad_origins:
+            raise RuntimeError("Production CORS origins must be explicit HTTPS origins")
+
+    return sorted(set(origins))
+
+
+def _trusted_hosts() -> list[str]:
+    defaults = [
+        "localhost",
+        "localhost:3000",
+        "localhost:5173",
+        "localhost:5174",
+        "localhost:8000",
+        "127.0.0.1",
+        "127.0.0.1:3000",
+        "127.0.0.1:5173",
+        "127.0.0.1:5174",
+        "127.0.0.1:8000",
+    ]
+    hosts = _csv_env("TRUSTED_HOSTS", defaults)
+    if _is_production() and "*" in hosts:
+        raise RuntimeError("Production TRUSTED_HOSTS must not contain '*'")
+    if not _is_production():
+        hosts.append("*")
+    return sorted(set(hosts))
 
 
 def _distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -60,50 +125,13 @@ def _distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
 # 1. Trusted Host Middleware (prevent Host header injection)
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=[
-        "localhost:3000",
-        "localhost:5173",
-        "localhost:8000",
-        "127.0.0.1:3000",
-        "127.0.0.1:5173",
-        "127.0.0.1:8000",
-        "127.0.0.1",
-        "localhost",
-        "192.168.0.192:5173",  # Admin panel
-        "192.168.0.192:8000",  # Backend API port (actual machine IP)
-        "192.168.0.192:8001",  # Chatbot API port
-        "192.168.0.192:3000",  # Alternative development URL
-        "192.168.1.7:5173",  # Current admin panel origin
-        "192.168.1.7:8000",  # Current backend origin
-        "*",  # Allow all in development (don't use in production)
-    ]
-    + os.getenv("TRUSTED_HOSTS", "localhost").split(","),
+    allowed_hosts=_trusted_hosts(),
 )
 
 # 2. CORS Middleware with strict settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:8000",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:5174",
-        "http://127.0.0.1:8000",
-        "http://localhost",
-        "http://127.0.0.1",
-        "http://192.168.0.192:5173",  # Admin panel
-        "http://192.168.0.192:5174",  # Vite dev server alternate port
-        "http://192.168.0.192:8000",  # Backend API
-        "http://192.168.0.192:8001",  # Chatbot API
-        "http://192.168.0.192:3000",  # Alternative debug port
-        "http://192.168.1.7:5173",  # Current admin panel origin
-        "http://192.168.1.7:5174",  # Current Vite dev server alternate port
-        "http://192.168.1.7:8000",  # Current backend origin
-        os.getenv("FRONTEND_URL", "http://localhost:5173"),
-    ],
+    allow_origins=_cors_origins(),
     allow_credentials=True,  # REQUIRED for cookies
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],
@@ -178,9 +206,10 @@ async def get_all_pharmacies(
         cache_service.set_json(cache_key, result, ttl_seconds=3600)
         return result
     except Exception as e:
+        logger.exception("Failed to fetch pharmacies")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch pharmacies: {str(e)}",
+            detail="Failed to fetch pharmacies",
         )
 
 
@@ -202,9 +231,10 @@ async def get_all_pharmacies_count(
         cache_service.set_json(cache_key, payload, ttl_seconds=3600)
         return payload
     except Exception as e:
+        logger.exception("Failed to get pharmacy count")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get pharmacy count: {str(e)}",
+            detail="Failed to get pharmacy count",
         )
 
 
@@ -299,9 +329,10 @@ async def search_pharmacies(
         cache_service.set_json(cache_key, payload, ttl_seconds=600)
         return payload
     except Exception as e:
+        logger.exception("Failed to search pharmacies")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to search pharmacies: {str(e)}",
+            detail="Failed to search pharmacies",
         )
 
 
@@ -410,9 +441,10 @@ async def get_nearby_pharmacies(
         cache_service.set_json(cache_key, payload, ttl_seconds=600)
         return payload
     except Exception as e:
+        logger.exception("Failed to fetch nearby pharmacies")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch nearby pharmacies: {str(e)}",
+            detail="Failed to fetch nearby pharmacies",
         )
 
 
@@ -455,9 +487,10 @@ async def get_pharmacy_by_id(
     except HTTPException:
         raise
     except Exception as e:
+        logger.exception("Failed to fetch pharmacy")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch pharmacy: {str(e)}",
+            detail="Failed to fetch pharmacy",
         )
 
 
@@ -488,9 +521,10 @@ async def get_public_gardes(
         cache_service.set_json(cache_key, payload, ttl_seconds=900)
         return payload
     except Exception as e:
+        logger.exception("Failed to fetch garde schedules")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch garde schedules: {str(e)}",
+            detail="Failed to fetch garde schedules",
         )
 
 
@@ -519,9 +553,10 @@ async def get_public_medicines(
         cache_service.set_json(cache_key, payload, ttl_seconds=900)
         return payload
     except Exception as e:
+        logger.exception("Failed to fetch medicines")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch medicines: {str(e)}",
+            detail="Failed to fetch medicines",
         )
 
 
@@ -542,9 +577,10 @@ async def get_public_medicine_count(
         cache_service.set_json(cache_key, payload, ttl_seconds=900)
         return payload
     except Exception as e:
+        logger.exception("Failed to fetch medicine count")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch medicine count: {str(e)}",
+            detail="Failed to fetch medicine count",
         )
 
 
@@ -573,7 +609,8 @@ async def get_public_medicine_by_code_pct(
     except HTTPException:
         raise
     except Exception as e:
+        logger.exception("Failed to fetch medicine")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch medicine: {str(e)}",
+            detail="Failed to fetch medicine",
         )

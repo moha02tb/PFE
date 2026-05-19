@@ -18,7 +18,7 @@ import os
 import models
 from database import get_db
 from dependencies import admin_required, get_current_account
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, BackgroundTasks, Cookie, Depends, HTTPException, Request, Response, status
 from schemas import (
     AdminCreate,
     AdminCreateByAdmin,
@@ -34,6 +34,7 @@ from schemas import (
 )
 from services import AuthService
 from services.admin_service import AdminService
+from permissions import role_value
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
@@ -53,6 +54,28 @@ def _cookie_secure_default(request: Request) -> bool:
     if raw is not None:
         return raw.strip().lower() in {"1", "true", "yes", "on"}
     return request.url.scheme == "https"
+
+
+def _set_auth_cookies(request: Request, response: Response, token_response: dict) -> None:
+    secure = _cookie_secure_default(request)
+    cookie_settings = {
+        "httponly": True,
+        "secure": secure,
+        "samesite": "lax",
+        "path": "/",
+    }
+    response.set_cookie(
+        key="access_token",
+        value=token_response["access_token"],
+        max_age=token_response["expires_in"],
+        **cookie_settings,
+    )
+    response.set_cookie(
+        key="refresh_token",
+        value=token_response["refresh_token"],
+        max_age=7 * 24 * 60 * 60,
+        **cookie_settings,
+    )
 
 
 # ---- UNIFIED LOGIN ENDPOINT ----
@@ -87,6 +110,7 @@ async def login(
     if error:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=error)
 
+    _set_auth_cookies(request, response, token_response)
     return token_response
 
 
@@ -133,7 +157,12 @@ async def register(
 
 
 @router.post("/verify-email", response_model=VerifyEmailResponse, tags=["Authentication"])
-async def verify_email(payload: VerifyEmailCodeRequest, db: Session = Depends(get_db)):
+@limiter.limit("5/15 minutes")
+async def verify_email(
+    request: Request,
+    payload: VerifyEmailCodeRequest,
+    db: Session = Depends(get_db),
+):
     """Verify a pending account email from an email + code pair."""
     auth_service = AuthService(db)
     _, error = auth_service.verify_email_code(payload.email, payload.code)
@@ -166,7 +195,13 @@ async def resend_verification_email(
 
 # ---- REFRESH TOKEN ENDPOINT ----
 @router.post("/refresh", response_model=TokenResponse, tags=["Authentication"])
-async def refresh(http_request: Request, request: TokenRefreshRequest, response: Response, db: Session = Depends(get_db)):
+async def refresh(
+    http_request: Request,
+    response: Response,
+    request: TokenRefreshRequest | None = None,
+    refresh_token_cookie: str | None = Cookie(None, alias="refresh_token"),
+    db: Session = Depends(get_db),
+):
     """Refresh expired access token.
     
     **Description:**
@@ -185,11 +220,16 @@ async def refresh(http_request: Request, request: TokenRefreshRequest, response:
     - `422`: Validation error
     """
     auth_service = AuthService(db)
-    token_response, error = auth_service.refresh_access_token(request.refresh_token)
+    refresh_token = (request.refresh_token if request else None) or refresh_token_cookie
+    if not refresh_token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing refresh token")
+
+    token_response, error = auth_service.refresh_access_token(refresh_token)
     
     if error:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=error)
 
+    _set_auth_cookies(http_request, response, token_response)
     return token_response
 
 
@@ -213,6 +253,9 @@ async def logout(
     except:
         refresh_token = None
 
+    if not refresh_token:
+        refresh_token = request.cookies.get("refresh_token")
+
     actor_type = "administrateur" if isinstance(user, models.Administrateur) else "utilisateur"
     auth_service.logout(
         refresh_token,
@@ -222,8 +265,9 @@ async def logout(
         user_agent=request.headers.get("user-agent"),
     )
 
-    # Clear access token cookie
-    response.delete_cookie(key="access_token")
+    # Clear auth cookies
+    response.delete_cookie(key="access_token", path="/")
+    response.delete_cookie(key="refresh_token", path="/")
 
     return {"message": "Logged out successfully"}
 
@@ -266,6 +310,13 @@ async def create_admin(
     db: Session = Depends(get_db),
 ):
     """Create new admin user (admin+ role required)"""
+    requested_role = str(admin_data.role).strip().lower()
+    if requested_role == "super_admin" and role_value(current_user.role) != "super_admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only super admins can create super admin accounts",
+        )
+
     admin_service = AdminService(db)
     new_admin, error = admin_service.create_admin(admin_data, current_user.id)
     

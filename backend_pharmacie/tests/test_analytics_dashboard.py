@@ -78,6 +78,7 @@ def test_search_pharmacies_endpoint_filters_by_query_and_governorate(test_db, te
 
 def test_admin_dashboard_exposes_operational_metrics(test_db, test_admin):
     now = datetime.now(timezone.utc)
+    start_today = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
     verified_user = models.Utilisateur(
         nomUtilisateur="verified_user",
@@ -137,14 +138,14 @@ def test_admin_dashboard_exposes_operational_metrics(test_db, test_admin):
                 location_label="Tunis",
                 governorate="Tunis",
                 result_count=1,
-                created_at=now - timedelta(hours=2),
+                created_at=start_today + timedelta(hours=1),
             ),
             models.SearchEvent(
                 event_type="nearby_pharmacy_search",
                 location_label="Tunis",
                 governorate="Tunis",
                 result_count=8,
-                created_at=now - timedelta(days=1),
+                created_at=start_today - timedelta(days=1),
             ),
             models.SearchEvent(
                 event_type="place_search",
@@ -152,7 +153,7 @@ def test_admin_dashboard_exposes_operational_metrics(test_db, test_admin):
                 location_label="Sfax",
                 governorate="Sfax",
                 result_count=1,
-                created_at=now - timedelta(days=2),
+                created_at=start_today - timedelta(days=2),
             ),
         ]
     )

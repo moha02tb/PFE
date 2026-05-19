@@ -19,6 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Keep tests isolated from the developer's real PostgreSQL configuration.
 os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
 os.environ.setdefault("ENABLE_REDIS_CACHE", "false")
+os.environ.setdefault("SECRET_KEY", "test-secret-key-for-pytest-only-change-me-32")
 
 from database import get_db
 from main import app
@@ -100,7 +101,7 @@ def admin_token(test_admin):
     """Obtain JWT access token for test admin."""
     from security import create_access_token
 
-    token = create_access_token(test_admin.id, test_admin.role)
+    token = create_access_token(test_admin.id, test_admin.role, "administrateur")
     return token
 
 
@@ -109,7 +110,7 @@ def user_token(test_user):
     """Obtain JWT access token for test user."""
     from security import create_access_token
 
-    token = create_access_token(test_user.id, "user")
+    token = create_access_token(test_user.id, "user", "utilisateur")
     return token
 
 

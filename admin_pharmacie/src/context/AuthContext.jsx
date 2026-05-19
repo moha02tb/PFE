@@ -1,12 +1,11 @@
-import React, { createContext, useState, useCallback } from 'react';
+import React, { createContext, useEffect, useState, useCallback } from 'react';
 import api from '../lib/api';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(() => {
-        // Check if user was previously authenticated
-        return !!localStorage.getItem('access_token') && !!localStorage.getItem('refresh_token');
+        return false;
     });
     const [user, setUser] = useState(() => {
         // Restore user from localStorage if it exists
@@ -16,13 +15,38 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // No initial auth check - rely on stored tokens
-
     const persistUser = useCallback((userData) => {
         localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);
         return userData;
     }, []);
+
+    useEffect(() => {
+        let mounted = true;
+
+        const restoreSession = async () => {
+            setLoading(true);
+            try {
+                const response = await api.get('/api/auth/me');
+                if (!mounted) return;
+                persistUser(response.data);
+                setIsAuthenticated(true);
+            } catch {
+                if (!mounted) return;
+                setIsAuthenticated(false);
+                setUser(null);
+                localStorage.removeItem('user');
+            } finally {
+                if (mounted) setLoading(false);
+            }
+        };
+
+        restoreSession();
+
+        return () => {
+            mounted = false;
+        };
+    }, [persistUser]);
 
     const refreshUser = useCallback(async () => {
         const response = await api.get('/api/auth/me');
@@ -56,17 +80,12 @@ export const AuthProvider = ({ children }) => {
 
         try {
             // Call login endpoint
-            const response = await api.post('/api/auth/login', {
+            await api.post('/api/auth/login', {
                 email,
                 password,
             });
 
-            // Store both tokens in localStorage
-            localStorage.setItem('access_token', response.data.access_token);
-            localStorage.setItem('refresh_token', response.data.refresh_token);
-
             // Fetch user data from /me endpoint with new token
-            // Temporarily set the header for this request
             const meResponse = await api.get('/api/auth/me');
             const userData = meResponse.data;
 
@@ -106,22 +125,13 @@ export const AuthProvider = ({ children }) => {
     // Logout function
     const logout = useCallback(async () => {
         try {
-            const refreshToken = localStorage.getItem('refresh_token');
-            
-            // Call logout endpoint if it exists
-            if (refreshToken) {
-                await api.post('/api/auth/logout', {
-                    refresh_token: refreshToken,
-                });
-            }
+            await api.post('/api/auth/logout', {});
         } catch (err) {
             console.error('Logout error:', err);
         } finally {
             // Clear client state and storage
             setIsAuthenticated(false);
             setUser(null);
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('refresh_token');
             localStorage.removeItem('user');
         }
     }, []);

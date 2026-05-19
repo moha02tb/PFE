@@ -23,7 +23,7 @@ def test_medicine_upload_creates_rows(client, test_db, admin_headers):
     saved = test_db.query(models.Medicine).filter_by(code_pct="302344").first()
     assert saved is not None
     assert saved.nom_commercial == "MESONE Spray Nasal"
-    assert float(saved.prix_public_dt) == 19.0
+    assert float(saved.prix_public_dt) == 19.55
 
 
 def test_medicine_upload_upserts_existing_code_pct(client, test_db, admin_headers, test_admin):
@@ -144,7 +144,7 @@ def test_public_medicine_search_and_detail_endpoints(client, test_db, test_admin
     assert len(search_payload) == 1
     assert search_payload[0]["code_pct"] == "302344"
 
-    count_response = client.get("/api/medicines/count", params={"q": "NASA"})
+    count_response = client.get("/api/medicines/count", params={"q": "NASACORT"})
     assert count_response.status_code == 200
     assert count_response.json()["total"] == 1
 
