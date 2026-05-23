@@ -90,38 +90,6 @@ const chartColors = {
   axis: 'oklch(var(--muted-foreground))',
 };
 
-const chartTextTick = {
-  fill: 'oklch(var(--muted-foreground))',
-  fontSize: 12,
-  fontWeight: 600,
-};
-
-const chartLegendStyle = {
-  color: 'oklch(var(--muted-foreground))',
-  fontSize: '0.75rem',
-  fontWeight: 600,
-};
-
-const chartTooltipProps = {
-  contentStyle: {
-    backgroundColor: 'oklch(var(--surface-elevated) / 0.98)',
-    border: '1px solid oklch(var(--border))',
-    borderRadius: '12px',
-    boxShadow: '0 18px 36px oklch(0.14 0.03 245 / 0.18)',
-    color: 'oklch(var(--foreground))',
-  },
-  itemStyle: {
-    color: 'oklch(var(--muted-foreground))',
-  },
-  labelStyle: {
-    color: 'oklch(var(--foreground))',
-    fontWeight: 700,
-  },
-  wrapperStyle: {
-    outline: 'none',
-  },
-};
-
 const POLL_INTERVAL_MS = 30000;
 const formatRefreshTime = () =>
   `Last refreshed at ${new Date().toLocaleTimeString([], {

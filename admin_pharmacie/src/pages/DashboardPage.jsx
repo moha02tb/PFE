@@ -72,15 +72,6 @@ const Sparkline = ({ data, color = chartColors.primary }) => (
   </div>
 );
 
-const AutoRefreshPill = ({ loading, lastUpdated }) => (
-  <div className="inline-flex items-center gap-2 rounded-[8px] border border-border bg-surface-elevated/80 px-3 py-2 text-xs font-semibold text-muted-foreground shadow-soft">
-    <RefreshCw className={`h-3.5 w-3.5 text-primary ${loading ? 'animate-spin' : ''}`} />
-    {loading ? 'Refreshing dashboard' : `Auto-refresh ready · ${lastUpdated}`}
-  </div>
-);
-
-AutoRefreshPill.displayName = 'AutoRefreshPill';
-
 const PollingStatusPill = ({ loading, lastUpdated }) => (
   <div className="inline-flex items-center gap-2 rounded-[8px] border border-border bg-surface-elevated/80 px-3 py-2 text-xs font-semibold text-muted-foreground shadow-soft">
     <RefreshCw className={`h-3.5 w-3.5 text-primary ${loading ? 'animate-spin' : ''}`} />
