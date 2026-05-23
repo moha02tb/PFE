@@ -11,6 +11,7 @@ export {
   TableRow,
   TableCell,
 } from './Table';
+export { default as Dialog } from './Dialog';
 export { default as Modal } from './Modal';
 export { default as Drawer } from './Drawer';
 export { default as Dropdown, DropdownItem } from './Dropdown';
@@ -19,3 +20,4 @@ export { default as Pagination } from './Pagination';
 export { default as Skeleton } from './Skeleton';
 export { default as EmptyState } from './EmptyState';
 export { default as SectionHeader } from './SectionHeader';
+export { default as Tooltip } from './Tooltip';

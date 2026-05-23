@@ -23,9 +23,9 @@ export const FieldLabel = ({ className, ...props }) => (
 );
 
 export const FieldHint = ({ className, ...props }) => (
-  <span className={cn('text-xs text-muted-foreground leading-relaxed', className)} {...props} />
+  <span className={cn('text-xs leading-relaxed text-muted-foreground', className)} {...props} />
 );
 
 export const FieldError = ({ className, ...props }) => (
-  <span className={cn('text-xs font-medium text-foreground', className)} {...props} />
+  <span className={cn('text-xs font-medium text-danger', className)} {...props} />
 );

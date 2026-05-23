@@ -25,7 +25,7 @@ const buttonVariants = {
 const Button = React.forwardRef(
   ({ className, variant = 'primary', size = 'md', type = 'button', asChild = false, ...props }, ref) => {
     const classes = cn(
-      'inline-flex items-center justify-center gap-2 rounded-[8px] leading-tight focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 transition-smooth active:translate-y-0.5 whitespace-nowrap',
+      'inline-flex items-center justify-center gap-2 rounded-[8px] leading-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 transition-smooth active:translate-y-0.5 whitespace-nowrap',
       buttonVariants.variant[variant],
       buttonVariants.size[size],
       className

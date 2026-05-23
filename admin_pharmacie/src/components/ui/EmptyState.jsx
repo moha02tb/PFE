@@ -1,8 +1,9 @@
 import React from 'react';
 import Button from './Button';
+import { cn } from '../../lib/utils';
 
-const EmptyState = ({ icon: Icon, title, description, actionLabel, onAction }) => (
-  <div className="empty-state flex flex-col items-center justify-center rounded-[8px] border border-dashed border-border bg-surface/80 p-8 text-center">
+const EmptyState = ({ icon: Icon, title, description, actionLabel, onAction, className }) => (
+  <div className={cn('empty-state flex flex-col items-center justify-center rounded-[8px] border border-dashed border-border bg-surface/80 p-8 text-center', className)}>
     {Icon ? (
       <div className="empty-state__icon mb-3 rounded-[8px] border border-border bg-surface-muted p-3 text-primary">
         <Icon className="h-6 w-6" />

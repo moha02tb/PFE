@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from '../../lib/utils';
 
 export const Table = ({ className, ...props }) => (
-  <div className="table-shell overflow-x-auto border border-border/70">
+  <div className="table-shell overflow-x-auto rounded-[10px] border border-border/70 bg-surface-elevated">
     <table className={cn('min-w-full text-left text-sm tabular-nums', className)} {...props} />
   </div>
 );
