@@ -136,36 +136,78 @@ const MapController = ({ center, zoom, onCenterChange, onZoomChange }) => {
   }, [map, onCenterChange, onZoomChange]);
 
   return null;
+};
+
+const FixMapSize = () => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    let animationFrameId = 0;
+    const invalidate = () => {
+      window.cancelAnimationFrame(animationFrameId);
+      animationFrameId = window.requestAnimationFrame(() => {
+        map.invalidateSize({ pan: false });
+      });
+    };
+
+    invalidate();
+
+    const container = map.getContainer();
+    const observer = typeof ResizeObserver !== 'undefined' && container
+      ? new ResizeObserver(() => invalidate())
+      : null;
+
+    if (observer && container) {
+      observer.observe(container);
+    }
+
+    const timeoutId = window.setTimeout(invalidate, 100);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrameId);
+      window.clearTimeout(timeoutId);
+      if (observer) {
+        observer.disconnect();
+      }
+    };
+  }, [map]);
+
   return null;
 };
 
 const DirectoryItem = ({ pharmacy, selected, onClick }) => {
   const { t } = useLanguage();
   const status = getPharmacyOpenStatus(pharmacy);
-  const statusColors = {
-    open: 'text-green-600',
-    closed: 'text-red-600',
-    garde: 'text-orange-600',
-    night: 'text-purple-600',
+  const statusBadge = {
+    open:   'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    closed: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    garde:  'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+    night:  'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
   };
   const statusLabels = {
-    open: t('map.openNow', 'Open'),
-    closed: t('map.closed', 'Closed'),
-    garde: t('map.garde', 'On duty'),
-    night: t('map.night', 'Night pharmacy'),
+    open:   t('map.openNow'),
+    closed: t('map.closed'),
+    garde:  t('map.onCallGarde'),
+    night:  t('map.nightGuard'),
   };
-  
+
   return (
-    <button type="button" onClick={onClick} className={selected ? 'map-directory-item map-directory-item--selected' : 'map-directory-item'}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`map-directory-item${selected ? ' map-directory-item--selected border-l-2 border-l-primary' : ''}`}
+    >
       <div className="mb-1 flex items-start justify-between gap-3">
         <h3 className="font-display text-sm font-bold text-foreground">{pharmacy.name}</h3>
-        <span className={`registry-status registry-status--${status.statusType} ${statusColors[status.statusType]}`}>
+        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-[0.06em] ${statusBadge[status.statusType]}`}>
           {statusLabels[status.statusType]}
         </span>
       </div>
       <p className="mb-2 flex items-center gap-1 text-xs text-muted-foreground">
-        <MapPin className="h-3.5 w-3.5" />
-        {pharmacy.address || pharmacy.governorate || t('map.noAddress')}
+        <MapPin className="h-3.5 w-3.5 shrink-0" />
+        <span className="truncate">{pharmacy.address || pharmacy.governorate || t('map.noAddress')}</span>
       </p>
       <div className="flex items-center gap-4 text-[0.6875rem] font-bold uppercase tracking-[0.06em] text-muted-foreground">
         <span className="flex items-center gap-1">
@@ -268,14 +310,20 @@ const MapPage = () => {
     }
   };
 
+  const selectedStatus = selectedPharmacy ? getPharmacyOpenStatus(selectedPharmacy) : null;
+
   return (
     <div className="map-page-shell">
-      <section className="map-directory-panel">
-        <div className="border-b border-border p-6">
-          <h1 className="font-display text-2xl font-bold text-foreground">{t('map.title')}</h1>
-          <p className="mt-2 text-xs text-muted-foreground">{t('map.description', { count: pharmacies.length || 0 })}</p>
-          {error ? <p className="mt-2 text-xs font-medium text-amber-700">{error}</p> : null}
-          <div className="mt-4 flex flex-wrap gap-2">
+      <div className="border-b border-border bg-surface/80 px-6 py-4 backdrop-blur">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="mb-2 text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-primary">{t('nav.map')}</div>
+            <h1 className="font-display text-2xl font-bold text-foreground">{t('map.title')}</h1>
+            <p className="mt-1 max-w-3xl text-xs text-muted-foreground">
+              {t('map.description', { count: pharmacies.length || 0 })}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
             <button className="map-filter-chip map-filter-chip--active">
               <CircleDot className="h-3.5 w-3.5" />
               {t('map.openNow')}
@@ -283,7 +331,15 @@ const MapPage = () => {
             <button className="map-filter-chip">{t('map.garde24')}</button>
             <button className="map-filter-chip">{t('map.wholesale')}</button>
           </div>
-          <div className="relative mt-4">
+        </div>
+      </div>
+      {error ? (
+        <div className="border-b border-warning/25 bg-warning-soft px-6 py-3 text-xs font-medium text-warning">{error}</div>
+      ) : null}
+
+      <section className="map-directory-panel">
+        <div className="border-b border-border p-6">
+          <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="pl-10" placeholder={t('map.searchPlaceholder')} />
           </div>
@@ -318,10 +374,9 @@ const MapPage = () => {
         </div>
       </section>
 
-      <section className="map-main-canvas relative min-w-0 flex-1 overflow-hidden bg-slate-200">
+      <section className="map-main-canvas relative min-w-0 flex-1 overflow-hidden bg-slate-200" style={{ minHeight: '720px' }}>
         {typeof window !== 'undefined' && (
           <MapContainer
-            ref={mapRef}
             center={center}
             zoom={zoom}
             style={{ height: '100%', width: '100%' }}
@@ -333,6 +388,7 @@ const MapPage = () => {
               maxZoom={MAX_ZOOM}
               minZoom={MIN_ZOOM}
             />
+            <FixMapSize />
             <MapController center={center} zoom={zoom} onCenterChange={setCenter} onZoomChange={setZoom} />
             {filteredPharmacies.map((marker) => {
               const status = getPharmacyOpenStatus(marker);
@@ -349,10 +405,16 @@ const MapPage = () => {
                   }}
                 >
                   <Popup>
-                    <div className="text-sm">
-                      <h3 className="font-bold">{marker.name}</h3>
-                      <p className="text-xs text-gray-600">{marker.address}</p>
-                      <p className="mt-1 text-xs font-medium">{status.label}</p>
+                    <div className="min-w-[180px] p-1">
+                      <p className="mb-0.5 text-[0.625rem] font-bold uppercase tracking-[0.06em] text-muted-foreground">{marker.governorate}</p>
+                      <h3 className="font-display text-sm font-bold text-foreground">{marker.name}</h3>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{marker.address}</p>
+                      <span
+                        className="mt-2 inline-block rounded-full px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-[0.06em]"
+                        style={{ background: `${status.color}1A`, color: status.color }}
+                      >
+                        {status.label}
+                      </span>
                     </div>
                   </Popup>
                 </Marker>
@@ -382,36 +444,44 @@ const MapPage = () => {
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-8 text-xs">
-              <span className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4 fill-green-500 text-green-500" /> {t('map.openNow', 'Open')}</span>
+              <span className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4 fill-green-500 text-green-500" /> {t('map.openNow')}</span>
               <strong>{pharmacies.filter(p => getPharmacyOpenStatus(p).statusType === 'open').length}</strong>
             </div>
             <div className="flex items-center justify-between gap-8 text-xs">
-              <span className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4 fill-orange-500 text-orange-500" /> {t('map.garde', 'On duty')}</span>
+              <span className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4 fill-orange-500 text-orange-500" /> {t('map.onCallGarde')}</span>
               <strong>{pharmacies.filter(p => getPharmacyOpenStatus(p).statusType === 'garde').length}</strong>
             </div>
             <div className="flex items-center justify-between gap-8 text-xs">
-              <span className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4 fill-purple-500 text-purple-500" /> {t('map.night', 'Night')}</span>
+              <span className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4 fill-purple-500 text-purple-500" /> {t('map.nightGuard')}</span>
               <strong>{pharmacies.filter(p => getPharmacyOpenStatus(p).statusType === 'night').length}</strong>
             </div>
             <div className="flex items-center justify-between gap-8 text-xs">
-              <span className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4 fill-red-500 text-red-500" /> {t('map.closed', 'Closed')}</span>
+              <span className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4 fill-red-500 text-red-500" /> {t('map.closed')}</span>
               <strong>{pharmacies.filter(p => getPharmacyOpenStatus(p).statusType === 'closed').length}</strong>
             </div>
             <div className="flex items-center justify-between gap-8 text-xs">
-              <span className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4 fill-blue-500 text-blue-500" /> {t('map.selected', 'Selected')}</span>
+              <span className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4 fill-blue-500 text-blue-500" /> {t('map.selectedForNightDuty')}</span>
               <strong>{selectedPharmacy ? 1 : 0}</strong>
             </div>
           </div>
         </div>
 
-        {selectedPharmacy ? (
+        {selectedPharmacy && selectedStatus ? (
           <div className="map-popover">
-            <div className="mb-1 flex items-center gap-2">
-              <span className={`h-2 w-2 rounded-full`} style={{ backgroundColor: getPharmacyOpenStatus(selectedPharmacy).color }} />
-              <h3 className="font-display text-sm font-bold text-foreground">{selectedPharmacy.name}</h3>
+            <p className="mb-0.5 text-[0.625rem] font-bold uppercase tracking-[0.06em] text-primary">{selectedPharmacy.governorate}</p>
+            <div className="mb-2 flex min-w-0 items-start justify-between gap-2">
+              <h3 className="min-w-0 truncate font-display text-sm font-bold text-foreground">{selectedPharmacy.name}</h3>
+              <span
+                className="shrink-0 rounded-full px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-[0.06em]"
+                style={{ background: `${selectedStatus.color}1A`, color: selectedStatus.color }}
+              >
+                {selectedStatus.label}
+              </span>
             </div>
-            <p className="mb-3 text-xs text-muted-foreground">{selectedPharmacy.address || t('map.selectedForNightDuty')}</p>
-            <p className="mb-2 text-xs font-medium text-foreground">{getPharmacyOpenStatus(selectedPharmacy).label}</p>
+            <p className="mb-3 flex items-center gap-1 text-xs text-muted-foreground">
+              <MapPin className="h-3 w-3 shrink-0" />
+              <span className="truncate">{selectedPharmacy.address || t('map.noAddress')}</span>
+            </p>
             <Button className="w-full" size="sm">{t('map.viewFullRecords')}</Button>
             <span className="map-popover-arrow" />
           </div>
