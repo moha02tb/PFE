@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import Dropdown, { DropdownItem } from '../ui/Dropdown';
 import { Input } from '../ui/Input';
@@ -36,7 +37,7 @@ const TopBarNew = ({ onMenuClick, theme, onToggleTheme }) => {
 
   return (
     <header className="sticky top-0 z-30 px-3 pt-3 sm:px-4 lg:px-5">
-      <div className="admin-topbar flex min-h-[72px] items-center gap-3 border px-3 py-3 sm:px-4">
+      <div className="admin-topbar flex min-h-[76px] items-center gap-3 border px-3 py-3 sm:px-4 lg:px-5">
         <Button variant="secondary" size="icon" className="lg:hidden" onClick={onMenuClick} aria-label={t('common.openNavigation')}>
           <Menu className="h-4 w-4" />
         </Button>
@@ -56,16 +57,16 @@ const TopBarNew = ({ onMenuClick, theme, onToggleTheme }) => {
             <div className="relative">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                className="bg-surface/80 pl-10 pr-3 placeholder:text-muted-foreground hover:border-primary/25"
-                placeholder={t('topbar.searchPlaceholder')} 
+                className="bg-surface-elevated/90 pl-10 pr-3 shadow-soft placeholder:text-muted-foreground hover:border-primary/25 hover:bg-surface-elevated"
+                placeholder={t('topbar.searchPlaceholder')}
               />
             </div>
           </div>
 
-          <div className="hidden h-9 items-center gap-2 rounded-[8px] border border-border bg-surface-elevated/80 px-3 text-xs font-semibold text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.36)] lg:flex">
+          <Badge variant="neutral" className="hidden lg:inline-flex">
             <Circle className="live-dot h-2.5 w-2.5 fill-primary text-primary" />
             {t('common.active')}
-          </div>
+          </Badge>
           <Button variant="secondary" size="icon" onClick={onToggleTheme} aria-label={t('common.toggleTheme')}>
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
@@ -122,8 +123,7 @@ const TopBarNew = ({ onMenuClick, theme, onToggleTheme }) => {
                 role="button"
                 tabIndex={0}
                 className={cn(
-                  'flex items-center gap-2 rounded-[8px] border border-border bg-surface px-2 py-1.5 text-left transition-colors hover:bg-surface-muted dark:border-white/8',
-                  'transition-smooth hover:border-primary/25 hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]'
+                  'flex items-center gap-2 rounded-[10px] border border-border bg-surface-elevated px-2.5 py-1.5 text-left shadow-soft transition-smooth hover:border-primary/25 hover:bg-surface-muted hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]'
                 )}
               >
                 <div className="flex h-8 w-8 items-center justify-center rounded-[8px] border border-border bg-surface-muted text-xs font-bold text-foreground">

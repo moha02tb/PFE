@@ -22,6 +22,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { canViewNavigationPath, ADMIN_ROLES } from '../../lib/permissions';
 import { cn } from '../../lib/utils';
 import Button from '../ui/Button';
+import Tooltip from '../ui/Tooltip';
 
 const groups = [
   {
@@ -32,7 +33,7 @@ const groups = [
       { label: 'Management', path: '/management', icon: ClipboardList },
       { label: 'Calendar', path: '/calendar', icon: CalendarDays },
       { label: 'Map', path: '/map', icon: MapPinned },
-      { label: 'Emergency', path: '/emergency', icon: ShieldAlert },
+      { label: 'Monitoring', path: '/emergency', icon: ShieldAlert },
     ],
   },
   {
@@ -73,124 +74,127 @@ const SidebarNew = ({ open, onClose }) => {
   };
 
   const sidebarBody = (
-    <div className="admin-sidebar flex h-full flex-col">
-      <div className="flex items-start justify-between px-5 pb-7 pt-5">
+    <div className="admin-sidebar flex h-full flex-col border-r border-border/70 bg-surface-elevated/96 text-foreground shadow-panel backdrop-blur-md">
+      <div className="flex items-start justify-between border-b border-border/70 px-5 pb-5 pt-5">
         <div className="min-w-0">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-[8px] bg-primary text-primary-foreground shadow-[0_14px_28px_oklch(var(--primary)/0.22)]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-primary text-primary-foreground shadow-[0_14px_28px_oklch(var(--primary)/0.22)]">
               <HeartPulse className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-lg font-bold leading-tight text-white">{t('common.appName')}</p>
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">{t('nav.controlCenter')}</p>
+              <p className="text-lg font-bold leading-tight text-foreground">{t('common.appName')}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">{t('nav.controlCenter')}</p>
             </div>
           </div>
         </div>
-        <Button variant="ghost" size="icon" className="text-slate-400 hover:bg-white/[0.08] hover:text-white lg:hidden" onClick={onClose} aria-label={t('common.closeSidebar')}>
-          <X className="h-4 w-4" />
-        </Button>
+        <Tooltip content={t('common.closeSidebar')} side="left">
+          <Button variant="ghost" size="icon" className="lg:hidden" onClick={onClose} aria-label={t('common.closeSidebar')}>
+            <X className="h-4 w-4" />
+          </Button>
+        </Tooltip>
       </div>
 
-      <nav className="flex-1 space-y-6 overflow-y-auto px-3 pb-4">
+      <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
         {groups.map((group) => (
           <div key={group.label}>
-            <p className="mb-2 px-3 text-[0.625rem] font-bold uppercase tracking-[0.16em] text-slate-500">
+            <p className="mb-2 px-3 text-[0.625rem] font-bold uppercase tracking-[0.16em] text-muted-foreground/80">
               {t(`nav.${groupLabelKey[group.label]}`)}
             </p>
             <div className="space-y-1">
               {group.items
                 .filter((item) => {
-                  // Check path visibility first
                   if (!canViewNavigationPath(user?.role, item.path)) return false;
-                  // Then check admin-only flag
                   if (item.adminOnly && !ADMIN_ROLES.includes(user?.role)) return false;
                   return true;
                 })
                 .map((item) => {
-                const active = location.pathname === item.path;
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={onClose}
-                    className={cn(
-                      'admin-nav-link group flex items-center gap-3 rounded-[8px] px-3 py-3 text-sm font-medium tracking-wide transition-normal',
-                      active
-                        ? 'bg-primary/14 text-white shadow-[inset_0_0_0_1px_oklch(var(--primary)/0.26)]'
-                        : 'text-slate-400 hover:bg-white/[0.055] hover:text-white'
-                    )}
-                    data-active={active}
-                  >
-                    <Icon className={cn('h-5 w-5 flex-shrink-0', active ? 'text-primary' : item.path === '/emergency' ? 'text-red-400' : '')} />
-                    <span className="truncate">
-                      {item.path === '/dashboard'
-                        ? t('nav.dashboard')
-                        : item.path === '/pharmacies'
-                          ? t('nav.pharmacies')
-                          : item.path === '/management'
-                            ? t('nav.management')
-                            : item.path === '/calendar'
-                              ? t('nav.calendar')
-                              : item.path === '/map'
-                                ? t('nav.map')
-                                : item.path === '/emergency'
-                                  ? t('nav.emergency')
-                                  : item.path === '/upload-pharmacies'
-                                    ? t('nav.uploadPharmacies')
-                                    : item.path === '/upload-garde'
-                                      ? t('nav.uploadGarde')
-                                      : item.path === '/upload-medicines'
-                                        ? t('nav.uploadMedicines')
-                                        : item.path === '/notifications'
-                                          ? t('nav.notifications')
-                                          : item.path === '/languages'
-                                            ? t('nav.languages')
-                                            : item.path === '/audit-logs'
-                                              ? t('nav.auditLogs')
-                                              : item.path === '/settings'
-                                                ? t('nav.settings')
-                                                : t('nav.profile')}
-                    </span>
-                  </Link>
-                );
-              })}
+                  const active = location.pathname === item.path;
+                  const Icon = item.icon;
+
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      onClick={onClose}
+                      className={cn(
+                        'admin-nav-link group flex items-center gap-3 rounded-[10px] border border-transparent px-3 py-3 text-sm font-medium tracking-wide transition-smooth',
+                        active
+                          ? 'border-primary/20 bg-primary/12 text-foreground shadow-[0_10px_24px_oklch(var(--primary)/0.10)]'
+                          : 'text-muted-foreground hover:border-border/70 hover:bg-surface-muted hover:text-foreground'
+                      )}
+                      data-active={active}
+                    >
+                      <Icon className={cn('h-5 w-5 flex-shrink-0', active ? 'text-primary' : item.path === '/emergency' ? 'text-red-400' : 'text-muted-foreground/80')} />
+                      <span className="truncate">
+                        {item.path === '/dashboard'
+                          ? t('nav.dashboard')
+                          : item.path === '/pharmacies'
+                            ? t('nav.pharmacies')
+                            : item.path === '/management'
+                              ? t('nav.management')
+                              : item.path === '/calendar'
+                                ? t('nav.calendar')
+                                : item.path === '/map'
+                                  ? t('nav.map')
+                                  : item.path === '/emergency'
+                                    ? t('nav.emergency')
+                                    : item.path === '/upload-pharmacies'
+                                      ? t('nav.uploadPharmacies')
+                                      : item.path === '/upload-garde'
+                                        ? t('nav.uploadGarde')
+                                        : item.path === '/upload-medicines'
+                                          ? t('nav.uploadMedicines')
+                                          : item.path === '/notifications'
+                                            ? t('nav.notifications')
+                                            : item.path === '/languages'
+                                              ? t('nav.languages')
+                                              : item.path === '/audit-logs'
+                                                ? t('nav.auditLogs')
+                                                : item.path === '/settings'
+                                                  ? t('nav.settings')
+                                                  : t('nav.profile')}
+                      </span>
+                    </Link>
+                  );
+                })}
             </div>
           </div>
         ))}
       </nav>
 
-      <div className="mt-auto px-5 pb-5">
-        <div className="mb-3 rounded-[8px] border border-white/10 bg-white/[0.055] p-3">
+      <div className="mt-auto border-t border-border/70 px-5 pb-5 pt-4">
+        <div className="mb-3 rounded-[10px] border border-border bg-surface-muted/60 p-3 shadow-soft">
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-[0.625rem] font-bold uppercase tracking-[0.14em] text-slate-500">{t('common.live')}</span>
+            <span className="text-[0.625rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">{t('common.live')}</span>
             <span className="live-dot h-2 w-2 rounded-full bg-primary shadow-[0_0_0_5px_oklch(var(--primary)/0.13)]" />
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div>
-              <p className="font-bold text-white">API</p>
-              <p className="text-slate-400">{t('common.active')}</p>
+              <p className="font-bold text-foreground">API</p>
+              <p className="text-muted-foreground">{t('common.active')}</p>
             </div>
             <div>
-              <p className="font-bold text-white">Sync</p>
-              <p className="text-slate-400">{t('common.active')}</p>
+              <p className="font-bold text-foreground">Sync</p>
+              <p className="text-muted-foreground">{t('common.active')}</p>
             </div>
           </div>
         </div>
-        <div className="rounded-[8px] border border-white/10 bg-slate-800/45 p-3">
+        <div className="rounded-[10px] border border-border bg-surface-elevated/95 p-3 shadow-card">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border-2 border-slate-700 bg-slate-700 text-sm font-bold text-white">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-border bg-surface-muted text-sm font-bold text-foreground">
               {user?.nomUtilisateur?.[0]?.toUpperCase() || 'A'}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-white">{user?.nomUtilisateur || t('profile.adminUser')}</p>
-              <p className="truncate text-xs capitalize text-slate-400">
+              <p className="truncate text-sm font-semibold text-foreground">{user?.nomUtilisateur || t('profile.adminUser')}</p>
+              <p className="truncate text-xs capitalize text-muted-foreground">
                 {user?.region_scope ? `${user.role} · ${user.region_scope}` : user?.role || 'admin'}
               </p>
             </div>
-            <Button variant="ghost" size="icon" className="flex-shrink-0 text-slate-400 hover:bg-white/10 hover:text-white" onClick={handleLogout} aria-label={t('common.signOut')}>
-              <LogOut className="h-4 w-4" />
-            </Button>
+            <Tooltip content={t('common.signOut')} side="left">
+              <Button variant="ghost" size="icon" className="flex-shrink-0" onClick={handleLogout} aria-label={t('common.signOut')}>
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </Tooltip>
           </div>
         </div>
       </div>
@@ -203,14 +207,14 @@ const SidebarNew = ({ open, onClose }) => {
         type="button"
         onClick={onClose}
         className={cn(
-          'fixed inset-0 z-40 bg-slate-950/40 transition lg:hidden',
+          'fixed inset-0 z-40 bg-slate-950/50 transition lg:hidden',
           open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
         )}
         aria-hidden={!open}
       />
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-[272px] border-r border-white/10 transition-transform lg:static lg:z-auto lg:w-[264px] lg:translate-x-0 lg:bg-transparent',
+          'fixed inset-y-0 left-0 z-50 w-[280px] transition-transform lg:static lg:z-auto lg:w-[272px] lg:translate-x-0',
           open ? 'translate-x-0' : '-translate-x-full'
         )}
       >
