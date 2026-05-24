@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AlertTriangle, FileSpreadsheet, Pill, UploadCloud } from 'lucide-react';
+import { AlertCircle, AlertTriangle, FileSpreadsheet, Pill, UploadCloud } from 'lucide-react';
 import api from '../lib/api';
 import {
   Badge,
@@ -11,6 +11,7 @@ import {
   CardTitle,
   EmptyState,
   SectionHeader,
+  Skeleton,
   Table,
   TableBody,
   TableCell,
@@ -173,7 +174,10 @@ const UploadMedicinesPage = () => {
               </div>
 
               {error ? (
-                <div className="mt-5 rounded-[8px] border border-border bg-surface-muted p-4 text-sm text-foreground">{error}</div>
+                <div className="mt-5 flex items-start gap-3 rounded-[8px] border border-danger/25 bg-danger/10 px-4 py-3 text-sm text-danger">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>{error}</span>
+                </div>
               ) : null}
             </CardContent>
           </Card>
@@ -210,16 +214,16 @@ const UploadMedicinesPage = () => {
                         <p className="mt-2 font-display text-2xl font-semibold text-foreground">{result.total_rows}</p>
                       </div>
                       <div className="rounded-[6px] bg-surface-muted p-4">
-                        <p className="text-sm text-foreground">{t('upload.saved')}</p>
-                        <p className="mt-2 font-display text-2xl font-semibold text-foreground">{result.successful}</p>
+                        <p className="text-sm text-muted-foreground">{t('upload.saved')}</p>
+                        <p className="mt-2 font-display text-2xl font-semibold text-success">{result.successful}</p>
                       </div>
                       <div className="rounded-[6px] bg-surface-muted p-4">
-                        <p className="text-sm text-foreground">{t('upload.failed')}</p>
-                        <p className="mt-2 font-display text-2xl font-semibold text-foreground">{result.failed}</p>
+                        <p className="text-sm text-muted-foreground">{t('upload.failed')}</p>
+                        <p className="mt-2 font-display text-2xl font-semibold text-danger">{result.failed}</p>
                       </div>
                       <div className="rounded-[6px] bg-surface-muted p-4">
-                        <p className="text-sm text-foreground">{t('upload.warnings')}</p>
-                        <p className="mt-2 font-display text-2xl font-semibold text-foreground">{result.warnings?.length || 0}</p>
+                        <p className="text-sm text-muted-foreground">{t('upload.warnings')}</p>
+                        <p className="mt-2 font-display text-2xl font-semibold text-warning">{result.warnings?.length || 0}</p>
                       </div>
                     </div>
 
@@ -287,7 +291,13 @@ const UploadMedicinesPage = () => {
             </div>
           </CardHeader>
           <CardContent>
-            {recentMedicines.length ? (
+            {loadingRecent ? (
+              <div className="space-y-2 p-2">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <Skeleton key={i} className="h-10 w-full" />
+                ))}
+              </div>
+            ) : recentMedicines.length ? (
               <Table>
                 <TableHead>
                   <tr>
@@ -311,12 +321,8 @@ const UploadMedicinesPage = () => {
             ) : (
               <EmptyState
                 icon={Pill}
-                title={loadingRecent ? t('uploadMedicines.loadingMedicines') : t('uploadMedicines.noMedicines')}
-                description={
-                  loadingRecent
-                    ? t('uploadMedicines.loadingMedicinesDesc')
-                    : t('uploadMedicines.noMedicinesDesc')
-                }
+                title={t('uploadMedicines.noMedicines')}
+                description={t('uploadMedicines.noMedicinesDesc')}
               />
             )}
           </CardContent>

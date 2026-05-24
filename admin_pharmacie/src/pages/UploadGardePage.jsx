@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { CalendarDays, CheckCircle2, FileSpreadsheet, UploadCloud } from 'lucide-react';
+import { AlertCircle, CalendarDays, CheckCircle2, FileSpreadsheet, UploadCloud } from 'lucide-react';
 import api from '../lib/api';
 import {
   Badge,
@@ -11,6 +11,7 @@ import {
   CardTitle,
   EmptyState,
   SectionHeader,
+  Skeleton,
   Table,
   TableBody,
   TableCell,
@@ -52,6 +53,7 @@ const UploadGardePage = () => {
   const [error, setError] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [result, setResult] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [recentGardes, setRecentGardes] = useState([]);
   const [loadingRecent, setLoadingRecent] = useState(true);
 
@@ -162,9 +164,31 @@ const UploadGardePage = () => {
               <button
                 type="button"
                 onClick={() => inputRef.current?.click()}
-                className="upload-zone flex min-h-[280px] w-full flex-col items-center justify-center rounded-[8px] border border-dashed border-border bg-surface px-8 text-center hover:border-primary/40 hover:bg-surface-muted"
+                onDragEnter={(event) => {
+                  event.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={(event) => {
+                  event.preventDefault();
+                  setIsDragging(false);
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  setIsDragging(false);
+                  handleFile(event.dataTransfer.files?.[0]);
+                }}
+                data-dragging={isDragging}
+                className={`upload-zone flex min-h-[280px] w-full flex-col items-center justify-center rounded-[8px] border border-dashed px-8 text-center ${
+                  isDragging
+                    ? 'border-primary bg-primary-soft'
+                    : 'border-border bg-surface hover:border-primary/40 hover:bg-surface-muted'
+                }`}
               >
-                <div className="mb-5 rounded-[8px] bg-surface-muted p-4 text-foreground">
+                <div className="mb-5 rounded-[8px] bg-primary-soft p-4 text-primary">
                   <CalendarDays className="h-8 w-8" />
                 </div>
                 <h2 className="font-display text-2xl font-semibold text-foreground">{t('uploadGarde.dropTitle')}</h2>
@@ -192,7 +216,10 @@ const UploadGardePage = () => {
               </div>
 
               {error ? (
-                <div className="mt-5 rounded-[8px] border border-border bg-surface-muted p-4 text-sm text-foreground">{error}</div>
+                <div className="mt-5 flex items-start gap-3 rounded-[8px] border border-danger/25 bg-danger/10 px-4 py-3 text-sm text-danger">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>{error}</span>
+                </div>
               ) : null}
 
               {result ? (
@@ -202,12 +229,12 @@ const UploadGardePage = () => {
                     <p className="mt-2 font-display text-2xl font-semibold text-foreground">{result.total_rows}</p>
                   </div>
                   <div className="rounded-[6px] bg-surface-muted p-4">
-                    <p className="text-sm text-foreground">{t('upload.saved')}</p>
-                    <p className="mt-2 font-display text-2xl font-semibold text-foreground">{result.successful}</p>
+                    <p className="text-sm text-muted-foreground">{t('upload.saved')}</p>
+                    <p className="mt-2 font-display text-2xl font-semibold text-success">{result.successful}</p>
                   </div>
                   <div className="rounded-[6px] bg-surface-muted p-4">
-                    <p className="text-sm text-foreground">{t('upload.failed')}</p>
-                    <p className="mt-2 font-display text-2xl font-semibold text-foreground">{result.failed}</p>
+                    <p className="text-sm text-muted-foreground">{t('upload.failed')}</p>
+                    <p className="mt-2 font-display text-2xl font-semibold text-danger">{result.failed}</p>
                   </div>
                 </div>
               ) : null}
@@ -243,7 +270,13 @@ const UploadGardePage = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                {recentGardes.length ? (
+                {loadingRecent ? (
+                  <div className="space-y-2 p-2">
+                    {Array.from({ length: 4 }, (_, i) => (
+                      <Skeleton key={i} className="h-10 w-full" />
+                    ))}
+                  </div>
+                ) : recentGardes.length ? (
                   <Table>
                     <TableHead>
                       <tr>
@@ -265,12 +298,8 @@ const UploadGardePage = () => {
                 ) : (
                   <EmptyState
                     icon={CheckCircle2}
-                    title={loadingRecent ? t('uploadGarde.loadingRows') : t('uploadGarde.noRows')}
-                    description={
-                      loadingRecent
-                        ? t('uploadGarde.loadingRowsDesc')
-                        : t('uploadGarde.noRowsDesc')
-                    }
+                    title={t('uploadGarde.noRows')}
+                    description={t('uploadGarde.noRowsDesc')}
                   />
                 )}
               </CardContent>
