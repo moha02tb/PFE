@@ -1,6 +1,6 @@
 import React from 'react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card";
 
 const StatCard = ({ icon, label, value, change, changeColor }) => {
   const trend = (change || '').trim();

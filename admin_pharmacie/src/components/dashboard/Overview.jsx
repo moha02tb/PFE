@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import StatCard from '../common/StatCard';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/Card";
 import { Building2, Clock, CheckCircle2, AlertCircle, UploadCloud, ShieldCheck, Activity, Plus, RefreshCw, Wifi, Sparkles, HeartPulse, Globe2 } from 'lucide-react';
 
 const Overview = ({ recentActivities = [] }) => {
