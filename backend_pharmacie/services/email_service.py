@@ -10,7 +10,7 @@ class EmailService:
 
     def __init__(self):
         self.smtp_host = os.getenv("SMTP_HOST", "").strip()
-        self.smtp_port = int(os.getenv("SMTP_PORT", "587"))
+        self.smtp_port = self._smtp_port()
         self.smtp_username = os.getenv("SMTP_USERNAME", "").strip()
         self.smtp_password = os.getenv("SMTP_PASSWORD", "")
         self.smtp_from_email = os.getenv("SMTP_FROM_EMAIL", "").strip()
@@ -28,6 +28,13 @@ class EmailService:
             "on",
         }
         self.backend_public_url = os.getenv("BACKEND_PUBLIC_URL", "http://localhost:8000").rstrip("/")
+
+    def _smtp_port(self) -> int:
+        raw_port = os.getenv("SMTP_PORT", "587").strip() or "587"
+        try:
+            return int(raw_port)
+        except ValueError as exc:
+            raise RuntimeError("SMTP_PORT must be a valid integer.") from exc
 
     def _ensure_configured(self):
         if not self.smtp_host or not self.smtp_from_email:

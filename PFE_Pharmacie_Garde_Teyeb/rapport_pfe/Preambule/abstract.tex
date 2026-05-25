@@ -1,21 +1,22 @@
 This final-year project focuses on the design and implementation of \textbf{PharmacieConnect}, a web and
-mobile platform for pharmacy search, on-duty pharmacy schedule consultation, and pharmaceutical data
-administration. The project addresses a practical need: on-duty pharmacy information can be scattered,
-manually updated, and difficult to consult from a mobile device, especially when users need a quick
-answer.
+mobile platform dedicated to Tunisian pharmacies, on-duty pharmacy schedules, and quick access to useful
+information from a phone. The work starts from a practical observation: duty schedules are still shared
+through heterogeneous lists that are not always easy to correct or search, while citizens often need this
+information at night, during weekends, or on public holidays.
 
 PharmacieConnect relies on three complementary components. The backend is the technical core of the
 platform. With \textbf{FastAPI}, it brings together data access, business rules, REST endpoints, and
-security mechanisms based on JWT authentication and role-based authorization. On the administration side,
-the \textbf{React}/\textbf{Vite} dashboard provides a central workspace for maintaining pharmacies, duty
-schedules, medicines, CSV imports, analytics, and audit logs. The mobile application uses \textbf{Expo}
-and \textbf{React Native} and focuses on citizens' needs: searching for pharmacies, consulting
-on-duty schedules by date, using geolocation, and accessing the medicine catalog.
+security mechanisms based on JWT authentication, roles, and regional scopes. On the administration side,
+the \textbf{React}/\textbf{Vite} dashboard is used to maintain pharmacies, duty schedules, medicines,
+authorized users, CSV imports, analytics, and audit logs. The mobile application uses \textbf{Expo}
+and \textbf{React Native} and covers citizens' main journeys: text search, on-duty schedule consultation
+by date, geolocation, medicine catalog access, and a first-aid conversational assistant.
 
 The project is not limited to visible interfaces. It also addresses several software engineering concerns,
 including data modeling with SQLAlchemy, input validation, role-based access control, audit logging,
 backend testing, and a clear separation between client interfaces, business services, and data
-persistence.
+persistence. The first-aid assistant adds a hybrid information retrieval layer, evaluated with retrieval
+metrics and surrounded by safety messages whenever a situation requires medical attention.
 
 \textbf{Keywords:} on-duty pharmacy, FastAPI, React, Vite, Expo, React Native, JWT, REST API,
-SQLAlchemy, dashboard, mobile application.
+SQLAlchemy, dashboard, mobile application, first-aid assistant.

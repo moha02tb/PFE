@@ -66,7 +66,7 @@ async def get_current_admin(
     - Reads access token from Authorization header or cookie
     - Validates token and checks user is admin
     - Returns admin user from administrateurs table
-    """
+    """                                                                                                                                                                                                                                                          
     token = _extract_bearer_or_cookie_token(authorization, access_token)
 
     if not token:

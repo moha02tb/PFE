@@ -5,16 +5,17 @@
 
 \section{Introduction}
 
-La conception traduit les besoins identifiés en une organisation technique cohérente. Elle précise la
-répartition des responsabilités entre les composants, la structure des données, les mécanismes de
-sécurité et les choix techniques qui soutiennent la réalisation de PharmacieConnect.
+La conception traduit les besoins identifiés en une organisation technique directement exploitable dans
+le projet. Elle précise la répartition des responsabilités entre les composants, la structure des données,
+les mécanismes de sécurité et les choix retenus pour relier le backend, le tableau de bord, l'application
+mobile et l'assistant de premiers secours.
 
 \section{Architecture globale}
 
-PharmacieConnect repose sur une architecture client-serveur. L'application mobile et le tableau de bord
-administrateur ne communiquent pas directement avec la base de données : toutes les opérations passent
-par l'API backend. Cette couche commune concentre la validation, la sécurité et les règles métier, ce qui
-évite de dupliquer ces responsabilités dans les interfaces clientes.
+PharmacieConnect repose sur une architecture client-serveur organisée autour d'un backend unique.
+L'application mobile et le tableau de bord administrateur ne communiquent pas directement avec la base de
+données : toutes les opérations passent par l'API backend. Ce choix évite que les règles de validation,
+les restrictions régionales ou les contrôles d'accès soient réécrits différemment dans chaque interface.
 
 \begin{figure}[H]
     \centering
@@ -23,16 +24,18 @@ par l'API backend. Cette couche commune concentre la validation, la sécurité e
     \label{fig:architecture-globale}
 \end{figure}
 
-L'application mobile utilise principalement les endpoints publics et les services liés au compte
-utilisateur. Le tableau de bord administrateur s'appuie sur des endpoints protégés pour les opérations de
-gestion. Le backend devient ainsi la couche commune entre les interfaces clientes et la base de données.
+L'application mobile utilise principalement les endpoints publics, les services liés au compte utilisateur
+et l'accès à l'assistant. Le tableau de bord administrateur s'appuie sur des endpoints protégés pour les
+opérations de gestion. Le backend devient ainsi la couche commune entre les interfaces clientes, les
+services spécialisés et la base de données.
 
 \section{Backend FastAPI}
 
 Le backend s'appuie sur FastAPI pour exposer les endpoints REST et organiser le traitement des requêtes.
 Sa structure sépare les routes HTTP, les services métier, les modèles de données et les schémas de
-validation. Cette séparation rend le code plus lisible, limite le couplage entre les modules et facilite
-les tests.
+validation. Cette séparation correspond aux besoins réels du projet : les imports CSV, les gardes, les
+médicaments, les restrictions régionales et l'audit peuvent évoluer sans modifier directement les écrans
+web ou mobiles.
 
 \begin{table}[H]
     \centering
@@ -147,6 +150,27 @@ entre les comptes, les pharmacies, les gardes, les médicaments et les journaux 
     \label{fig:class-diagram}
 \end{figure}
 
+Le diagramme de la figure~\ref{fig:class-diagram} synthétise les entités centrales du modèle métier de
+PharmacieConnect et les liens qui les unissent. L'entité \texttt{Administrateur} (caractérisée par
+\texttt{email}, \texttt{password\_hash}, \texttt{role} et un éventuel
+\texttt{allowed\_governorates}) et l'entité \texttt{Utilisateur} (avec \texttt{email},
+\texttt{password\_hash}, \texttt{email\_verified} et \texttt{is\_active}) représentent les deux profils
+de comptes manipulés par la plateforme : la gestion côté tableau de bord d'une part, la consultation
+côté mobile d'autre part. L'entité \texttt{Pharmacie} (\texttt{nom}, \texttt{adresse},
+\texttt{telephone}, \texttt{gouvernorat}, \texttt{latitude}, \texttt{longitude}) est associée à
+l'entité \texttt{GardeSchedule} (\texttt{date}, \texttt{horaire}, \texttt{type\_garde},
+\texttt{ville}) par une relation un-à-plusieurs : une pharmacie peut figurer dans plusieurs plannings
+de garde, mais chaque garde référence une seule pharmacie. L'entité \texttt{Medicine}
+(\texttt{code\_pct}, \texttt{nom\_commercial}, \texttt{dci}, \texttt{prix\_public},
+\texttt{tarif\_reference}, \texttt{remboursement}) reste indépendante du planning de garde et compose
+le catalogue interrogé par l'application mobile. Enfin, l'entité \texttt{AuditLog}
+(\texttt{actor\_id}, \texttt{action}, \texttt{target}, \texttt{status}, \texttt{ip}, \texttt{timestamp})
+référence l'\texttt{Administrateur} ou l'\texttt{Utilisateur} qui a déclenché l'action et conserve une
+trace horodatée des opérations sensibles (connexions, créations, modifications, suppressions et
+imports). Cette organisation traduit la séparation des responsabilités voulue par l'architecture :
+les profils d'accès sont distincts, les données métier sont centralisées autour de la pharmacie et
+toute action de gestion laisse une trace exploitable côté audit.
+
 \section{Diagrammes de séquence}
 
 Les diagrammes de séquence servent à décrire les échanges entre les interfaces clientes, le backend, les
@@ -200,40 +224,91 @@ backend, la base de données et la configuration.
 \end{figure}
 
 \section{Sécurité}
+\label{sec:securite}
 
 La sécurité est traitée au niveau du backend, car les règles d'accès ne doivent pas dépendre uniquement
-des interfaces clientes. Les mécanismes retenus suivent les principes généraux de protection des API et
-de réduction des accès non autorisés \cite{owasp}.
+des interfaces clientes. Les mécanismes retenus s'appuient sur les recommandations OWASP pour la
+protection des API~\cite{owasp} et couvrent l'ensemble du cycle de vie d'une requête : authentification,
+autorisation, validation des données, journalisation et configuration du déploiement.
 
-\subsection{JWT}
+\subsection{Authentification JWT et gestion des sessions}
 
-Après une connexion réussie, le backend génère un jeton d'accès et un jeton de rafraîchissement. Le
-jeton d'accès autorise l'appel des routes protégées, tandis que le jeton de rafraîchissement renouvelle la
-session lorsque le premier expire. Le format JWT est défini par la RFC 7519 \cite{jwt}.
+La gestion des sessions dans PharmacieConnect distingue deux jetons aux durées de vie volontairement
+différentes. À la connexion, le backend émet un jeton d'accès valable 30~minutes, signé avec
+HS256, et un jeton de rafraîchissement valable 7~jours. Le premier accompagne chaque requête
+protégée dans l'en-tête \texttt{Authorization: Bearer} ; sa courte durée limite les conséquences
+d'une interception. Le second est conservé en base dans l'entité \texttt{RefreshToken} et effacé
+lors de la déconnexion explicite, ce qui permet de renouveler la session active sans laisser
+le jeton d'accès circuler au-delà de sa fenêtre autorisée.
 
-\subsection{Contrôle d'accès basé sur les rôles (RBAC)}
+La validation de ces jetons est prise en charge exclusivement par le backend à chaque appel
+protégé : déléguer ce contrôle à l'interface cliente serait insuffisant, car tout appel direct à
+l'API contournerait alors les vérifications \cite{jwt}.
 
-La plateforme distingue plusieurs rôles administratifs, notamment administrateur, super administrateur et
-assistant. Ces rôles limitent les actions accessibles. Les assistants peuvent aussi être liés à un périmètre
-régional afin de limiter leurs interventions aux zones autorisées.
+\subsection{Contrôle d'accès basé sur les rôles (\gls{rbac})}
+
+PharmacieConnect organise les accès administratifs selon trois rôles : \texttt{super\_admin},
+\texttt{admin} et \texttt{assistant}. Chaque endpoint protégé évalue le rôle du demandeur avant
+d'exécuter quoi que ce soit. Pour le rôle \texttt{assistant}, un deuxième filtre s'applique :
+l'attribut \texttt{allowed\_governorates} liste les gouvernorats sur lesquels l'assistant est
+habilité à agir. Toute tentative d'opération hors de ce périmètre est rejetée même si le jeton
+d'accès est valide. Cette combinaison rôle\,/\,périmètre répond directement au besoin de
+délégation régionale : plusieurs assistants peuvent coexister sans avoir accès aux données
+des autres délégations.
 
 \subsection{Hachage des mots de passe}
 
-Les mots de passe ne sont pas stockés en clair. Le backend les hache avant l'enregistrement et compare
-les valeurs hachées pendant la connexion. Ce choix réduit l'impact d'un éventuel accès non autorisé à la
-base de données.
+Le projet a retenu bcrypt via Passlib pour protéger les mots de passe des administrateurs et des
+utilisateurs mobiles. Chaque empreinte est produite avec un sel unique généré à l'enregistrement :
+deux comptes utilisant le même mot de passe donnent des empreintes différentes, ce qui empêche
+toute comparaison directe entre entrées. Le facteur de coût est réglé pour que la vérification
+lors de la connexion reste imperceptible pour l'utilisateur, tout en rendant une attaque par
+volume prohibitivement longue. La comparaison à la connexion s'opère uniquement sur les empreintes
+stockées ; le mot de passe en clair n'est jamais conservé en base.
 
-\subsection{Validation API}
+\subsection{Validation des entrées avec Pydantic}
 
-Les données envoyées vers l'API sont validées avec Pydantic et avec les services métier. Cette validation
-concerne les champs obligatoires, les coordonnées GPS, les dates, les fichiers CSV, les limites de
-pagination et les autorisations.
+Avant qu'une donnée entrante n'atteigne la couche service, un schéma Pydantic la valide
+intégralement. Pour PharmacieConnect, cela concerne notamment les formats d'email des comptes,
+les plages de coordonnées des pharmacies (latitude bornée entre $-90$ et $90$, longitude entre
+$-180$ et $180$), les dates des plannings de garde, les codes PCT des médicaments et la taille
+maximale des fichiers CSV importés. Regrouper ces contrôles dans les schémas évite de les
+répliquer dans chaque route et intercepte les données malformées avant tout accès à la base.
 
-\subsection{Variables d'environnement}
+\subsection{Politique \gls{cors} et hôtes autorisés}
 
-Les paramètres sensibles sont placés dans des variables d'environnement. Cela concerne notamment la
-chaîne de connexion à la base de données, la clé de signature JWT, la durée des jetons, les origines CORS,
-les hôtes autorisés et la configuration du cache.
+Le backend déclare explicitement les origines autorisées à le solliciter via la variable
+d'environnement \texttt{FRONTEND\_URL}. Toute requête provenant d'une origine non déclarée est
+rejetée par le middleware CORS avant même d'atteindre une route. En complément,
+\texttt{TrustedHostMiddleware} inspecte l'en-tête d'hôte de chaque requête et bloque celles
+dont l'hôte n'est pas inscrit dans \texttt{TRUSTED\_HOSTS}. Ces deux listes sont externalisées
+dans la configuration d'environnement : aucune valeur d'origine ou d'hôte n'est codée dans
+le code source, ce qui facilite l'adaptation lors d'un déploiement en production.
+
+\subsection{Traçabilité et journalisation des actions}
+
+Deux mécanismes de traçabilité coexistent dans PharmacieConnect. La table \texttt{LoginAttempt}
+enregistre chaque tentative de connexion — succès ou échec — avec l'adresse IP source et
+l'horodatage, ce qui permet de repérer une activité suspecte sur un compte donné. En parallèle,
+le service \texttt{AuditService} journalise les opérations administratives significatives :
+création, modification, suppression d'entités, imports CSV et changements de droits. Chaque
+entrée d'audit identifie l'acteur, décrit l'opération, référence la cible et horodate l'événement.
+Cette granularité permet de reconstituer précisément l'historique des modifications apportées
+aux données de la plateforme.
+
+\subsection{Sécurité du déploiement}
+
+Pour un déploiement en production, les mesures complémentaires recommandées sont :
+
+\begin{itemize}
+    \item forcer \textbf{HTTPS} sur toutes les communications et rediriger le trafic HTTP ;
+    \item utiliser une \texttt{SECRET\_KEY} aléatoire d'au moins 256 bits, distincte entre
+    les environnements de développement et de production ;
+    \item remplacer SQLite par \textbf{PostgreSQL} pour une gestion robuste des connexions
+    concurrentes ;
+    \item activer le cache \textbf{Redis} pour réduire la pression sur la base de données et
+    limiter les requêtes répétitives.
+\end{itemize}
 
 \section{Justification des choix techniques}
 
@@ -259,6 +334,8 @@ les hôtes autorisés et la configuration du cache.
 
 \section{Conclusion}
 
-La conception retenue sépare clairement le backend, l'administration web, l'application mobile et la base
-de données. Cette organisation facilite le développement, les tests et les évolutions futures. Le chapitre
+La conception retenue sépare le backend, l'administration web, l'application mobile, l'assistant et la
+base de données tout en les reliant par des contrats d'API explicites. Cette organisation facilite les
+tests et rend les évolutions futures plus maîtrisables : ajout d'une règle de garde, modification d'un
+import ou enrichissement de l'assistant peuvent être traités dans le composant concerné. Le chapitre
 suivant passe de cette conception à la réalisation technique et à la validation de la solution.

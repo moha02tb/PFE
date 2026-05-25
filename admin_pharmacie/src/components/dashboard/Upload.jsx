@@ -1,7 +1,7 @@
 import React from 'react';
 import { mainContentStyles, cardStyles, buttonStyles, fileUploadStyles, summaryStyles } from '../../styles/dashboard.styles';
 
-const Upload = ({ uploadedFiles, setUploadedFiles, dragActive, setDragActive, handleDrag, handleDrop }) => {
+const Upload = ({ uploadedFiles, setUploadedFiles, dragActive, setDragActive, handleDrag, handleDrop, onStartGeocoding }) => {
   return (
     <div style={mainContentStyles.mainContent}>
       {/* Page Header */}
@@ -94,6 +94,7 @@ const Upload = ({ uploadedFiles, setUploadedFiles, dragActive, setDragActive, ha
             style={{ ...buttonStyles.buttonPrimary, marginTop: '24px', width: '100%' }}
             onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 12px 30px rgba(102, 126, 234, 0.5)')}
             onMouseLeave={(e) => (e.currentTarget.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.3)')}
+            onClick={onStartGeocoding}
           >
             Commencer le Géocodage →
           </button>

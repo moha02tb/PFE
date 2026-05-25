@@ -1,6 +1,25 @@
 import models
+from main import _cors_origins
 from schemas import AdminCreate
 from services.admin_service import AdminService
+
+
+def test_cors_preflight_allows_local_network_origin(client):
+    response = client.options(
+        "/api/auth/login",
+        headers={
+            "Origin": "http://192.168.1.44:5173",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "content-type",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://192.168.1.44:5173"
+
+
+def test_development_cors_keeps_defaults_when_env_is_partial():
+    assert "http://127.0.0.1:5173" in _cors_origins()
 
 
 def test_regular_user_token_cannot_access_admin_endpoint(client, test_user, user_headers, test_db):

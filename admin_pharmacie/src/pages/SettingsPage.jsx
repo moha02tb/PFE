@@ -1,20 +1,286 @@
 import React, { useState } from 'react';
-import { BellRing, Clock, Globe2, LockKeyhole, Save, ShieldCheck } from 'lucide-react';
+import {
+  AlertCircle,
+  BellRing,
+  CheckCircle2,
+  Clock,
+  Globe2,
+  KeyRound,
+  LockKeyhole,
+  Mail,
+  Phone,
+  Save,
+  ShieldCheck,
+  UserPen,
+} from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { Badge, Button, Field, FieldHint, FieldLabel, Input, SectionHeader, Select, Tabs } from '../components/ui';
+import {
+  Badge,
+  Button,
+  Field,
+  FieldError,
+  FieldHint,
+  FieldLabel,
+  Input,
+  SectionHeader,
+  Select,
+  Tabs,
+} from '../components/ui';
+import api from '../lib/api';
+
+const cleanPhone = (value) => value?.trim() || null;
+
+const StatusBanner = ({ type, message }) => (
+  <div
+    className={`flex items-start gap-3 rounded-[8px] border p-4 text-sm font-medium ${
+      type === 'success'
+        ? 'border-emerald-600/20 bg-emerald-50 text-emerald-700 dark:border-emerald-300/20 dark:bg-emerald-400/10 dark:text-emerald-200'
+        : 'border-red-600/20 bg-red-50 text-red-700 dark:border-red-300/20 dark:bg-red-400/10 dark:text-red-200'
+    }`}
+  >
+    {type === 'success' ? (
+      <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0" />
+    ) : (
+      <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+    )}
+    <FieldError className="text-inherit">{message}</FieldError>
+  </div>
+);
+
+const GeneralTab = ({ t, setLanguage, language }) => {
+  const { user, updateProfile } = useAuth();
+  const [form, setForm] = useState({
+    nomUtilisateur: user?.nomUtilisateur || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+  });
+  const [status, setStatus] = useState({ type: null, message: '' });
+  const [saving, setSaving] = useState(false);
+
+  const changed =
+    form.nomUtilisateur !== (user?.nomUtilisateur || '') ||
+    form.email !== (user?.email || '') ||
+    cleanPhone(form.phone) !== cleanPhone(user?.phone || '');
+
+  const updateField = (key, value) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    if (status.type) setStatus({ type: null, message: '' });
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!form.nomUtilisateur.trim() || !form.email.trim()) {
+      setStatus({ type: 'error', message: t('profile.requiredFields') });
+      return;
+    }
+    setSaving(true);
+    const result = await updateProfile({
+      nomUtilisateur: form.nomUtilisateur.trim(),
+      email: form.email.trim(),
+      phone: cleanPhone(form.phone),
+    });
+    setSaving(false);
+    if (result.success) {
+      setForm({
+        nomUtilisateur: result.user.nomUtilisateur || '',
+        email: result.user.email || '',
+        phone: result.user.phone || '',
+      });
+      setStatus({ type: 'success', message: t('profile.saved') });
+    } else {
+      setStatus({ type: 'error', message: result.error || t('profile.failed') });
+    }
+  };
+
+  return (
+    <div className="grid gap-8">
+      <form id="settings-profile-form" onSubmit={handleSubmit} className="grid gap-5">
+        <div>
+          <h2 className="font-display text-xl font-bold text-foreground">{t('settings.profileSection')}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{t('settings.profileSectionDesc')}</p>
+        </div>
+
+        <Field>
+          <FieldLabel>{t('profile.username')}</FieldLabel>
+          <div className="relative">
+            <UserPen className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={form.nomUtilisateur}
+              minLength={3}
+              maxLength={100}
+              onChange={(e) => updateField('nomUtilisateur', e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <FieldHint>{t('profile.usernameHint')}</FieldHint>
+        </Field>
+
+        <Field>
+          <FieldLabel>{t('profile.email')}</FieldLabel>
+          <div className="relative">
+            <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="email"
+              value={form.email}
+              onChange={(e) => updateField('email', e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <FieldHint>{t('profile.emailHint')}</FieldHint>
+        </Field>
+
+        <Field>
+          <FieldLabel>{t('profile.phone')}</FieldLabel>
+          <div className="relative">
+            <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="tel"
+              value={form.phone}
+              maxLength={30}
+              onChange={(e) => updateField('phone', e.target.value)}
+              className="pl-10"
+              placeholder="+216"
+            />
+          </div>
+          <FieldHint>{t('profile.phoneHint')}</FieldHint>
+        </Field>
+
+        {status.type ? <StatusBanner type={status.type} message={status.message} /> : null}
+
+        <div>
+          <Button type="submit" disabled={!changed || saving}>
+            <Save className="h-4 w-4" />
+            {saving ? t('profile.saving') : t('common.saveChanges')}
+          </Button>
+        </div>
+      </form>
+
+      <div className="border-t border-border pt-6 grid gap-4">
+        <div>
+          <h2 className="font-display text-xl font-bold text-foreground">{t('settings.interfaceLanguage')}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{t('settings.interfaceLanguageDesc')}</p>
+        </div>
+        <Field>
+          <FieldLabel>{t('settings.defaultLanguage')}</FieldLabel>
+          <Select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+          >
+            <option value="en">English</option>
+            <option value="fr">Français</option>
+            <option value="ar">العربية</option>
+          </Select>
+        </Field>
+      </div>
+    </div>
+  );
+};
+
+const SecurityTab = ({ t }) => {
+  const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [status, setStatus] = useState({ type: null, message: '' });
+  const [saving, setSaving] = useState(false);
+
+  const updateField = (key, value) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    if (status.type) setStatus({ type: null, message: '' });
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (form.newPassword.length < 6) {
+      setStatus({ type: 'error', message: t('settings.passwordTooShort') });
+      return;
+    }
+    if (form.newPassword !== form.confirmPassword) {
+      setStatus({ type: 'error', message: t('settings.passwordsNoMatch') });
+      return;
+    }
+    setSaving(true);
+    try {
+      await api.post('/api/auth/me/password', {
+        current_password: form.currentPassword,
+        new_password: form.newPassword,
+      });
+      setForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setStatus({ type: 'success', message: t('settings.passwordSaved') });
+    } catch (err) {
+      const message =
+        err.response?.data?.detail || err.message || t('settings.passwordFailed');
+      setStatus({ type: 'error', message });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="grid gap-5">
+      <div>
+        <h2 className="font-display text-xl font-bold text-foreground">{t('settings.changePassword')}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t('settings.changePasswordDesc')}</p>
+      </div>
+
+      <Field>
+        <FieldLabel>{t('settings.currentPassword')}</FieldLabel>
+        <div className="relative">
+          <LockKeyhole className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="password"
+            value={form.currentPassword}
+            onChange={(e) => updateField('currentPassword', e.target.value)}
+            className="pl-10"
+            required
+          />
+        </div>
+      </Field>
+
+      <Field>
+        <FieldLabel>{t('settings.newPassword')}</FieldLabel>
+        <div className="relative">
+          <KeyRound className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="password"
+            value={form.newPassword}
+            onChange={(e) => updateField('newPassword', e.target.value)}
+            className="pl-10"
+            minLength={6}
+            required
+          />
+        </div>
+      </Field>
+
+      <Field>
+        <FieldLabel>{t('settings.confirmPassword')}</FieldLabel>
+        <div className="relative">
+          <KeyRound className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="password"
+            value={form.confirmPassword}
+            onChange={(e) => updateField('confirmPassword', e.target.value)}
+            className="pl-10"
+            minLength={6}
+            required
+          />
+        </div>
+      </Field>
+
+      {status.type ? <StatusBanner type={status.type} message={status.message} /> : null}
+
+      <div>
+        <Button type="submit" disabled={saving || !form.currentPassword || !form.newPassword || !form.confirmPassword}>
+          <Save className="h-4 w-4" />
+          {saving ? t('settings.changingPassword') : t('settings.changePassword')}
+        </Button>
+      </div>
+    </form>
+  );
+};
 
 const SettingsPage = () => {
-  const { t, setLanguage } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
+  const { user } = useAuth();
   const [tab, setTab] = useState('general');
-  const [form, setForm] = useState({
-    workspaceName: 'HealthAdmin',
-    timezone: 'Africa/Tunis',
-    locale: 'en',
-    emailAlerts: 'enabled',
-    sessionTimeout: '30',
-  });
-
-  const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 
   return (
     <div className="page-shell">
@@ -23,12 +289,6 @@ const SettingsPage = () => {
           eyebrow={t('settings.eyebrow')}
           title={t('settings.title')}
           description={t('settings.description')}
-          actions={
-            <Button>
-              <Save className="h-4 w-4" />
-              {t('common.saveChanges')}
-            </Button>
-          }
         />
 
         <div className="flex flex-wrap items-center gap-3">
@@ -46,43 +306,11 @@ const SettingsPage = () => {
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.2fr_0.8fr]">
           <div className="bento-card p-6">
-            {tab === 'general' ? (
-              <div className="grid gap-5">
-                <div>
-                  <h2 className="font-display text-xl font-bold text-foreground">{t('settings.workspaceSettings')}</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">{t('settings.workspaceSettingsDesc')}</p>
-                </div>
-                <Field>
-                  <FieldLabel>{t('settings.workspaceName')}</FieldLabel>
-                  <Input value={form.workspaceName} onChange={(event) => update('workspaceName', event.target.value)} />
-                </Field>
-                <div className="grid gap-5 md:grid-cols-2">
-                  <Field>
-                    <FieldLabel>{t('settings.timezone')}</FieldLabel>
-                    <Select value={form.timezone} onChange={(event) => update('timezone', event.target.value)}>
-                      <option value="Africa/Tunis">Africa/Tunis</option>
-                      <option value="Europe/Paris">Europe/Paris</option>
-                      <option value="UTC">UTC</option>
-                    </Select>
-                  </Field>
-                  <Field>
-                    <FieldLabel>{t('settings.defaultLanguage')}</FieldLabel>
-                    <Select value={form.locale} onChange={(event) => { update('locale', event.target.value); setLanguage(event.target.value); }}>
-                      <option value="en">English</option>
-                      <option value="fr">Francais</option>
-                      <option value="ar">العربية</option>
-                    </Select>
-                  </Field>
-                </div>
-                <Field>
-                  <FieldLabel>{t('settings.retentionNote')}</FieldLabel>
-                  <Input value={t('settings.retentionValue')} readOnly />
-                  <FieldHint>{t('settings.retentionHint')}</FieldHint>
-                </Field>
-              </div>
-            ) : null}
+            {tab === 'general' && (
+              <GeneralTab t={t} language={language} setLanguage={setLanguage} />
+            )}
 
-            {tab === 'notifications' ? (
+            {tab === 'notifications' && (
               <div className="grid gap-5">
                 <div>
                   <h2 className="font-display text-xl font-bold text-foreground">{t('settings.notificationControls')}</h2>
@@ -90,7 +318,7 @@ const SettingsPage = () => {
                 </div>
                 <Field>
                   <FieldLabel>{t('settings.emailAlerts')}</FieldLabel>
-                  <Select value={form.emailAlerts} onChange={(event) => update('emailAlerts', event.target.value)}>
+                  <Select defaultValue="enabled">
                     <option value="enabled">{t('settings.enabled')}</option>
                     <option value="digest">{t('settings.dailyDigest')}</option>
                     <option value="disabled">{t('settings.disabled')}</option>
@@ -101,28 +329,9 @@ const SettingsPage = () => {
                   <Input value="ops-alerts@pharmacieconnect.tn" readOnly />
                 </Field>
               </div>
-            ) : null}
+            )}
 
-            {tab === 'security' ? (
-              <div className="grid gap-5">
-                <div>
-                  <h2 className="font-display text-xl font-bold text-foreground">{t('settings.sessionPolicy')}</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">{t('settings.sessionPolicyDesc')}</p>
-                </div>
-                <Field>
-                  <FieldLabel>{t('settings.sessionTimeout')}</FieldLabel>
-                  <Select value={form.sessionTimeout} onChange={(event) => update('sessionTimeout', event.target.value)}>
-                    <option value="15">{t('settings.minutes15')}</option>
-                    <option value="30">{t('settings.minutes30')}</option>
-                    <option value="60">{t('settings.minutes60')}</option>
-                  </Select>
-                </Field>
-                <Field>
-                  <FieldLabel>{t('settings.tokenRefreshStrategy')}</FieldLabel>
-                  <Input value={t('settings.automaticOn401')} readOnly />
-                </Field>
-              </div>
-            ) : null}
+            {tab === 'security' && <SecurityTab t={t} />}
           </div>
 
           <div className="grid gap-6">
@@ -147,15 +356,15 @@ const SettingsPage = () => {
               <div className="mt-5 grid gap-3">
                 <div className="flex items-center gap-3 rounded-[8px] bg-surface-muted p-4 text-sm font-semibold text-foreground">
                   <Globe2 className="h-4 w-4 text-primary" />
-                  {form.timezone}
+                  {user?.email || '—'}
                 </div>
                 <div className="flex items-center gap-3 rounded-[8px] bg-surface-muted p-4 text-sm font-semibold text-foreground">
                   <BellRing className="h-4 w-4 text-primary" />
-                  {t('settings.alerts')}: {t(`settings.${form.emailAlerts}`)}
+                  {t('settings.alerts')}: {t('settings.enabled')}
                 </div>
                 <div className="flex items-center gap-3 rounded-[8px] bg-surface-muted p-4 text-sm font-semibold text-foreground">
                   <Clock className="h-4 w-4 text-primary" />
-                  {t('settings.session')}: {t(`settings.minutes${form.sessionTimeout}`)}
+                  {t('settings.session')}: {t('settings.minutes30')}
                 </div>
                 <div className="flex items-center gap-3 rounded-[8px] bg-surface-muted p-4 text-sm font-semibold text-foreground">
                   <LockKeyhole className="h-4 w-4 text-primary" />

@@ -73,7 +73,8 @@ def _cors_origins() -> list[str]:
         "http://127.0.0.1:5173",
         "http://127.0.0.1:5174",
     ]
-    origins = _csv_env("CORS_ORIGINS", defaults)
+    configured_origins = _csv_env("CORS_ORIGINS", [])
+    origins = configured_origins if _is_production() else defaults + configured_origins
     frontend_url = os.getenv("FRONTEND_URL")
     if frontend_url:
         origins.append(frontend_url.strip())
@@ -84,6 +85,19 @@ def _cors_origins() -> list[str]:
             raise RuntimeError("Production CORS origins must be explicit HTTPS origins")
 
     return sorted(set(origins))
+
+
+def _cors_origin_regex() -> str | None:
+    if _is_production():
+        return None
+    return (
+        r"https?://("
+        r"localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|"
+        r"10\.\d{1,3}\.\d{1,3}\.\d{1,3}|"
+        r"192\.168\.\d{1,3}\.\d{1,3}|"
+        r"172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}"
+        r")(:\d+)?"
+    )
 
 
 def _trusted_hosts() -> list[str]:
@@ -132,6 +146,7 @@ app.add_middleware(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins(),
+    allow_origin_regex=_cors_origin_regex(),
     allow_credentials=True,  # REQUIRED for cookies
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],

@@ -5,24 +5,23 @@
 \addcontentsline{toc}{section}{Bilan}
 
 Ce projet de fin d'études a abouti à la réalisation de \textbf{PharmacieConnect}, une plateforme web et
-mobile répondant à un besoin concret : faciliter l'accès aux informations sur les pharmacies et les
-pharmacies de garde, tout en proposant un espace de gestion pour les administrateurs et une assistance
-conversationnelle pour les premiers secours. La solution s'appuie sur une API backend, un tableau de bord
-administrateur, une application mobile et un assistant de premiers secours basé sur la récupération
-d'informations hybride.
+mobile construite autour d'un besoin observé : rendre les informations sur les pharmacies et les gardes
+plus faciles à consulter, mais aussi plus simples à maintenir. La solution regroupe une API backend, un
+tableau de bord administrateur, une application mobile et un assistant de premiers secours basé sur la
+récupération d'informations hybride. Elle ne se limite donc pas à afficher des listes ; elle organise aussi
+la validation, la traçabilité et le contrôle des accès.
 
 \section*{Résultats obtenus}
 \addcontentsline{toc}{section}{Résultats obtenus}
 
 Les objectifs principaux ont été atteints. L'utilisateur mobile peut rechercher des pharmacies, utiliser la
 géolocalisation, consulter les pharmacies de garde par date et accéder au catalogue de médicaments. Il
-peut également consulter l'assistant de premiers secours pour obtenir des réponses fiables et sûres à des
-questions d'urgence médicale. L'administrateur peut gérer les pharmacies, les gardes, les médicaments,
-les utilisateurs autorisés, les imports CSV, les indicateurs et les journaux d'audit. Le backend assure la
-centralisation des données, l'authentification, le contrôle des rôles, la validation des API et la traçabilité
-des actions sensibles. L'assistant offre une récupération précise d'informations avec un Recall@5 de 94.38\%,
-une fusion hybride BM25/sémantique et des mécanismes de confiance et de sécurité pour éviter les
-hallucinations et ajouter les mises en garde appropriées pour les urgences.
+peut également consulter l'assistant de premiers secours pour recevoir une réponse encadrée par des
+messages de prudence. L'administrateur peut gérer les pharmacies, les gardes, les médicaments, les
+utilisateurs autorisés, les imports CSV, les indicateurs et les journaux d'audit. Le backend assure la
+centralisation des données, l'authentification, le contrôle des rôles, la validation des API et la
+traçabilité des actions sensibles. L'assistant atteint un Recall@5 de 94.38\%, combine BM25 et recherche
+sémantique, puis applique des mécanismes de confiance destinés à limiter les réponses non fiables.
 
 Sur le plan technique, ce travail a mobilisé plusieurs compétences : conception d'API REST,
 développement backend avec FastAPI, modélisation SQLAlchemy, développement web avec React et Vite,
@@ -37,12 +36,24 @@ spécialisés comme l'assistant.
 
 Certaines limites restent à prendre en compte. Le catalogue des médicaments ne représente pas encore le
 stock réel de chaque pharmacie. Les données de garde dépendent toujours de la qualité des fichiers
-importés. L'assistant, bien que performant sur la récupération, pourrait bénéficier d'une amélioration de la
-sélection de spans (F1 = 0.2990 contre une cible de 0.35), possibilité de réentraînement avec des
-données d'entraînement enrichies pour affiner davantage l'extraction. Les tests bout en bout et les tests
-de charge doivent encore être renforcés. L'application mobile devra aussi être testée sur davantage
-d'appareils et dans différents contextes de connexion. L'intégration de l'assistant au sein de l'application
-mobile nécessite des tests supplémentaires pour assurer la cohérence de l'expérience utilisateur.
+importés et de la discipline de mise à jour côté administration. L'assistant, bien que performant sur la
+récupération, pourrait bénéficier d'une amélioration de la sélection de spans (F1 = 0.2990 contre une
+cible de 0.35) grâce à un réentraînement sur des données enrichies et mieux annotées. Les tests bout en
+bout et les tests de charge doivent encore être renforcés. L'application mobile devra aussi être testée
+sur davantage d'appareils et dans différents contextes de connexion. L'intégration de l'assistant au sein
+de l'application mobile nécessite des tests supplémentaires pour assurer la cohérence de l'expérience
+utilisateur.
+
+\section*{Apport personnel}
+\addcontentsline{toc}{section}{Apport personnel}
+
+Sur le plan personnel, ce projet m'a permis de consolider des compétences en développement full-stack
+tout en découvrant des domaines nouveaux comme la récupération d'informations hybride et la sécurité
+applicative. La gestion simultanée d'un backend, d'une interface web, d'une application mobile et d'un
+assistant m'a obligé à raisonner en contrats entre composants : quelles données circulent, qui peut les
+modifier, comment les erreurs sont signalées et comment chaque action reste vérifiable. Les difficultés
+rencontrées, notamment l'intégration des rôles, la qualité des imports CSV et l'optimisation de
+l'assistant, m'ont appris à adopter une démarche itérative rigoureuse.
 
 \section*{Perspectives}
 \addcontentsline{toc}{section}{Perspectives}
@@ -63,8 +74,8 @@ Les perspectives d'amélioration sont les suivantes :
     \item construire une interface d'administration pour gérer les données d'entraînement et les performances de l'assistant.
 \end{itemize}
 
-Ainsi, PharmacieConnect constitue une base fonctionnelle pour une solution complète de gestion
-pharmaceutique avec assistance intelligente. Le projet peut encore évoluer, mais il montre déjà qu'une
-architecture bien organisée, associée à des techniques modernes comme la récupération hybride
-d'informations, peut répondre à la fois aux besoins du citoyen, aux besoins de l'administration et aux
-besoins d'assistance médicale d'urgence.
+Ainsi, PharmacieConnect constitue une base fonctionnelle pour une solution de gestion pharmaceutique avec
+assistance intelligente. Le projet peut encore évoluer, mais il montre déjà qu'une architecture centrée sur
+un backend commun, associée à une application mobile, un tableau de bord contrôlé et une récupération
+hybride d'informations, peut répondre simultanément aux besoins du citoyen, de l'administration et de
+l'assistance de premiers secours.

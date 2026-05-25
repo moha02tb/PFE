@@ -1,17 +1,12 @@
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {1.1}Introduction}{\reset@font\mtcSfont 5}{section.1.1}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {1.2}Présentation du domaine pharmaceutique}{\reset@font\mtcSfont 5}{section.1.2}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {1.3}Contexte général}{\reset@font\mtcSfont 5}{section.1.3}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {1.4}Cadre du stage externe et organisme d'accueil}{\reset@font\mtcSfont 5}{section.1.4}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {1.5}Problèmes et défis}{\reset@font\mtcSfont 6}{section.1.5}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {1.6}Étude de l'existant}{\reset@font\mtcSfont 6}{section.1.6}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {1.7}Analyse du marché et solutions existantes}{\reset@font\mtcSfont 7}{section.1.7}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {1.8}Critique de l'existant}{\reset@font\mtcSfont 7}{section.1.8}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {1.9}Solution proposée : PharmacieConnect}{\reset@font\mtcSfont 8}{section.1.9}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {1.10}Objectifs}{\reset@font\mtcSfont 8}{section.1.10}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {1.11}Acteurs}{\reset@font\mtcSfont 9}{section.1.11}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {1.12}Besoins fonctionnels}{\reset@font\mtcSfont 9}{section.1.12}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {1.13}Besoins non fonctionnels}{\reset@font\mtcSfont 9}{section.1.13}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {1.14}Méthodologie de développement}{\reset@font\mtcSfont 9}{section.1.14}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {1.15}Diagramme de cas d'utilisation}{\reset@font\mtcSfont 10}{section.1.15}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {1.16}Planification technique}{\reset@font\mtcSfont 10}{section.1.16}}
-{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {1.17}Conclusion}{\reset@font\mtcSfont 11}{section.1.17}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {2.1}Introduction}{\reset@font\mtcSfont 11}{section.2.1}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {2.2}Acteurs}{\reset@font\mtcSfont 11}{section.2.2}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {2.3}Besoins fonctionnels détaillés}{\reset@font\mtcSfont 11}{section.2.3}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {2.4}Besoins non fonctionnels}{\reset@font\mtcSfont 12}{section.2.4}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {2.5}Règles de gestion}{\reset@font\mtcSfont 12}{section.2.5}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {2.6}Descriptions textuelles des cas d'utilisation}{\reset@font\mtcSfont 12}{section.2.6}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {2.6.1}Cas d'utilisation : authentification}{\reset@font\mtcSSfont 12}{subsection.2.6.1}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {2.6.2}Cas d'utilisation : recherche d'une pharmacie}{\reset@font\mtcSSfont 13}{subsection.2.6.2}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {2.6.3}Cas d'utilisation : consultation des pharmacies de garde}{\reset@font\mtcSSfont 13}{subsection.2.6.3}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {2.6.4}Cas d'utilisation : gestion des pharmacies}{\reset@font\mtcSSfont 13}{subsection.2.6.4}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {2.7}Diagramme de cas d'utilisation}{\reset@font\mtcSfont 14}{section.2.7}}
+{\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {2.8}Conclusion}{\reset@font\mtcSfont 16}{section.2.8}}

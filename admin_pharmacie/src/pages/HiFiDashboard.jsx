@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Activity,
   ArrowRight,
@@ -40,6 +40,8 @@ const SparkLine = ({ points, color }) => {
 };
 
 const HiFiDashboard = ({ onBack, onLogout }) => {
+  const [modal, setModal] = useState(null); // { mode: 'view' | 'edit', row: object }
+
   const timeline = [
     { title: 'File Uploaded', desc: 'pharmacies_batch_12.csv', state: 'done' },
     { title: 'Validation Check', desc: 'Schema + dedoubling', state: 'active' },
@@ -340,8 +342,8 @@ const HiFiDashboard = ({ onBack, onLogout }) => {
                             </span>
                           </td>
                           <td className="px-4 py-3 space-x-2 text-xs">
-                            <button className="rounded-lg border border-white/15 bg-white/10 px-2 py-1 text-white transition hover:border-cyan-300/50 hover:translate-y-[-1px]">View Details</button>
-                            <button className="rounded-lg border border-white/15 bg-white/10 px-2 py-1 text-white transition hover:border-purple-300/50 hover:translate-y-[-1px]">Edit</button>
+                            <button onClick={() => setModal({ mode: 'view', row })} className="rounded-lg border border-white/15 bg-white/10 px-2 py-1 text-white transition hover:border-cyan-300/50 hover:translate-y-[-1px]">View Details</button>
+                            <button onClick={() => setModal({ mode: 'edit', row })} className="rounded-lg border border-white/15 bg-white/10 px-2 py-1 text-white transition hover:border-purple-300/50 hover:translate-y-[-1px]">Edit</button>
                           </td>
                         </tr>
                       ))}
@@ -371,6 +373,54 @@ const HiFiDashboard = ({ onBack, onLogout }) => {
           </div>
         </main>
       </div>
+
+      {modal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setModal(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-white/15 bg-[#0f1c33] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.6)] backdrop-blur-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <h2 className="text-lg font-semibold text-white">
+                {modal.mode === 'edit' ? '✏️ Edit Pharmacy' : '🔍 Pharmacy Details'}
+              </h2>
+              <button type="button" className="text-white/50 hover:text-white" onClick={() => setModal(null)}>✕</button>
+            </div>
+            {modal.mode === 'view' ? (
+              <div className="space-y-3 text-sm text-white/80">
+                <div className="flex justify-between"><span className="text-white/50">Name</span><span className="font-semibold text-white">{modal.row.name}</span></div>
+                <div className="flex justify-between"><span className="text-white/50">Status</span><span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-xs text-purple-200">{modal.row.status}</span></div>
+                <div className="flex justify-between"><span className="text-white/50">Last Sync</span><span>{modal.row.sync}</span></div>
+                <div className="flex justify-between"><span className="text-white/50">Geolocation</span><span className="text-emerald-300">Geocoded ✓</span></div>
+                <div className="flex justify-between"><span className="text-white/50">Regulatory</span><span className="text-cyan-300">Ready ✓</span></div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-xs uppercase tracking-[0.12em] text-white/50">Name</label>
+                  <input defaultValue={modal.row.name} className="w-full rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-300/50 focus:outline-none" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs uppercase tracking-[0.12em] text-white/50">Status</label>
+                  <select defaultValue={modal.row.status} className="w-full rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm text-white focus:border-cyan-300/50 focus:outline-none">
+                    <option value="Raw">Raw</option>
+                    <option value="Validated">Validated</option>
+                    <option value="Geocoded">Geocoded</option>
+                    <option value="PUBLISHED">Published</option>
+                  </select>
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button onClick={() => setModal(null)} className="flex-1 rounded-xl border border-white/20 bg-white/10 py-2 text-sm font-semibold text-white hover:bg-white/15">Cancel</button>
+                  <button onClick={() => setModal(null)} className="flex-1 rounded-xl bg-gradient-to-r from-cyan-400 to-purple-500 py-2 text-sm font-semibold text-slate-900">Save</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,7 +1,9 @@
 import React from 'react';
 import { mainContentStyles, cardStyles, buttonStyles, queueStyles, statusStyles } from '../../styles/dashboard.styles';
 
-const Processing = ({ processingQueue }) => {
+const Processing = ({ processingQueue, onStartGeocoding, onConfigItem }) => {
+  const hasRaw = processingQueue.some((item) => item.status === 'raw');
+
   return (
     <div style={mainContentStyles.mainContent}>
       {/* Page Header */}
@@ -10,7 +12,13 @@ const Processing = ({ processingQueue }) => {
           <h1 style={mainContentStyles.pageTitle}>Traitement & Géocodage</h1>
           <p style={mainContentStyles.pageSubtitle}>Gérez la file d'attente de traitement et les opérations de géocodage</p>
         </div>
-        <button style={buttonStyles.buttonPrimary}>🚀 Lancer le Géocodage</button>
+        <button
+          style={{ ...buttonStyles.buttonPrimary, opacity: hasRaw ? 1 : 0.5, cursor: hasRaw ? 'pointer' : 'not-allowed' }}
+          onClick={hasRaw ? onStartGeocoding : undefined}
+          title={hasRaw ? 'Démarrer le géocodage des fichiers bruts' : 'Aucun fichier brut en attente'}
+        >
+          🚀 Lancer le Géocodage
+        </button>
       </div>
 
       {/* Queue Table */}
@@ -18,8 +26,8 @@ const Processing = ({ processingQueue }) => {
         <h2 style={cardStyles.cardTitle}>File d'Attente de Traitement</h2>
         <div style={queueStyles.queueTable}>
           {processingQueue.map((item) => (
+            <div key={item.id} style={{ borderRadius: '10px', overflow: 'hidden', marginBottom: '8px' }}>
             <div
-              key={item.id}
               style={queueStyles.queueRow}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = '#f1f5f9';
@@ -72,7 +80,23 @@ const Processing = ({ processingQueue }) => {
                 <span style={queueStyles.statBadge}>{item.errors} erreurs</span>
               </div>
 
-              <button style={buttonStyles.buttonSmall}>⚙️</button>
+              <button
+                style={buttonStyles.buttonSmall}
+                onClick={() => onConfigItem?.(item.id)}
+                title="Configurer"
+              >
+                {item._configOpen ? '✕' : '⚙️'}
+              </button>
+            </div>
+            {item._configOpen && (
+              <div style={{ backgroundColor: '#f8fafc', borderTop: '1px solid #e2e8f0', padding: '12px 16px', fontSize: '13px', color: '#374151', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                <span><strong>Fichier :</strong> {item.fileName}</span>
+                <span><strong>Statut :</strong> {item.status}</span>
+                <span><strong>Lignes :</strong> {item.lines}</span>
+                <span><strong>Erreurs :</strong> {item.errors}</span>
+                <span><strong>Progression :</strong> {item.progress}%</span>
+              </div>
+            )}
             </div>
           ))}
         </div>

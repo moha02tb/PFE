@@ -4,40 +4,44 @@
 \section*{Contexte général}
 \addcontentsline{toc}{section}{Contexte général}
 
-Dans le domaine de la santé, l'accès à une information fiable peut avoir un impact direct sur le service
-rendu au citoyen. Pour les pharmacies, cette information concerne notamment l'adresse, le numéro de
-téléphone, les horaires et les périodes de garde. Lorsqu'un utilisateur cherche une pharmacie disponible,
-il attend une réponse simple et rapide, surtout en dehors des horaires habituels.
+Trouver une pharmacie de garde en Tunisie reste souvent une recherche discontinue. L'information peut
+exister sur une affiche, dans une liste transmise localement, sur une publication partagée en ligne ou
+dans un fichier tenu par un responsable, mais elle n'est pas toujours présentée avec le même niveau de
+détail. Pour un citoyen qui cherche une pharmacie disponible un vendredi soir, un dimanche ou un jour
+férié, cette dispersion oblige à comparer plusieurs sources au moment même où la réponse devrait être
+immédiate.
 
-En Tunisie, les informations relatives aux pharmacies de garde existent, mais leur consultation reste
-parfois peu pratique. Elles peuvent être diffusées sous forme de listes, relayées localement ou mises à
-jour manuellement. Cette dispersion complique la recherche depuis un téléphone, en particulier lorsque
-l'utilisateur ne connaît pas bien la ville ou le gouvernorat concerné.
+Le problème n'est donc pas uniquement l'absence d'une interface mobile. Il touche aussi la manière dont
+les données sont produites, corrigées et contrôlées. Un planning de garde importé depuis un fichier CSV,
+une adresse incomplète ou une pharmacie déplacée doivent pouvoir être corrigés sans casser la consultation
+côté utilisateur. Le besoin porte ainsi sur une chaîne complète : collecte, validation, administration,
+publication et consultation mobile.
 
-Le projet \textbf{PharmacieConnect} s'inscrit dans ce contexte. Il associe une API backend FastAPI, un
-tableau de bord administrateur React/Vite, une application mobile Expo/React Native et un assistant
-conversationnel spécialisé en premiers secours. Le backend porte la logique commune, tandis que les
-interfaces répondent à des usages complémentaires : la consultation citoyenne, l'administration des
-données et l'assistance médicale d'urgence. L'assistant conversationnel enrichit l'application mobile en
-fournissant des réponses rapides et fiables aux questions de premiers secours, complément naturel au
-repérage des pharmacies de garde.
+Le projet \textbf{PharmacieConnect} a été conçu pour couvrir cette chaîne de bout en bout. Il associe une
+API backend FastAPI, un tableau de bord administrateur React/Vite, une application mobile Expo/React
+Native et un assistant conversationnel spécialisé en premiers secours. Le backend porte les règles communes
+-- validation, sécurité, audit et accès aux données -- tandis que les interfaces répondent à trois usages
+distincts : consulter les pharmacies disponibles, administrer les données et obtenir une première
+orientation de secours avant une prise en charge adaptée.
 
 \section*{Problématique}
 \addcontentsline{toc}{section}{Problématique}
 
-La problématique du projet peut être formulée ainsi : comment concevoir une plateforme qui permette au
-citoyen de trouver rapidement une pharmacie ou une pharmacie de garde, tout en offrant à
-l'administrateur un moyen fiable de gérer, corriger et suivre les données ?
+La problématique du projet peut être formulée ainsi : \og Comment concevoir une plateforme capable de
+centraliser les pharmacies et les plannings de garde, de contrôler leur mise à jour par des utilisateurs
+autorisés et de fournir au citoyen une consultation mobile rapide, fiable et contextualisée ?\fg{}
 
-Cette question impose plusieurs contraintes. L'application mobile doit rester simple à utiliser et fournir
-des résultats lisibles. Le tableau de bord doit faciliter l'import, la correction et le suivi des données.
-Le backend, quant à lui, doit contrôler les accès, valider les informations reçues et conserver une trace
-des actions importantes.
+Cette question impose plusieurs contraintes concrètes. L'application mobile doit rester lisible sur un
+écran réduit, gérer la recherche par texte ou par position et afficher les gardes par date. Le tableau de
+bord doit accepter des imports CSV tout en signalant les erreurs exploitables par l'administrateur. Le
+backend doit contrôler les accès, appliquer les périmètres régionaux, valider les coordonnées et conserver
+une trace des opérations sensibles.
 
 \section*{Objectifs du projet}
 \addcontentsline{toc}{section}{Objectifs du projet}
 
-Le projet vise à réaliser une plateforme complète autour des pharmacies et des pharmacies de garde, enrichie par un assistant de premiers secours. Les objectifs retenus sont les suivants :
+Le projet vise à réaliser une plateforme complète autour des pharmacies et des pharmacies de garde,
+enrichie par un assistant de premiers secours. Les objectifs retenus sont les suivants :
 
 \begin{itemize}
     \item concevoir une API backend centralisant les données et les règles métier ;
@@ -54,21 +58,20 @@ Le projet vise à réaliser une plateforme complète autour des pharmacies et de
 \section*{Méthodologie adoptée}
 \addcontentsline{toc}{section}{Méthodologie adoptée}
 
-La démarche suivie est itérative et incrémentale, avec une organisation inspirée de Scrum
-\cite{scrumguide}. Le travail a été découpé en cycles courts afin d'avancer progressivement sur des
-modules vérifiables : analyse du besoin, étude de l'existant, définition des fonctionnalités, conception de
-l'architecture, développement du backend, développement de l'administration web, développement de
-l'application mobile, intégration, tests et rédaction du rapport.
+Le projet a été conduit en six cycles courts~\cite{scrumguide}, chacun associé à un livrable vérifiable :
+cadrage et analyse de l'existant, conception technique, backend, tableau de bord administrateur,
+application mobile, puis intégration et validation finale. Cette progression a permis de confronter tôt
+les choix de conception à des écrans, endpoints et scénarios réels, au lieu de reporter les incohérences à
+la phase finale.
 
-La modélisation s'appuie sur le formalisme \gls{uml} \cite{uml} pour représenter les acteurs, les cas
-d'utilisation, les classes principales et les échanges entre les composants. La réalisation a d'abord
-porté sur les règles métier du backend, puisque l'API centralise la validation, la sécurité et l'accès aux
-données. Les interfaces web et mobile ont ensuite été raccordées progressivement aux endpoints
-disponibles.
+La modélisation fait appel au formalisme \gls{uml}~\cite{uml} pour décrire les acteurs, les cas
+d'utilisation, les entités et les séquences d'échanges. Le développement a démarré par le
+backend : c'est lui qui concentre les règles d'accès, la validation et la persistance, et les
+interfaces ne peuvent être raccordées qu'une fois les contrats d'API stabilisés.
 
-Les fonctionnalités sensibles ont été vérifiées au fur et à mesure de leur intégration. Cette progression a
-facilité la validation des imports, de l'authentification, de la gestion des rôles, de la recherche par
-proximité et des principaux parcours utilisateur.
+Les fonctionnalités à risque -- imports CSV, authentification, gestion des droits, recherche
+géographique et assistant de premiers secours -- ont été vérifiées dès leur livraison par des tests
+backend, des essais manuels et des contrôles de cohérence entre les interfaces.
 
 \section*{Organisation du rapport}
 \addcontentsline{toc}{section}{Organisation du rapport}

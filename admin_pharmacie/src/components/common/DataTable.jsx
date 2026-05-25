@@ -21,7 +21,7 @@ const DataTable = ({
             type="checkbox"
             onChange={(e) => onSelectAll?.(e.target.checked)}
             checked={selectAllChecked}
-            className="w-4 h-4 rounded border-slate-300 text-blue-600 cursor-pointer"
+            className="w-4 h-4 rounded border-slate-300 text-primary cursor-pointer"
           />
         )}
         {headers.map((header, idx) => (

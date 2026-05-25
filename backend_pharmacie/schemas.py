@@ -354,6 +354,13 @@ class ProfileUpdateRequest(BaseModel):
     phone: Optional[str] = Field(None, max_length=30)
 
 
+class ChangePasswordRequest(BaseModel):
+    """Change the authenticated account password."""
+
+    current_password: str = Field(..., min_length=6, max_length=128)
+    new_password: str = Field(..., min_length=6, max_length=128)
+
+
 class AdminCreateByAdmin(BaseModel):
     """Admin creating a regular user (different rules)"""
 

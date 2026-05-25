@@ -264,6 +264,20 @@ Object.assign(translations.en.settings, {
   session: 'Session',
   tokenRefreshOn401: 'Token refresh on 401',
   digest: 'Daily digest',
+  profileSection: 'Account profile',
+  profileSectionDesc: 'Update your display name, email, and contact details.',
+  interfaceLanguage: 'Interface language',
+  interfaceLanguageDesc: 'Choose the display language for this browser session.',
+  changePassword: 'Change password',
+  changePasswordDesc: 'Update your login credentials. Your current password is required.',
+  currentPassword: 'Current password',
+  newPassword: 'New password',
+  confirmPassword: 'Confirm new password',
+  passwordsNoMatch: 'New passwords do not match',
+  passwordTooShort: 'Password must be at least 6 characters',
+  passwordSaved: 'Password changed successfully.',
+  passwordFailed: 'Unable to change password. Please check your current password.',
+  changingPassword: 'Changing...',
 });
 
 Object.assign(translations.en.dashboard, {

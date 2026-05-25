@@ -138,7 +138,7 @@ const App = () => {
             <Route path="/profile" element={<ProfilePage />} />
             <Route 
               path="/audit-logs" 
-              element={<ProtectedRoute allowedRoles={ADMIN_ROLES} element={<AuditLogViewer />} />} 
+              element={<ProtectedRoute requiredRoles={ADMIN_ROLES} element={<AuditLogViewer />} />}
             />
           </Route>
           

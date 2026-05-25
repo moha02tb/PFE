@@ -1,18 +1,48 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import Button from './Button';
 import '../styles/drawer.css';
 
 const Drawer = ({ open, onClose, title, children, side = 'right', className }) => {
-  if (!open) return null;
+  const [rendered, setRendered] = useState(open);
+  const [closing, setClosing] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setRendered(true);
+      setClosing(false);
+    } else if (rendered) {
+      setClosing(true);
+    }
+  }, [open]);
+
+  if (!rendered) return null;
+
+  const handlePanelAnimationEnd = () => {
+    if (closing) setRendered(false);
+  };
 
   return (
-    <div className="drawer-backdrop fixed inset-0 z-[90] bg-slate-950/40">
+    <div
+      className={cn(
+        'fixed inset-0 z-[90]',
+        closing ? 'drawer-backdrop-out' : 'drawer-backdrop-in'
+      )}
+    >
+      <button
+        type="button"
+        aria-label="Close drawer"
+        className="absolute inset-0 cursor-default bg-slate-950/40"
+        onClick={onClose}
+      />
       <div
+        onAnimationEnd={handlePanelAnimationEnd}
         className={cn(
           'drawer-content absolute top-0 h-full w-full max-w-md border-border bg-surface-elevated',
-          side === 'left' ? 'drawer-left left-0 border-r' : 'drawer-right right-0 border-l',
+          side === 'left'
+            ? cn('left-0 border-r', closing ? 'drawer-left-out' : 'drawer-left-in')
+            : cn('right-0 border-l', closing ? 'drawer-right-out' : 'drawer-right-in'),
           className
         )}
       >

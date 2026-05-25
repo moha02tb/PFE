@@ -1,5 +1,5 @@
 import React, { createContext, useEffect, useState, useCallback } from 'react';
-import api from '../lib/api';
+import api, { authTokenStore } from '../lib/api';
 
 export const AuthContext = createContext();
 
@@ -12,7 +12,7 @@ export const AuthProvider = ({ children }) => {
         const stored = localStorage.getItem('user');
         return stored ? JSON.parse(stored) : null;
     });
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     const persistUser = useCallback((userData) => {
@@ -36,6 +36,7 @@ export const AuthProvider = ({ children }) => {
                 setIsAuthenticated(false);
                 setUser(null);
                 localStorage.removeItem('user');
+                authTokenStore.clearTokens();
             } finally {
                 if (mounted) setLoading(false);
             }
@@ -80,10 +81,11 @@ export const AuthProvider = ({ children }) => {
 
         try {
             // Call login endpoint
-            await api.post('/api/auth/login', {
+            const loginResponse = await api.post('/api/auth/login', {
                 email,
                 password,
             });
+            authTokenStore.setTokens(loginResponse.data);
 
             // Fetch user data from /me endpoint with new token
             const meResponse = await api.get('/api/auth/me');
@@ -133,6 +135,7 @@ export const AuthProvider = ({ children }) => {
             setIsAuthenticated(false);
             setUser(null);
             localStorage.removeItem('user');
+            authTokenStore.clearTokens();
         }
     }, []);
 

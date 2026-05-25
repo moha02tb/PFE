@@ -79,7 +79,7 @@ const AssignmentCard = ({ item }) => {
   return (
     <div className="garde-assignment-card">
       <div className="mb-2 flex items-start justify-between gap-3">
-        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[0.625rem] font-bold uppercase text-blue-700">
+        <span className="rounded-full bg-primary-soft px-2 py-0.5 text-[0.625rem] font-bold uppercase text-primary">
           {item.shift_type || t('calendar.nightShift')}
         </span>
         <span className="text-xs text-muted-foreground">{item.start_time || '20:00'} - {item.end_time || '08:00'}</span>
@@ -95,6 +95,7 @@ const AssignmentCard = ({ item }) => {
 
 const CalendarPage = () => {
   const { t } = useLanguage();
+  const [calendarView, setCalendarView] = useState('month');
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
   const [selectedDate, setSelectedDate] = useState(toIsoDate(new Date()));
   const [gardes, setGardes] = useState([]);
@@ -178,9 +179,21 @@ const CalendarPage = () => {
           </div>
           <div className="flex flex-wrap gap-3">
             <div className="inline-flex overflow-hidden rounded-[8px] border border-border bg-surface-elevated shadow-soft">
-              <button className="px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-surface-muted">{t('calendar.day')}</button>
-              <button className="border-x border-border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-surface-muted">{t('calendar.week')}</button>
-              <button className="bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">{t('calendar.month')}</button>
+              {['day', 'week', 'month'].map((view, idx) => (
+                <button
+                  key={view}
+                  onClick={() => setCalendarView(view)}
+                  className={[
+                    'px-4 py-2 text-sm font-semibold transition',
+                    idx === 1 ? 'border-x border-border' : '',
+                    calendarView === view
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-surface-muted',
+                  ].join(' ')}
+                >
+                  {t(`calendar.${view}`)}
+                </button>
+              ))}
             </div>
             <Button asChild>
               <Link to="/upload-garde">
@@ -198,12 +211,38 @@ const CalendarPage = () => {
             <div className="garde-calendar-panel">
               <div className="flex flex-col gap-4 border-b border-border p-6 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-4">
-                  <h2 className="font-display text-xl font-bold text-foreground">{formatHeaderMonth(currentMonth)}</h2>
+                  <h2 className="font-display text-xl font-bold text-foreground">
+                    {calendarView === 'day' ? formatFullDate(selectedDate) : formatHeaderMonth(currentMonth)}
+                  </h2>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))}>
+                    <Button variant="ghost" size="icon" onClick={() => {
+                      if (calendarView === 'day') {
+                        const d = new Date(selectedDate);
+                        d.setDate(d.getDate() - 1);
+                        setSelectedDate(toIsoDate(d));
+                      } else if (calendarView === 'week') {
+                        const d = new Date(selectedDate);
+                        d.setDate(d.getDate() - 7);
+                        setSelectedDate(toIsoDate(d));
+                      } else {
+                        setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+                      }
+                    }}>
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))}>
+                    <Button variant="ghost" size="icon" onClick={() => {
+                      if (calendarView === 'day') {
+                        const d = new Date(selectedDate);
+                        d.setDate(d.getDate() + 1);
+                        setSelectedDate(toIsoDate(d));
+                      } else if (calendarView === 'week') {
+                        const d = new Date(selectedDate);
+                        d.setDate(d.getDate() + 7);
+                        setSelectedDate(toIsoDate(d));
+                      } else {
+                        setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+                      }
+                    }}>
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
@@ -225,25 +264,88 @@ const CalendarPage = () => {
                   </Button>
                 </div>
               </div>
-              <div className="grid grid-cols-7 border-b border-border bg-surface-muted">
-                {WEEK_DAYS.map((day) => (
-                  <div key={day} className="border-r border-border py-3 text-center text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-muted-foreground last:border-r-0">
-                    {day}
+
+              {calendarView === 'day' && (
+                <div className="p-6 space-y-3">
+                  {(gardesByDate.get(selectedDate) || []).length ? (
+                    (gardesByDate.get(selectedDate) || []).map((item) => (
+                      <AssignmentCard key={item.id} item={item} />
+                    ))
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-2 py-16 text-muted-foreground">
+                      <CalendarDays className="h-10 w-10 opacity-30" />
+                      <p className="text-sm font-medium">{loading ? t('calendar.loadingRows') : t('calendar.noAssignments')}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {calendarView === 'week' && (() => {
+                const anchor = new Date(selectedDate);
+                const weekStart = new Date(anchor);
+                weekStart.setDate(anchor.getDate() - anchor.getDay());
+                const weekDays = Array.from({ length: 7 }, (_, i) => {
+                  const d = new Date(weekStart);
+                  d.setDate(weekStart.getDate() + i);
+                  return d;
+                });
+                return (
+                  <>
+                    <div className="grid grid-cols-7 border-b border-border bg-surface-muted">
+                      {weekDays.map((d) => (
+                        <div key={toIsoDate(d)} className="border-r border-border py-3 text-center text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-muted-foreground last:border-r-0">
+                          {d.toLocaleDateString(undefined, { weekday: 'short' })}
+                          <div className="mt-0.5 text-xs font-normal normal-case">{d.getDate()}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-7 divide-x divide-border">
+                      {weekDays.map((d) => {
+                        const iso = toIsoDate(d);
+                        const dayItems = gardesByDate.get(iso) || [];
+                        const isSelected = iso === selectedDate;
+                        return (
+                          <button
+                            key={iso}
+                            type="button"
+                            onClick={() => setSelectedDate(iso)}
+                            className={['p-2 min-h-[120px] text-left transition', isSelected ? 'bg-primary-soft' : 'hover:bg-surface-muted'].join(' ')}
+                          >
+                            {dayItems.slice(0, 3).map((item) => (
+                              <div key={item.id} className="garde-event mb-1 truncate">{item.pharmacy_name || t('calendar.unnamedPharmacy')}</div>
+                            ))}
+                            {dayItems.length > 3 && <div className="text-[0.625rem] text-muted-foreground">+{dayItems.length - 3}</div>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                );
+              })()}
+
+              {calendarView === 'month' && (
+                <>
+                  <div className="grid grid-cols-7 border-b border-border bg-surface-muted">
+                    {WEEK_DAYS.map((day) => (
+                      <div key={day} className="border-r border-border py-3 text-center text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-muted-foreground last:border-r-0">
+                        {day}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-7">
-                {calendarCells.map((cell, index) => (
-                  <CalendarCell
-                    key={cell ? toIsoDate(cell) : `empty-${index}`}
-                    cell={cell}
-                    currentMonth={currentMonth}
-                    selectedDate={selectedDate}
-                    gardesByDate={gardesByDate}
-                    onSelect={setSelectedDate}
-                  />
-                ))}
-              </div>
+                  <div className="grid grid-cols-7">
+                    {calendarCells.map((cell, index) => (
+                      <CalendarCell
+                        key={cell ? toIsoDate(cell) : `empty-${index}`}
+                        cell={cell}
+                        currentMonth={currentMonth}
+                        selectedDate={selectedDate}
+                        gardesByDate={gardesByDate}
+                        onSelect={setSelectedDate}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </section>
 
@@ -272,10 +374,13 @@ const CalendarPage = () => {
                     description={loading ? t('calendar.fetchingAssignments') : t('calendar.noAssignmentsDesc')}
                   />
                 )}
-                <button className="flex w-full items-center justify-center gap-2 rounded-[8px] border-2 border-dashed border-border py-3 text-sm font-bold text-muted-foreground transition hover:bg-surface-muted hover:text-foreground">
+                <Link
+                  to="/upload-garde"
+                  className="flex w-full items-center justify-center gap-2 rounded-[8px] border-2 border-dashed border-border py-3 text-sm font-bold text-muted-foreground transition hover:bg-surface-muted hover:text-foreground"
+                >
                   <Plus className="h-4 w-4" />
                   {t('calendar.addShift')}
-                </button>
+                </Link>
               </div>
             </div>
 

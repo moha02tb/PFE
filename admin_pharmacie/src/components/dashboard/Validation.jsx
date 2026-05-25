@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { mainContentStyles, cardStyles, buttonStyles, tableStyles, mapButtonStyles } from '../../styles/dashboard.styles';
 
-const Validation = ({ validationData, selectedValidation, setSelectedValidation }) => {
+const Validation = ({ validationData, selectedValidation, setSelectedValidation, onPublish, onReject }) => {
+  const [mapPharmacy, setMapPharmacy] = useState(null);
+
   const handleSelectAll = (checked) => {
     setSelectedValidation(checked ? validationData.map(d => d.id) : []);
   };
@@ -21,18 +23,24 @@ const Validation = ({ validationData, selectedValidation, setSelectedValidation 
         <button
           style={{
             ...buttonStyles.buttonPrimary,
-            opacity: selectedValidation.length === 0 ? 0.5 : 1
+            opacity: selectedValidation.length === 0 ? 0.5 : 1,
+            cursor: selectedValidation.length === 0 ? 'not-allowed' : 'pointer',
           }}
+          disabled={selectedValidation.length === 0}
+          onClick={() => onPublish?.(selectedValidation)}
         >
           ✓ Publier la Sélection ({selectedValidation.length})
         </button>
         <button
           style={{
             ...buttonStyles.buttonSecondary,
-            opacity: selectedValidation.length === 0 ? 0.5 : 1
+            opacity: selectedValidation.length === 0 ? 0.5 : 1,
+            cursor: selectedValidation.length === 0 ? 'not-allowed' : 'pointer',
           }}
+          disabled={selectedValidation.length === 0}
+          onClick={() => onReject?.(selectedValidation)}
         >
-          ✕ Rejeter
+          ✕ Rejeter ({selectedValidation.length})
         </button>
       </div>
 
@@ -105,11 +113,38 @@ const Validation = ({ validationData, selectedValidation, setSelectedValidation 
               >
                 {row.status === 'warning' ? '⚠️ Attention' : '✓ Complet'}
               </span>
-              <button style={mapButtonStyles.mapButton}>🗺️</button>
+              <button style={mapButtonStyles.mapButton} onClick={() => setMapPharmacy(row)} title="Voir sur la carte">🗺️</button>
             </div>
           ))}
         </div>
       </div>
+      {mapPharmacy && (
+        <div
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={() => setMapPharmacy(null)}
+        >
+          <div
+            style={{ backgroundColor: '#fff', borderRadius: '16px', padding: '24px', width: '380px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a', margin: 0 }}>🗺️ {mapPharmacy.name}</h3>
+              <button onClick={() => setMapPharmacy(null)} style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: '#6b7280' }}>✕</button>
+            </div>
+            <p style={{ fontSize: '14px', color: '#374151', marginBottom: '8px' }}><strong>Ville :</strong> {mapPharmacy.city}</p>
+            <p style={{ fontSize: '14px', color: '#374151', marginBottom: '8px' }}><strong>Téléphone :</strong> {mapPharmacy.phone || '—'}</p>
+            <p style={{ fontSize: '14px', color: '#374151', marginBottom: '16px' }}><strong>Email :</strong> {mapPharmacy.email || '—'}</p>
+            <a
+              href={`https://www.google.com/maps/search/${encodeURIComponent(mapPharmacy.name + ' ' + mapPharmacy.city)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ ...buttonStyles.buttonPrimary, textDecoration: 'none', display: 'inline-block', textAlign: 'center', width: '100%', boxSizing: 'border-box' }}
+            >
+              Ouvrir dans Google Maps →
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

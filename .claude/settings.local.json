@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"c:\\\\Users\\\\teyem\\\\OneDrive\\\\Desktop\\\\pfe\" add admin_pharmacie/src/pages/MapPage.jsx)",
+      "Bash(git -C \"c:\\\\Users\\\\teyem\\\\OneDrive\\\\Desktop\\\\pfe\" diff --cached --name-only)"
+    ]
+  }
+}

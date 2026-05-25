@@ -15,6 +15,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from models import Administrateur, AuditActionEnum
 from permissions import role_value
 from region_scope import normalize_region, region_options
+from routers.system_health import router as system_health_router
 from services import CacheService, MedicineService, PharmacyService
 from services.admin_service import AdminService
 from services.garde_service import GardeService
@@ -30,6 +31,7 @@ from schemas import (
 )
 
 router = APIRouter(prefix="/api/admin", tags=["Administration"])
+router.include_router(system_health_router)
 
 AUDIT_ENTITY_TYPES = {
     "administrateur",

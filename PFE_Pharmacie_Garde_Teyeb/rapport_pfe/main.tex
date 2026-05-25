@@ -1,10 +1,10 @@
-\documentclass[12pt,a4paper,notitlepage,oneside]{book}
+\documentclass[11pt,a4paper,notitlepage,oneside,openany]{book}
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage[french]{babel}
-\usepackage[left=1.1in,right=1.0in,top=1.0in,bottom=1.0in,head=1.0cm,foot=1.0cm]{geometry}
+\usepackage[left=0.85in,right=0.85in,top=0.82in,bottom=0.82in,head=0.8cm,foot=0.8cm]{geometry}
 \usepackage{graphicx}
 \usepackage{tikz}
 \usepackage{float}
@@ -22,7 +22,7 @@
 \usepackage{microtype}
 \usepackage{fancyhdr}
 \usepackage[Lenny]{fncychap}
-\usepackage[onehalfspacing]{setspace}
+\usepackage{setspace}
 \usepackage[hidelinks]{hyperref}
 \usepackage{bookmark}
 \usepackage[french]{minitoc}
@@ -40,21 +40,25 @@
 
 \graphicspath{{Figures/}{images/}}
 
-\setcounter{tocdepth}{3}
+\setcounter{tocdepth}{1}
 \setcounter{secnumdepth}{3}
 \setcounter{minitocdepth}{2}
 
 \justifying
+\setstretch{1.08}
 \setlength{\parindent}{1.25cm}
 \setlength{\parskip}{0pt}
 \setlength{\headheight}{15pt}
 \setlength{\emergencystretch}{3em}
+\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
 
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 \newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
 
-\captionsetup[figure]{position=below}
-\captionsetup[table]{position=above}
+\captionsetup[figure]{position=below,skip=4pt}
+\captionsetup[table]{position=above,skip=4pt}
 \renewcommand{\tablename}{Tableau}
 \addto\captionsfrench{\renewcommand{\tablename}{Tableau}}
 \addto\captionsfrench{\renewcommand{\figurename}{Figure}}
@@ -91,7 +95,23 @@
     commentstyle=\color{gray!70!black},
     stringstyle=\color{green!40!black},
     showstringspaces=false,
-    tabsize=2
+    tabsize=2,
+    extendedchars=true,
+    inputencoding=utf8,
+    literate=%
+      {é}{{\'e}}1 {è}{{\`e}}1 {ê}{{\^e}}1 {ë}{{\"e}}1
+      {à}{{\`a}}1 {â}{{\^a}}1 {ä}{{\"a}}1
+      {î}{{\^\i}}1 {ï}{{\"\i}}1
+      {ô}{{\^o}}1 {ö}{{\"o}}1
+      {û}{{\^u}}1 {ù}{{\`u}}1 {ü}{{\"u}}1
+      {ç}{{\c c}}1 {É}{{\'E}}1 {È}{{\`E}}1
+      {Ê}{{\^E}}1 {À}{{\`A}}1 {Â}{{\^A}}1
+      {Î}{{\^I}}1 {Ô}{{\^O}}1 {Û}{{\^U}}1 {Ç}{{\c C}}1
+}
+
+% Commande pour badge technologique (fond coloré)
+\newcommand{\tbadge}[2]{%
+  \colorbox{#1!18}{\textcolor{#1!75!black}{\small\bfseries\;#2\;}}%
 }
 
 \pagestyle{fancy}
@@ -128,11 +148,6 @@
 \input{Preambule/resume}
 \clearpage
 
-\chapter*{Abstract}
-\addcontentsline{toc}{chapter}{Abstract}
-\input{Preambule/abstract}
-\clearpage
-
 \phantomsection
 \addcontentsline{toc}{chapter}{Liste des figures}
 \listoffigures
@@ -146,7 +161,6 @@
 \phantomsection
 \tableofcontents
 \adjustmtc
-\clearpage
 
 \phantomsection
 \addcontentsline{toc}{chapter}{Liste des acronymes}
@@ -159,7 +173,7 @@
 \input{Chapters/intro}
 \clearpage
 
-\setcounter{mtc}{8}
+\setcounter{mtc}{7}
 \input{Chapters/chap1}
 \clearpage
 
@@ -180,9 +194,5 @@
 \nocite{*}
 \bibliographystyle{ieeetr}
 \bibliography{Biblio}
-\clearpage
-
-\appendix
-\input{Appendices/annexes}
 
 \end{document}

@@ -71,6 +71,37 @@ recherche, la carte et la consultation des gardes.
     \bottomrule
 \end{longtable}
 
+\begin{figure}[H]
+\centering
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{r@{\quad}l}
+  \small\textbf{Backend} &
+    \tbadge{blue}{Python}\;
+    \tbadge{teal}{FastAPI}\;
+    \tbadge{red}{SQLAlchemy}\;
+    \tbadge{orange}{Pydantic}\;
+    \tbadge{NavyBlue}{JWT} \\[0.25cm]
+  \small\textbf{Administration web} &
+    \tbadge{cyan}{React}\;
+    \tbadge{violet}{Vite}\;
+    \tbadge{purple}{Axios}\;
+    \tbadge{teal}{Tailwind CSS} \\[0.25cm]
+  \small\textbf{Application mobile} &
+    \tbadge{teal}{Expo}\;
+    \tbadge{cyan}{React Native}\;
+    \tbadge{green}{i18next}\;
+    \tbadge{orange}{React Navigation} \\[0.25cm]
+  \small\textbf{Base de données} &
+    \tbadge{blue}{SQLite}\;
+    \tbadge{NavyBlue}{PostgreSQL}\;
+    \tbadge{OliveGreen}{Pytest}\;
+    \tbadge{BrickRed}{Jest} \\
+\end{tabular}
+\caption{Stack technologique de PharmacieConnect}
+\label{fig:tech-stack}
+\end{figure}
+
 \section{Organisation du dépôt}
 
 Le projet est regroupé dans un même espace de travail. Cette structure a facilité l'intégration entre
@@ -125,8 +156,8 @@ Lorsqu'une connexion réussit, le serveur retourne un jeton d'accès et un jeton
 
 \begin{lstlisting}[caption={Structure simplifiée d'une réponse de connexion}]
 {
-  "access_token": "[jeton d'acces]",
-  "refresh_token": "[jeton de rafraichissement]",
+  "access_token": "[jeton d'accès]",
+  "refresh_token": "[jeton de rafraîchissement]",
   "token_type": "bearer",
   "expires_in": 1800
 }
@@ -314,24 +345,31 @@ et évalue les performances selon plusieurs métriques.
     \item Fallback mesuré (2.69\%) confirme bon fonctionnement du mécanisme de confiance.
 \end{itemize}
 
+La valeur d'Evidence F1 inférieure à la cible (0.2990 vs 0.35) s'explique principalement par le mode
+d'appariement entre les réponses de référence et les documents indexés. Le pipeline extrait des passages
+complets plutôt que des spans précis, ce qui pénalise le score F1 au niveau des tokens. Une amélioration
+possible consiste à réétiqueter les données avec des spans d'extraction annotés manuellement, ou à
+intégrer un modèle de question-réponse extractif (de type BERT fine-tuné sur SQuAD) en remplacement de
+l'extraction heuristique actuelle.
+
 \subsection{API et intégration avec l'application mobile}
 
 L'assistant est exposé via une API FastAPI dédiée, lancée sur un port séparé (8001 par défaut) pour éviter
 le conflit avec l'API principale de pharmacies (8000).
 
-\begin{lstlisting}[caption={Exemple de requete a l'API de l'assistant}]
+\begin{lstlisting}[caption={Exemple de requête à l'API de l'assistant}]
 POST /answer
 Content-Type: application/json
 
 {
-  "query": "Comment faire face a l'ettouffement?",
+  "query": "Comment faire face à l'étouffement ?",
   "top_k": 5
 }
 \end{lstlisting}
 
-\begin{lstlisting}[caption={Structure de la reponse de l'assistant}]
+\begin{lstlisting}[caption={Structure de la réponse de l'assistant}]
 {
-  "query": "Comment faire face a l'ettouffement?",
+  "query": "Comment faire face à l'étouffement ?",
   "answer": "Faites-le tousser vigoureusement.",
   "confidence": 0.92,
   "evidence_sources": [docid_1, docid_2],
@@ -351,13 +389,13 @@ L'assistant bénéficie de deux suites de tests : (1) Smoke Tests avec 14 scéna
 
 \section{Captures d'écran}
 
-Les captures suivantes presentent les principales interfaces realisees pour le tableau de bord
+Les captures suivantes présentent les principales interfaces réalisées pour le tableau de bord
 administrateur et pour l'application mobile.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth,height=0.72\textheight,keepaspectratio]{admin-login.png}
-    \caption{Ecran de connexion du tableau de bord administrateur}
+    \caption{Écran de connexion du tableau de bord administrateur}
     \label{fig:screenshot-admin-login}
 \end{figure}
 
@@ -392,7 +430,7 @@ administrateur et pour l'application mobile.
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth,height=0.72\textheight,keepaspectratio]{admin-map.png}
-    \caption{Vue cartographique du reseau de pharmacies}
+    \caption{Vue cartographique du réseau de pharmacies}
     \label{fig:screenshot-admin-map}
 \end{figure}
 
@@ -450,7 +488,7 @@ administrateur et pour l'application mobile.
     \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\textwidth,height=0.62\textheight,keepaspectratio]{mobile-medicines.jpeg}
-        \captionof{figure}{Catalogue mobile des medicaments}
+        \captionof{figure}{Catalogue mobile des médicaments}
         \label{fig:screenshot-mobile-medicines}
     \end{minipage}\hfill
     \begin{minipage}{0.32\textwidth}
@@ -506,6 +544,11 @@ valeurs qui changent selon l'environnement, comme la base de données ou les cl�
     \end{tabular}
 \end{table}
 
+Le déploiement en production n'a pas été réalisé dans le cadre de ce PFE en raison des contraintes de
+temps et de la nature du stage externe. L'architecture retenue est néanmoins compatible avec un
+déploiement sur des plateformes cloud comme Railway ou Render pour le backend FastAPI, et Vercel pour
+l'interface d'administration React/Vite. Ces étapes constituent une perspective concrète à court terme.
+
 Pour la version de validation, le projet est exécuté localement de manière contrôlée : le backend FastAPI
 est lancé avec Uvicorn, l'interface d'administration avec le serveur de développement Vite et
 l'application mobile avec Expo. Dans cette configuration, l'intégration entre les trois parties peut être
@@ -558,7 +601,7 @@ ou passent leurs tests automatisés dans l'environnement local.
     Backend : indicateurs, assistants et audit & \texttt{pytest} sur les fichiers ciblés & 14 tests réussis, 21 avertissements, durée 4,45 s. \\
     Application mobile & \texttt{npm test -- --runInBand} & 7 tests réussis sur la recherche mobile par localisation, durée 2,781 s. \\
     Administration web & \texttt{npm run build} & Build Vite terminé avec succès, génération du dossier \texttt{dist/}. \\
-    Import médicaments & \texttt{pytest} sur le fichier d'upload médicaments avec limite de temps & Exécution interrompue après 20 s sur le premier test ; ce point doit être stabilisé pour la validation complète de ce module. \\
+    Import médicaments & \texttt{pytest} sur le fichier d'upload médicaments avec limite de temps & \textbf{Limite connue} : exécution interrompue après 20 s sur le premier test\footnote{Ce test dépasse le délai d'exécution en raison du volume de données de test. Ce point constitue une limite connue identifiée pour correction dans une version future.}. \\
     \bottomrule
 \end{longtable}
 

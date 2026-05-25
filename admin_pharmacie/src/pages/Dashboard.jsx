@@ -24,7 +24,11 @@ const Dashboard = ({ onLogout }) => {
     directoryData,
     recentActivities,
     handleDrag,
-    handleDrop
+    handleDrop,
+    handleStartGeocoding,
+    handleConfigItem,
+    handlePublish,
+    handleReject,
   } = useDashboard();
 
   if (activeNav === 'hifi') {
@@ -52,14 +56,23 @@ const Dashboard = ({ onLogout }) => {
             setDragActive={setDragActive}
             handleDrag={handleDrag}
             handleDrop={handleDrop}
+            onStartGeocoding={handleStartGeocoding}
           />
         )}
-        {activeNav === 'processing' && <Processing processingQueue={processingQueue} />}
+        {activeNav === 'processing' && (
+          <Processing
+            processingQueue={processingQueue}
+            onStartGeocoding={handleStartGeocoding}
+            onConfigItem={handleConfigItem}
+          />
+        )}
         {activeNav === 'validation' && (
           <Validation
             validationData={validationData}
             selectedValidation={selectedValidation}
             setSelectedValidation={setSelectedValidation}
+            onPublish={handlePublish}
+            onReject={handleReject}
           />
         )}
         {activeNav === 'directory' && <Directory directoryData={directoryData} />}

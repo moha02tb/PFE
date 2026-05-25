@@ -8,23 +8,24 @@ const sideClasses = {
   right: 'left-full top-1/2 ml-2 -translate-y-1/2',
 };
 
+const originClasses = {
+  top: 'origin-bottom',
+  bottom: 'origin-top',
+  left: 'origin-right',
+  right: 'origin-left',
+};
+
 const Tooltip = ({ content, children, side = 'top', className, contentClassName, disabled = false }) => {
   const [open, setOpen] = useState(false);
   const id = useId();
 
-  const show = () => {
-    if (!disabled) setOpen(true);
-  };
-
-  const hide = () => setOpen(false);
-
   return (
     <span
       className={cn('relative inline-flex', className)}
-      onMouseEnter={show}
-      onMouseLeave={hide}
-      onFocus={show}
-      onBlur={hide}
+      onMouseEnter={() => { if (!disabled) setOpen(true); }}
+      onMouseLeave={() => setOpen(false)}
+      onFocus={() => { if (!disabled) setOpen(true); }}
+      onBlur={() => setOpen(false)}
     >
       <span aria-describedby={open ? id : undefined} className="inline-flex">
         {children}
@@ -35,6 +36,8 @@ const Tooltip = ({ content, children, side = 'top', className, contentClassName,
           role="tooltip"
           className={cn(
             'pointer-events-none absolute z-50 whitespace-nowrap rounded-[8px] border border-border bg-surface-elevated px-2.5 py-1.5 text-[11px] font-semibold text-foreground shadow-panel',
+            'animate-tooltip-in',
+            originClasses[side] || originClasses.top,
             sideClasses[side] || sideClasses.top,
             contentClassName
           )}

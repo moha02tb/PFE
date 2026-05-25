@@ -21,6 +21,7 @@ from schemas import (
     RegisterRequest,
     TokenResponse,
     UserResponse,
+    ChangePasswordRequest,
 )
 from services.audit_service import AuditService
 from services.email_service import EmailService
@@ -49,6 +50,16 @@ class AuthService:
         """Generate a short numeric verification code."""
         return f"{secrets.randbelow(1_000_000):06d}"
 
+    def _store_verification_code(self, user: models.Utilisateur) -> str:
+        code = self._generate_verification_code()
+        user.email_verification_code = hash_secret(code)
+        user.email_verification_failed_attempts = 0
+        user.email_verification_sent_at = datetime.now(timezone.utc)
+        user.email_verification_expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
+        self.db.add(user)
+        self.db.commit()
+        return code
+
     def send_verification_email_for_user(self, email: str) -> Optional[str]:
         """Send a verification email for an existing unverified user."""
         user = (
@@ -63,13 +74,7 @@ class AuthService:
         if user.email_verified:
             return None
 
-        code = self._generate_verification_code()
-        user.email_verification_code = hash_secret(code)
-        user.email_verification_failed_attempts = 0
-        user.email_verification_sent_at = datetime.now(timezone.utc)
-        user.email_verification_expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
-        self.db.add(user)
-        self.db.commit()
+        code = self._store_verification_code(user)
 
         try:
             self.email_service.send_verification_email(
@@ -345,9 +350,6 @@ class AuthService:
         if admin_username or user_username:
             return None, "Username already taken"
 
-        verification_code = self._generate_verification_code()
-        verification_expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
-
         new_user = models.Utilisateur(
             nomUtilisateur=reg_data.username,
             email=reg_data.email,
@@ -355,10 +357,10 @@ class AuthService:
             source="self_registered",
             is_active=True,
             email_verified=False,
-            email_verification_code=hash_secret(verification_code),
+            email_verification_code=None,
             email_verification_failed_attempts=0,
-            email_verification_sent_at=datetime.now(timezone.utc),
-            email_verification_expires_at=verification_expires_at,
+            email_verification_sent_at=None,
+            email_verification_expires_at=None,
         )
 
         self.db.add(new_user)
@@ -458,19 +460,6 @@ class AuthService:
 
         if user.email_verified:
             return {"message": "Email is already verified"}, None
-
-        verification_code = self._generate_verification_code()
-        user.email_verification_code = hash_secret(verification_code)
-        user.email_verification_failed_attempts = 0
-        user.email_verification_sent_at = datetime.now(timezone.utc)
-        user.email_verification_expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
-
-        try:
-            self.db.add(user)
-            self.db.commit()
-        except Exception as exc:
-            self.db.rollback()
-            return None, f"Unable to update verification code: {exc}"
 
         return {"message": "Verification email sent"}, None
 
@@ -684,6 +673,20 @@ class AuthService:
         if isinstance(user, models.Administrateur):
             return AdminResponse.model_validate(user), None
         return UserResponse.model_validate(user), None
+
+    def change_password(
+        self,
+        user: Union[models.Administrateur, models.Utilisateur],
+        current_password: str,
+        new_password: str,
+    ) -> Optional[str]:
+        """Verify current password and set a new one. Returns error string or None."""
+        if not verify_password(current_password, user.motDePasse):
+            return "Current password is incorrect"
+        user.motDePasse = hash_password(new_password)
+        self.db.add(user)
+        self.db.commit()
+        return None
 
     def create_user_by_admin(
         self,

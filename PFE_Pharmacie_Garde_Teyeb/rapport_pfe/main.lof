@@ -1,36 +1,33 @@
 \babel@toc {french}{}\relax 
 \addvspace {10\p@ }
-\contentsline {xchapter}{Cadre conceptuel et étude de l'existant}{4}{chapter.1}%
-\contentsline {figure}{\numberline {1.1}{\ignorespaces Diagramme de cas d'utilisation général}}{10}{figure.caption.23}%
-\contentsline {figure}{\numberline {1.2}{\ignorespaces Planning de réalisation}}{11}{figure.caption.25}%
+\contentsline {xchapter}{Cadre conceptuel et étude de l'existant}{3}{chapter.1}%
 \addvspace {10\p@ }
-\contentsline {xchapter}{Analyse et spécification des besoins}{12}{chapter.2}%
-\contentsline {figure}{\numberline {2.1}{\ignorespaces Diagramme de cas d'utilisation détaillé}}{19}{figure.caption.26}%
+\contentsline {xchapter}{Analyse et spécification des besoins}{10}{chapter.2}%
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Diagramme de cas d'utilisation détaillé}}{15}{figure.caption.23}%
 \addvspace {10\p@ }
-\contentsline {xchapter}{Conception}{21}{chapter.3}%
-\contentsline {figure}{\numberline {3.1}{\ignorespaces Architecture globale de PharmacieConnect}}{22}{figure.caption.27}%
-\contentsline {figure}{\numberline {3.2}{\ignorespaces Diagramme de classes}}{25}{figure.caption.31}%
-\contentsline {figure}{\numberline {3.3}{\ignorespaces Diagramme de séquence : authentification JWT}}{26}{figure.caption.32}%
-\contentsline {figure}{\numberline {3.4}{\ignorespaces Diagramme de séquence : recherche d'une pharmacie}}{27}{figure.caption.33}%
-\contentsline {figure}{\numberline {3.5}{\ignorespaces Diagramme d'activité : import CSV contrôlé}}{28}{figure.caption.34}%
-\contentsline {figure}{\numberline {3.6}{\ignorespaces Diagramme de composants}}{29}{figure.caption.35}%
-\contentsline {figure}{\numberline {3.7}{\ignorespaces Diagramme de déploiement}}{30}{figure.caption.36}%
+\contentsline {xchapter}{Conception}{17}{chapter.3}%
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Architecture globale de PharmacieConnect}}{18}{figure.caption.24}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Diagramme de classes}}{21}{figure.caption.28}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Diagramme de séquence : authentification JWT}}{22}{figure.caption.29}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Diagramme de séquence : recherche d'une pharmacie}}{23}{figure.caption.30}%
+\contentsline {figure}{\numberline {3.5}{\ignorespaces Diagramme d'activité : import CSV contrôlé}}{24}{figure.caption.31}%
+\contentsline {figure}{\numberline {3.6}{\ignorespaces Diagramme de composants}}{25}{figure.caption.32}%
+\contentsline {figure}{\numberline {3.7}{\ignorespaces Diagramme de déploiement}}{25}{figure.caption.33}%
 \addvspace {10\p@ }
-\contentsline {xchapter}{Réalisation et tests}{33}{chapter.4}%
-\contentsline {figure}{\numberline {4.1}{\ignorespaces Ecran de connexion du tableau de bord administrateur}}{43}{figure.caption.41}%
-\contentsline {figure}{\numberline {4.2}{\ignorespaces Vue du tableau de bord administrateur}}{44}{figure.caption.42}%
-\contentsline {figure}{\numberline {4.3}{\ignorespaces Vue du registre des pharmacies}}{44}{figure.caption.43}%
-\contentsline {figure}{\numberline {4.4}{\ignorespaces Vue de gestion des pharmacies et des gardes}}{45}{figure.caption.44}%
-\contentsline {figure}{\numberline {4.5}{\ignorespaces Vue du calendrier des gardes}}{45}{figure.caption.45}%
-\contentsline {figure}{\numberline {4.6}{\ignorespaces Vue cartographique du reseau de pharmacies}}{46}{figure.caption.46}%
-\contentsline {figure}{\numberline {4.7}{\ignorespaces Interface d'import des pharmacies}}{46}{figure.caption.47}%
-\contentsline {figure}{\numberline {4.8}{\ignorespaces Interface d'import du planning de garde}}{47}{figure.caption.48}%
-\contentsline {figure}{\numberline {4.9}{\ignorespaces Vue des journaux d'audit}}{47}{figure.caption.49}%
-\contentsline {figure}{\numberline {4.10}{\ignorespaces Connexion mobile}}{48}{figure.caption.50}%
-\contentsline {figure}{\numberline {4.11}{\ignorespaces Accueil et recherche mobile}}{48}{figure.caption.50}%
-\contentsline {figure}{\numberline {4.12}{\ignorespaces Carte mobile des pharmacies}}{48}{figure.caption.50}%
-\contentsline {figure}{\numberline {4.13}{\ignorespaces Calendrier mobile des gardes}}{49}{figure.caption.51}%
-\contentsline {figure}{\numberline {4.14}{\ignorespaces Catalogue mobile des medicaments}}{49}{figure.caption.51}%
-\contentsline {figure}{\numberline {4.15}{\ignorespaces Assistant mobile de premiers secours}}{49}{figure.caption.51}%
-\addvspace {10\p@ }
-\contentsline {xchapter}{Annexes}{60}{appendix.A}%
+\contentsline {xchapter}{Réalisation et tests}{29}{chapter.4}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Stack technologique de PharmacieConnect}}{32}{figure.caption.35}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Écran de connexion du tableau de bord administrateur}}{38}{figure.caption.39}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Vue du tableau de bord administrateur}}{38}{figure.caption.40}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Vue du registre des pharmacies}}{39}{figure.caption.41}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces Vue de gestion des pharmacies et des gardes}}{39}{figure.caption.42}%
+\contentsline {figure}{\numberline {4.6}{\ignorespaces Vue du calendrier des gardes}}{40}{figure.caption.43}%
+\contentsline {figure}{\numberline {4.7}{\ignorespaces Vue cartographique du réseau de pharmacies}}{40}{figure.caption.44}%
+\contentsline {figure}{\numberline {4.8}{\ignorespaces Interface d'import des pharmacies}}{41}{figure.caption.45}%
+\contentsline {figure}{\numberline {4.9}{\ignorespaces Interface d'import du planning de garde}}{41}{figure.caption.46}%
+\contentsline {figure}{\numberline {4.10}{\ignorespaces Vue des journaux d'audit}}{42}{figure.caption.47}%
+\contentsline {figure}{\numberline {4.11}{\ignorespaces Connexion mobile}}{42}{figure.caption.48}%
+\contentsline {figure}{\numberline {4.12}{\ignorespaces Accueil et recherche mobile}}{42}{figure.caption.48}%
+\contentsline {figure}{\numberline {4.13}{\ignorespaces Carte mobile des pharmacies}}{42}{figure.caption.48}%
+\contentsline {figure}{\numberline {4.14}{\ignorespaces Calendrier mobile des gardes}}{43}{figure.caption.49}%
+\contentsline {figure}{\numberline {4.15}{\ignorespaces Catalogue mobile des médicaments}}{43}{figure.caption.49}%
+\contentsline {figure}{\numberline {4.16}{\ignorespaces Assistant mobile de premiers secours}}{43}{figure.caption.49}%

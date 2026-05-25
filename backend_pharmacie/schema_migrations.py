@@ -638,4 +638,9 @@ MIGRATIONS = [
         description="Add composite indexes for list, count, and dashboard query patterns",
         apply=_add_operational_composite_indexes,
     ),
+    Migration(
+        version="2026_05_20_011_repair_utilisateurs_verification_columns",
+        description="Repair missing user email verification columns on existing databases",
+        apply=_normalize_user_verification_schema,
+    ),
 ]

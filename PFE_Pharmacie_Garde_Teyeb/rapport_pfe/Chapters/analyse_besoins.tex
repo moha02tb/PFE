@@ -182,48 +182,6 @@ Les règles de gestion suivantes encadrent le comportement de la plateforme :
     \bottomrule
 \end{longtable}
 
-\subsection{Cas d'utilisation : import CSV}
-
-\begin{longtable}{L{4cm}L{10cm}}
-    \caption{Description textuelle du cas d'utilisation Import CSV}\\
-    \toprule
-    \textbf{Élément} & \textbf{Description} \\
-    \midrule
-    \endfirsthead
-    \toprule
-    \textbf{Élément} & \textbf{Description} \\
-    \midrule
-    \endhead
-    Acteurs & Administrateur, assistant autorisé selon le périmètre \\
-    Objectif & Importer un ensemble de pharmacies, de gardes ou de médicaments à partir d'un fichier CSV. \\
-    Précondition & L'acteur est authentifié et le fichier respecte le format attendu. \\
-    Scénario nominal & L'acteur charge le fichier. Le backend vérifie l'extension, la taille, les colonnes et les valeurs, puis enregistre les lignes valides. \\
-    Postcondition & Les données valides sont enregistrées et un bilan d'import est retourné. \\
-    Exceptions & Colonnes manquantes, lignes invalides, fichier trop volumineux, doublons ou données hors périmètre régional. \\
-    \bottomrule
-\end{longtable}
-
-\subsection{Cas d'utilisation : gestion des utilisateurs et assistants}
-
-\begin{longtable}{L{4cm}L{10cm}}
-    \caption{Description textuelle du cas d'utilisation Gestion des utilisateurs et assistants}\\
-    \toprule
-    \textbf{Élément} & \textbf{Description} \\
-    \midrule
-    \endfirsthead
-    \toprule
-    \textbf{Élément} & \textbf{Description} \\
-    \midrule
-    \endhead
-    Acteur & Administrateur ou super administrateur \\
-    Objectif & Créer, modifier, activer, désactiver ou limiter les comptes administratifs et assistants. \\
-    Précondition & L'acteur dispose d'un rôle autorisé. \\
-    Scénario nominal & L'administrateur renseigne les informations du compte, choisit le rôle et le périmètre éventuel, puis valide l'opération. \\
-    Postcondition & Le compte est créé ou mis à jour avec les permissions correspondantes. \\
-    Exceptions & Email déjà utilisé, rôle invalide, droits insuffisants ou informations manquantes. \\
-    \bottomrule
-\end{longtable}
-
 \section{Diagramme de cas d'utilisation}
 
 Le diagramme de cas d'utilisation synthétise les interactions entre les acteurs et la plateforme. Il sert de

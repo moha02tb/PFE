@@ -1,19 +1,18 @@
 import { useState } from 'react';
 
-// Custom hook to manage dashboard state and logic
 export const useDashboard = () => {
   const [activeNav, setActiveNav] = useState('hifi');
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [dragActive, setDragActive] = useState(false);
   const [selectedValidation, setSelectedValidation] = useState([]);
 
-  const [processingQueue] = useState([
+  const [processingQueue, setProcessingQueue] = useState([
     { id: 1, fileName: 'pharmacies_paris.csv', status: 'completed', progress: 100, lines: 234, errors: 5 },
     { id: 2, fileName: 'pharmacies_lyon.csv', status: 'geocoding', progress: 65, lines: 156, errors: 2 },
     { id: 3, fileName: 'pharmacies_marseille.csv', status: 'raw', progress: 0, lines: 0, errors: 0 }
   ]);
 
-  const [validationData] = useState([
+  const [validationData, setValidationData] = useState([
     { id: 1, name: 'Pharmacie du Centre', city: 'Paris', phone: '0142345678', email: 'contact@centre.fr', status: 'complete' },
     { id: 2, name: 'Pharmacie de la Gare', city: 'Paris', phone: '', email: 'gare@pharm.fr', status: 'warning' },
     { id: 3, name: 'Pharmacie Belleville', city: 'Paris', phone: '0145678901', email: '', status: 'warning' },
@@ -35,6 +34,33 @@ export const useDashboard = () => {
     { id: 3, action: 'Data Published', records: 234, time: '1 day ago' },
     { id: 4, action: 'Validation Started', file: 'pharmacies_marseille.csv', time: '2 days ago' }
   ]);
+
+  const handleStartGeocoding = () => {
+    setProcessingQueue((queue) =>
+      queue.map((item) =>
+        item.status === 'raw' ? { ...item, status: 'geocoding', progress: 5 } : item
+      )
+    );
+    setActiveNav('processing');
+  };
+
+  const handleConfigItem = (id) => {
+    setProcessingQueue((queue) =>
+      queue.map((item) =>
+        item.id === id ? { ...item, _configOpen: !item._configOpen } : item
+      )
+    );
+  };
+
+  const handlePublish = (ids) => {
+    setValidationData((data) => data.filter((item) => !ids.includes(item.id)));
+    setSelectedValidation([]);
+  };
+
+  const handleReject = (ids) => {
+    setValidationData((data) => data.filter((item) => !ids.includes(item.id)));
+    setSelectedValidation([]);
+  };
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -76,6 +102,10 @@ export const useDashboard = () => {
     directoryData,
     recentActivities,
     handleDrag,
-    handleDrop
+    handleDrop,
+    handleStartGeocoding,
+    handleConfigItem,
+    handlePublish,
+    handleReject,
   };
 };

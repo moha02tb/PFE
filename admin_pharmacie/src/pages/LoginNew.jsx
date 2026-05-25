@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import { useState } from 'react';
-import { Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, LockKeyhole, Mail, ShieldCheck, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -11,8 +11,16 @@ const LoginNew = ({ onLoginSuccess }) => {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSent, setForgotSent] = useState(false);
   const { login } = useAuth();
   const { language, setLanguage, languages, t } = useLanguage();
+
+  const handleForgotSubmit = (e) => {
+    e.preventDefault();
+    if (forgotEmail) setForgotSent(true);
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -130,7 +138,7 @@ const LoginNew = ({ onLoginSuccess }) => {
             <label className="block">
               <div className="mb-2 flex items-center justify-between">
                 <span className="block text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-muted-foreground">{t('login.password')}</span>
-                <button type="button" className="text-xs font-bold text-primary hover:underline">{t('login.forgotPassword')}</button>
+                <button type="button" className="text-xs font-bold text-primary hover:underline" onClick={() => { setForgotOpen(true); setForgotSent(false); setForgotEmail(''); }}>{t('login.forgotPassword')}</button>
               </div>
               <div className="relative">
                 <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
@@ -167,7 +175,7 @@ const LoginNew = ({ onLoginSuccess }) => {
             </label>
 
             <button
-              className="flex w-full justify-center rounded-[8px] bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+              className="flex w-full justify-center rounded-[8px] bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-sm transition hover:bg-primary/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
               type="submit"
               disabled={!email || !password || isLoading}
             >
@@ -216,6 +224,53 @@ const LoginNew = ({ onLoginSuccess }) => {
           </div>
         </div>
       </section>
+      {forgotOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setForgotOpen(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-[12px] border border-border bg-surface-elevated p-6 shadow-elevated"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <h2 className="font-display text-lg font-bold text-foreground">{t('login.forgotPassword')}</h2>
+                <p className="mt-1 text-sm text-muted-foreground">{t('login.forgotPasswordDesc', 'Enter your email and we\'ll send you a reset link.')}</p>
+              </div>
+              <button type="button" className="text-muted-foreground hover:text-foreground" onClick={() => setForgotOpen(false)}>
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            {forgotSent ? (
+              <div className="rounded-[8px] border border-success/25 bg-success-soft px-4 py-3 text-sm font-medium text-success">
+                {t('login.forgotPasswordSent', 'Reset link sent! Check your inbox.')}
+              </div>
+            ) : (
+              <form onSubmit={handleForgotSubmit} className="space-y-4">
+                <div className="relative">
+                  <Mail className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="email"
+                    required
+                    className="login-input pl-12"
+                    placeholder="admin@pharmacieconnect.tn"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="flex w-full justify-center rounded-[8px] bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-50"
+                  disabled={!forgotEmail}
+                >
+                  {t('login.sendResetLink', 'Send reset link')}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

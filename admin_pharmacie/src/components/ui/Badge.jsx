@@ -13,7 +13,7 @@ const badgeVariants = {
 const Badge = ({ className, variant = 'neutral', ...props }) => (
   <span
     className={cn(
-      'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] whitespace-nowrap',
+      'badge-mount inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] whitespace-nowrap',
       badgeVariants[variant],
       className
     )}

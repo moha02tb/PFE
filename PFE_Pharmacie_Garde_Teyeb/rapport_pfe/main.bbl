@@ -1,15 +1,23 @@
 \begin{thebibliography}{10}
 
 \bibitem{scrumguide}
-K.~Schwaber and J.~Sutherland, ``The scrum guide.'' \url{https://scrumguides.org/}, 2020.
+K.~Schwaber and J.~Sutherland, ``The scrum guide.''
+  \url{https://scrumguides.org/}, 2020.
 \newblock Guide consulté le 13 mai 2026.
 
 \bibitem{uml}
-G.~Booch, J.~Rumbaugh, and I.~Jacobson, {\em The Unified Modeling Language User Guide}.
+G.~Booch, J.~Rumbaugh, and I.~Jacobson, {\em The Unified Modeling Language User
+  Guide}.
 \newblock Addison-Wesley, 2005.
 
+\bibitem{fielding}
+R.~T. Fielding, {\em Architectural Styles and the Design of Network-based
+  Software Architectures}.
+\newblock PhD thesis, University of California, Irvine, 2000.
+
 \bibitem{cnopt}
-{Conseil National de l'Ordre des Pharmaciens de Tunisie}, ``Site officiel du cnopt.'' \url{https://cnopt.tn/}, 2026.
+{Conseil National de l'Ordre des Pharmaciens de Tunisie}, ``Site officiel du
+  cnopt.'' \url{https://cnopt.tn/}, 2026.
 \newblock Consulté le 13 mai 2026.
 
 \bibitem{medtn}
@@ -21,19 +29,23 @@ Google, ``Google maps.'' \url{https://www.google.com/maps}, 2026.
 \newblock Service consulté le 13 mai 2026.
 
 \bibitem{openstreetmap}
-{OpenStreetMap Foundation}, ``Openstreetmap.'' \url{https://www.openstreetmap.org/}, 2026.
+{OpenStreetMap Foundation}, ``Openstreetmap.''
+  \url{https://www.openstreetmap.org/}, 2026.
 \newblock Service consulté le 13 mai 2026.
 
 \bibitem{apothicare}
-{Conseil national de l'ordre des pharmaciens de Tunisie}, ``Apothicare app.'' \url{https://apps.apple.com/tn/app/apothicare/id6760540666}, 2026.
+{Conseil national de l'ordre des pharmaciens de Tunisie}, ``Apothicare app.''
+  \url{https://apps.apple.com/tn/app/apothicare/id6760540666}, 2026.
 \newblock Page App Store consultée le 13 mai 2026.
 
 \bibitem{owasp}
-O.~Foundation, ``Owasp top 10 web application security risks.'' \url{https://owasp.org/www-project-top-ten/}, 2026.
+O.~Foundation, ``Owasp top 10 web application security risks.''
+  \url{https://owasp.org/www-project-top-ten/}, 2026.
 \newblock Référence générale consultée le 12 mai 2026.
 
 \bibitem{jwt}
-M.~Jones, J.~Bradley, and N.~Sakimura, ``Json web token.'' \url{https://www.rfc-editor.org/rfc/rfc7519}, 2015.
+M.~Jones, J.~Bradley, and N.~Sakimura, ``Json web token.''
+  \url{https://www.rfc-editor.org/rfc/rfc7519}, 2015.
 \newblock RFC 7519.
 
 \bibitem{fastapi}
@@ -53,19 +65,23 @@ Expo, ``Expo documentation.'' \url{https://docs.expo.dev/}, 2026.
 \newblock Documentation officielle consultée le 12 mai 2026.
 
 \bibitem{reactnative}
-M.~O. Source, ``React native documentation.'' \url{https://reactnative.dev/}, 2026.
+M.~O. Source, ``React native documentation.'' \url{https://reactnative.dev/},
+  2026.
 \newblock Documentation officielle consultée le 12 mai 2026.
 
 \bibitem{sqlalchemy}
-SQLAlchemy, ``Sqlalchemy documentation.'' \url{https://docs.sqlalchemy.org/}, 2026.
+SQLAlchemy, ``Sqlalchemy documentation.'' \url{https://docs.sqlalchemy.org/},
+  2026.
 \newblock Documentation officielle consultée le 12 mai 2026.
 
 \bibitem{postgresql}
-P.~G.~D. Group, ``Postgresql documentation.'' \url{https://www.postgresql.org/docs/}, 2026.
+P.~G.~D. Group, ``Postgresql documentation.''
+  \url{https://www.postgresql.org/docs/}, 2026.
 \newblock Documentation officielle consultée le 12 mai 2026.
 
 \bibitem{nominatim}
-{OpenStreetMap Foundation}, ``Nominatim usage policy.'' \url{https://operations.osmfoundation.org/policies/nominatim/}, 2026.
+{OpenStreetMap Foundation}, ``Nominatim usage policy.''
+  \url{https://operations.osmfoundation.org/policies/nominatim/}, 2026.
 \newblock Politique d'utilisation consultée le 13 mai 2026.
 
 \bibitem{pytest}
@@ -73,11 +89,8 @@ Pytest, ``Pytest documentation.'' \url{https://docs.pytest.org/}, 2026.
 \newblock Documentation consultée le 13 mai 2026.
 
 \bibitem{jest}
-M.~O. Source, ``Jest documentation.'' \url{https://jestjs.io/docs/getting-started}, 2026.
+M.~O. Source, ``Jest documentation.''
+  \url{https://jestjs.io/docs/getting-started}, 2026.
 \newblock Documentation consultée le 13 mai 2026.
-
-\bibitem{fielding}
-R.~T. Fielding, {\em Architectural Styles and the Design of Network-based Software Architectures}.
-\newblock PhD thesis, University of California, Irvine, 2000.
 
 \end{thebibliography}

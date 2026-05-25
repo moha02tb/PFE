@@ -14,14 +14,16 @@ Endpoints:
 
 from typing import Union
 
+import logging
 import os
 import models
-from database import get_db
+from database import SessionLocal, get_db
 from dependencies import admin_required, get_current_account
-from fastapi import APIRouter, BackgroundTasks, Cookie, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 from schemas import (
     AdminCreate,
     AdminCreateByAdmin,
+    ChangePasswordRequest,
     LoginRequest,
     ProfileUpdateRequest,
     RegisterRequest,
@@ -40,9 +42,23 @@ from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/api/auth", tags=["authentication"])
+logger = logging.getLogger(__name__)
 
 # Rate limiter
 limiter = Limiter(key_func=get_remote_address)
+
+
+def _send_verification_email_now(email: str) -> None:
+    """Send verification email with an independent DB session."""
+    db = SessionLocal()
+    try:
+        error = AuthService(db).send_verification_email_for_user(email)
+        if error:
+            logger.error("Verification email failed for %s: %s", email, error)
+            raise RuntimeError(error)
+        logger.info("Verification email sent for %s", email)
+    finally:
+        db.close()
 
 def _cookie_secure_default(request: Request) -> bool:
     """Decide whether auth cookies should be marked Secure.
@@ -121,7 +137,6 @@ async def register(
     request: Request,
     reg_data: RegisterRequest,
     response: Response,
-    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
     """Register new regular user (public endpoint).
@@ -151,7 +166,10 @@ async def register(
     if error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
 
-    background_tasks.add_task(auth_service.send_verification_email_for_user, token_response["email"])
+    try:
+        _send_verification_email_now(token_response["email"])
+    except RuntimeError as exc:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
     
     return token_response
 
@@ -178,7 +196,6 @@ async def verify_email(
 async def resend_verification_email(
     request: Request,
     payload: ResendVerificationRequest,
-    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
     """Resend an email verification link for an unverified account."""
@@ -188,7 +205,10 @@ async def resend_verification_email(
     if error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
 
-    background_tasks.add_task(auth_service.send_verification_email_for_user, payload.email)
+    try:
+        _send_verification_email_now(payload.email)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
 
     return result
 
@@ -298,8 +318,21 @@ async def update_me(
     
     if error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
-    
+
     return updated_user
+
+
+@router.post("/me/password", status_code=204)
+async def change_my_password(
+    payload: ChangePasswordRequest,
+    user: Union[models.Administrateur, models.Utilisateur] = Depends(get_current_account),
+    db: Session = Depends(get_db),
+):
+    """Change the current account password."""
+    auth_service = AuthService(db)
+    error = auth_service.change_password(user, payload.current_password, payload.new_password)
+    if error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
 
 
 # ---- CREATE ADMIN (admin+ required) ----

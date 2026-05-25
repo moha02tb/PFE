@@ -1,0 +1,46 @@
+/* Ensure tile images render correctly over Tailwind's img resets */
+.map-leaflet-container .leaflet-tile,
+.map-leaflet-container img.leaflet-tile,
+.map-preview__leaflet .leaflet-tile,
+.map-preview__leaflet img.leaflet-tile {
+  display: block !important;
+  filter: none !important;
+  height: 256px !important;
+  max-height: none !important;
+  max-width: none !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  mix-blend-mode: normal !important;
+  opacity: 1 !important;
+  padding: 0 !important;
+  visibility: visible !important;
+  width: 256px !important;
+}
+
+/* Tile pane and layer containers must not be hidden */
+.map-leaflet-container .leaflet-tile-pane,
+.map-preview__leaflet .leaflet-tile-pane {
+  background: transparent !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+  visibility: visible !important;
+}
+
+.map-leaflet-container .leaflet-layer,
+.map-preview__leaflet .leaflet-layer {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.map-leaflet-container .leaflet-tile-container,
+.map-preview__leaflet .leaflet-tile-container {
+  opacity: 1 !important;
+  overflow: visible !important;
+  visibility: visible !important;
+}
+
+/* All Leaflet panes: no 3D transform stacking issues */
+.map-leaflet-container .leaflet-pane,
+.map-preview__leaflet .leaflet-pane {
+  overflow: visible;
+}

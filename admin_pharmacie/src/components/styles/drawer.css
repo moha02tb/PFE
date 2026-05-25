@@ -1,10 +1,54 @@
-.drawer-backdrop,
-.drawer-content,
-.drawer-left,
-.drawer-right,
-.drawer-exit,
-.drawer-exit-left,
-.drawer-exit-right,
-.drawer-backdrop-exit {
-  animation: none;
+.drawer-backdrop-in {
+  animation: backdrop-fade-in 0.22s ease forwards;
+}
+
+.drawer-backdrop-out {
+  animation: backdrop-fade-out 0.2s ease forwards;
+  pointer-events: none;
+}
+
+.drawer-left-in {
+  animation: drawer-slide-in-left 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.drawer-left-out {
+  animation: drawer-slide-out-left 0.22s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+.drawer-right-in {
+  animation: drawer-slide-in-right 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.drawer-right-out {
+  animation: drawer-slide-out-right 0.22s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes backdrop-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes backdrop-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes drawer-slide-in-right {
+  from { transform: translateX(100%); opacity: 0.6; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes drawer-slide-out-right {
+  from { transform: translateX(0);    opacity: 1; }
+  to   { transform: translateX(100%); opacity: 0; }
+}
+
+@keyframes drawer-slide-in-left {
+  from { transform: translateX(-100%); opacity: 0.6; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+
+@keyframes drawer-slide-out-left {
+  from { transform: translateX(0);     opacity: 1; }
+  to   { transform: translateX(-100%); opacity: 0; }
 }

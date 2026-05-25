@@ -1,6 +1,9 @@
 /* eslint-disable react/prop-types */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import {
   Activity,
   ArrowRight,
@@ -32,6 +35,7 @@ import { Badge, Button, EmptyState, Skeleton } from '../components/ui';
 
 const formatNumber = (value) => new Intl.NumberFormat().format(value || 0);
 const POLL_INTERVAL_MS = 30000;
+const EMPTY_OBJECT = {};
 const formatRefreshTime = () =>
   `Last refreshed at ${new Date().toLocaleTimeString([], {
     hour: '2-digit',
@@ -54,6 +58,31 @@ const chartColors = {
 };
 
 const clamp = (value, min = 0, max = 100) => Math.min(max, Math.max(min, value || 0));
+const TUNISIA_CENTER = [36.8065, 10.1815];
+const TUNISIA_DEFAULT_ZOOM = 6;
+
+const parseCoordinate = (value) => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number.parseFloat(value.replace(',', '.'));
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+};
+
+const hasValidCoordinates = (item) =>
+  Number.isFinite(item?.latitude) &&
+  Number.isFinite(item?.longitude) &&
+  item.latitude >= -90 &&
+  item.latitude <= 90 &&
+  item.longitude >= -180 &&
+  item.longitude <= 180;
+
+const normalizePharmacyCoordinates = (item) => ({
+  ...item,
+  latitude: parseCoordinate(item?.latitude ?? item?.lat),
+  longitude: parseCoordinate(item?.longitude ?? item?.lng ?? item?.lon),
+});
 
 const toChartSeries = (items = [], key = 'count') =>
   items.map((item, index) => ({
@@ -67,7 +96,17 @@ const Sparkline = ({ data, color = chartColors.primary }) => (
       labels={(data || []).map((d) => d.label)}
       datasets={[{ data: (data || []).map((d) => d.value), borderColor: color, backgroundColor: color, fill: false, tension: 0.3, pointRadius: 0 }]}
       height={40}
-      options={{ plugins: { legend: { display: false } } }}
+      options={{
+        layout: { padding: 0 },
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false },
+        },
+        scales: {
+          x: { display: false },
+          y: { display: false },
+        },
+      }}
     />
   </div>
 );
@@ -224,19 +263,39 @@ const RecentActivityFeed = ({ items }) => (
   </div>
 );
 
-const DASHBOARD_MAP_TILES = [
-  { x: 32, y: 24, left: 'calc(50% - 463px)', top: 'calc(50% - 244px)' },
-  { x: 33, y: 24, left: 'calc(50% - 207px)', top: 'calc(50% - 244px)' },
-  { x: 34, y: 24, left: 'calc(50% + 49px)', top: 'calc(50% - 244px)' },
-  { x: 35, y: 24, left: 'calc(50% + 305px)', top: 'calc(50% - 244px)' },
-  { x: 32, y: 25, left: 'calc(50% - 463px)', top: 'calc(50% + 12px)' },
-  { x: 33, y: 25, left: 'calc(50% - 207px)', top: 'calc(50% + 12px)' },
-  { x: 34, y: 25, left: 'calc(50% + 49px)', top: 'calc(50% + 12px)' },
-  { x: 35, y: 25, left: 'calc(50% + 305px)', top: 'calc(50% + 12px)' },
-];
+const dashboardMarkerIcon = new L.DivIcon({
+  className: '',
+  html: '<span class="dashboard-map-pin"></span>',
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
+});
+
+const DashboardMapViewport = ({ pins }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      map.invalidateSize({ pan: false });
+      if (pins.length > 1) {
+        map.fitBounds(
+          L.latLngBounds(pins.map((item) => [item.latitude, item.longitude])),
+          { padding: [42, 42], maxZoom: 11 }
+        );
+      } else if (pins.length === 1) {
+        map.setView([pins[0].latitude, pins[0].longitude], 11);
+      } else {
+        map.setView(TUNISIA_CENTER, TUNISIA_DEFAULT_ZOOM);
+      }
+    }, 80);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [map, pins]);
+
+  return null;
+};
 
 const LargerMapWidget = ({ latestPharmacies, coverageAverage, t }) => {
-  const pins = latestPharmacies.slice(0, 8);
+  const pins = latestPharmacies.filter(hasValidCoordinates).slice(0, 30);
   return (
     <div className="bento-card overflow-hidden p-0">
       <div className="flex items-center justify-between border-b border-border px-5 py-4">
@@ -252,36 +311,35 @@ const LargerMapWidget = ({ latestPharmacies, coverageAverage, t }) => {
         </Button>
       </div>
       <div className="map-preview relative h-[320px]">
-        {DASHBOARD_MAP_TILES.map((tile) => (
-          <img
-            key={`${tile.x}-${tile.y}`}
-            src={`https://tile.openstreetmap.org/6/${tile.x}/${tile.y}.png`}
-            alt=""
-            aria-hidden="true"
-            draggable="false"
-            className="map-preview__tile"
-            style={{ left: tile.left, top: tile.top }}
-          />
-        ))}
-        {pins.map((item, index) => (
-          <div
-            key={item.id || index}
-            className="absolute z-[4] h-3 w-3 rounded-full border-2 border-white bg-primary shadow-[0_0_0_6px_rgba(20,184,166,0.18)]"
-            style={{
-              left: `${22 + ((index * 13) % 58)}%`,
-              top: `${24 + ((index * 17) % 52)}%`,
-            }}
-            title={item.name}
-          />
-        ))}
-        <a
-          className="map-preview__attribution"
-          href="https://www.openstreetmap.org/copyright"
-          target="_blank"
-          rel="noreferrer"
+        <MapContainer
+          center={TUNISIA_CENTER}
+          zoom={TUNISIA_DEFAULT_ZOOM}
+          minZoom={5}
+          maxZoom={18}
+          scrollWheelZoom={false}
+          dragging={false}
+          zoomControl={false}
+          attributionControl={false}
+          className="map-preview__leaflet"
         >
-          OSM
-        </a>
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution="OpenStreetMap"
+            maxZoom={18}
+          />
+          <DashboardMapViewport pins={pins} />
+          {pins.map((item, index) => (
+            <Marker
+              key={item.id || index}
+              position={[item.latitude, item.longitude]}
+              icon={dashboardMarkerIcon}
+              title={item.name}
+            />
+          ))}
+        </MapContainer>
+        <Link className="map-preview__open-link" to="/map">
+          {t('dashboard.viewLiveMap')}
+        </Link>
       </div>
     </div>
   );
@@ -403,7 +461,11 @@ const DashboardPage = () => {
 
       setDashboard(dashboardResponse.data);
       setActivity(activityResponse.data);
-      setLatestPharmacies(Array.isArray(pharmaciesResponse.data) ? pharmaciesResponse.data : []);
+      setLatestPharmacies(
+        Array.isArray(pharmaciesResponse.data)
+          ? pharmaciesResponse.data.map(normalizePharmacyCoordinates)
+          : []
+      );
       setLastUpdated(formatRefreshTime());
       setError('');
       hasLoadedRef.current = true;
@@ -442,7 +504,7 @@ const DashboardPage = () => {
   const totals = dashboard?.totals || {};
   const growth = dashboard?.growth || {};
   const auth = dashboard?.auth || {};
-  const pharmacyAnalytics = dashboard?.pharmacies || {};
+  const pharmacyAnalytics = useMemo(() => dashboard?.pharmacies || EMPTY_OBJECT, [dashboard?.pharmacies]);
   const searches = dashboard?.searches || {};
   const recentRegistrations = useMemo(() => (activity?.user_registrations || []).slice(-7), [activity]);
   const registrationChart = useMemo(() => toChartSeries(activity?.user_registrations || [], 'count'), [activity]);
@@ -462,9 +524,7 @@ const DashboardPage = () => {
   const authSuccessRate = loginTotal30d
     ? Math.round(((auth.login_success_last_30_days || 0) / loginTotal30d) * 100)
     : 0;
-  const mapCoverage = latestPharmacies.filter(
-    (item) => typeof item.latitude === 'number' && typeof item.longitude === 'number'
-  ).length;
+  const mapCoverage = latestPharmacies.filter(hasValidCoordinates).length;
   const phoneCoverage = latestPharmacies.filter((item) => item.phone).length;
   const addressCoverage = latestPharmacies.filter((item) => item.address).length;
   const governorateCoverage = latestPharmacies.filter((item) => item.governorate).length;
@@ -708,8 +768,8 @@ const DashboardPage = () => {
                     </div>
                     <span className="text-muted-foreground">{item.governorate || '-'}</span>
                     <span className="text-muted-foreground">{item.phone || '-'}</span>
-                    <Badge variant={typeof item.latitude === 'number' && typeof item.longitude === 'number' ? 'success' : 'warning'}>
-                      {typeof item.latitude === 'number' && typeof item.longitude === 'number' ? t('dashboard.mapped') : t('dashboard.missingMapData')}
+                    <Badge variant={hasValidCoordinates(item) ? 'success' : 'warning'}>
+                      {hasValidCoordinates(item) ? t('dashboard.mapped') : t('dashboard.missingMapData')}
                     </Badge>
                   </div>
                 ))
