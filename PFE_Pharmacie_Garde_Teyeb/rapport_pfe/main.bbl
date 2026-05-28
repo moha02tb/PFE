@@ -1,20 +1,5 @@
 \begin{thebibliography}{10}
 
-\bibitem{scrumguide}
-K.~Schwaber and J.~Sutherland, ``The scrum guide.''
-  \url{https://scrumguides.org/}, 2020.
-\newblock Guide consulté le 13 mai 2026.
-
-\bibitem{uml}
-G.~Booch, J.~Rumbaugh, and I.~Jacobson, {\em The Unified Modeling Language User
-  Guide}.
-\newblock Addison-Wesley, 2005.
-
-\bibitem{fielding}
-R.~T. Fielding, {\em Architectural Styles and the Design of Network-based
-  Software Architectures}.
-\newblock PhD thesis, University of California, Irvine, 2000.
-
 \bibitem{cnopt}
 {Conseil National de l'Ordre des Pharmaciens de Tunisie}, ``Site officiel du
   cnopt.'' \url{https://cnopt.tn/}, 2026.
@@ -38,15 +23,54 @@ Google, ``Google maps.'' \url{https://www.google.com/maps}, 2026.
   \url{https://apps.apple.com/tn/app/apothicare/id6760540666}, 2026.
 \newblock Page App Store consultée le 13 mai 2026.
 
-\bibitem{owasp}
-O.~Foundation, ``Owasp top 10 web application security risks.''
-  \url{https://owasp.org/www-project-top-ten/}, 2026.
-\newblock Référence générale consultée le 12 mai 2026.
+\bibitem{cnopt_tableau_garde}
+{Conseil National de l'Ordre des Pharmaciens de Tunisie}, ``Tableau de garde.''
+  \url{https://cnopt.tn/tableau-de-garde/}, 2026.
+\newblock Page officielle consultée le 26 mai 2026.
 
-\bibitem{jwt}
-M.~Jones, J.~Bradley, and N.~Sakimura, ``Json web token.''
-  \url{https://www.rfc-editor.org/rfc/rfc7519}, 2015.
-\newblock RFC 7519.
+\bibitem{scrumguide}
+K.~Schwaber and J.~Sutherland, ``The scrum guide.''
+  \url{https://scrumguides.org/}, 2020.
+\newblock Guide consulté le 13 mai 2026.
+
+\bibitem{uml}
+G.~Booch, J.~Rumbaugh, and I.~Jacobson, {\em The Unified Modeling Language User
+  Guide}.
+\newblock Addison-Wesley, 2005.
+
+\bibitem{cnopt_cropt_gardes}
+{Conseil National de l'Ordre des Pharmaciens de Tunisie}, ``Conseil régional
+  de l'ordre des pharmaciens de tunis -- missions principales.''
+  \url{https://cnopt.tn/sud-gabes/}, 2026.
+\newblock Page officielle consultée le 26 mai 2026.
+
+\bibitem{fielding}
+R.~T. Fielding, {\em Architectural Styles and the Design of Network-based
+  Software Architectures}.
+\newblock PhD thesis, University of California, Irvine, 2000.
+
+\bibitem{atlassian_jira_sprints}
+Atlassian, ``Coordinate and monitor work with sprints.''
+  \url{https://support.atlassian.com/jira-software-cloud/docs/coordinate-and-monitor-work-with-sprints/},
+  2026.
+\newblock Documentation officielle consultée le 26 mai 2026.
+
+\bibitem{atlassian_bitbucket_guides}
+Atlassian, ``How to use bitbucket cloud.''
+  \url{https://www.atlassian.com/software/bitbucket/guides}, 2026.
+\newblock Documentation officielle consultée le 26 mai 2026.
+
+\bibitem{atlassian_gitflow}
+Atlassian, ``Gitflow workflow.''
+  \url{https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow},
+  2026.
+\newblock Tutoriel officiel consulté le 26 mai 2026.
+
+\bibitem{atlassian_jira_bitbucket}
+Atlassian, ``Connect jira to bitbucket.''
+  \url{https://support.atlassian.com/jira-cloud-administration/docs/connect-jira-cloud-to-bitbucket/},
+  2026.
+\newblock Documentation officielle consultée le 26 mai 2026.
 
 \bibitem{fastapi}
 FastAPI, ``Fastapi documentation.'' \url{https://fastapi.tiangolo.com/}, 2026.
@@ -74,15 +98,68 @@ SQLAlchemy, ``Sqlalchemy documentation.'' \url{https://docs.sqlalchemy.org/},
   2026.
 \newblock Documentation officielle consultée le 12 mai 2026.
 
+\bibitem{owasp}
+O.~Foundation, ``Owasp top 10 web application security risks.''
+  \url{https://owasp.org/www-project-top-ten/}, 2026.
+\newblock Référence générale consultée le 12 mai 2026.
+
+\bibitem{jwt}
+M.~Jones, J.~Bradley, and N.~Sakimura, ``Json web token.''
+  \url{https://www.rfc-editor.org/rfc/rfc7519}, 2015.
+\newblock RFC 7519.
+
+\bibitem{passlib_bcrypt}
+Passlib, ``passlib.hash.bcrypt -- bcrypt.''
+  \url{https://passlib.readthedocs.io/en/stable/lib/passlib.hash.bcrypt.html},
+  2026.
+\newblock Documentation officielle consultée le 26 mai 2026.
+
+\bibitem{pydantic}
+Pydantic, ``Pydantic documentation.'' \url{https://docs.pydantic.dev/latest/},
+  2026.
+\newblock Documentation officielle consultée le 26 mai 2026.
+
 \bibitem{postgresql}
 P.~G.~D. Group, ``Postgresql documentation.''
   \url{https://www.postgresql.org/docs/}, 2026.
 \newblock Documentation officielle consultée le 12 mai 2026.
 
+\bibitem{axios_docs}
+{Axios Collective}, ``Axios documentation.''
+  \url{https://axios-http.com/docs/intro}, 2026.
+\newblock Documentation officielle consultée le 26 mai 2026.
+
+\bibitem{tailwind_docs}
+{Tailwind Labs}, ``Tailwind css documentation.''
+  \url{https://tailwindcss.com/docs/installation/using-vite}, 2026.
+\newblock Documentation officielle consultée le 26 mai 2026.
+
+\bibitem{react_navigation_docs}
+{React Navigation}, ``React navigation documentation.''
+  \url{https://reactnavigation.org/docs/getting-started/}, 2026.
+\newblock Documentation officielle consultée le 26 mai 2026.
+
+\bibitem{i18next_docs}
+{i18next}, ``i18next documentation.''
+  \url{https://www.i18next.com/overview/getting-started}, 2026.
+\newblock Documentation officielle consultée le 26 mai 2026.
+
 \bibitem{nominatim}
 {OpenStreetMap Foundation}, ``Nominatim usage policy.''
   \url{https://operations.osmfoundation.org/policies/nominatim/}, 2026.
 \newblock Politique d'utilisation consultée le 13 mai 2026.
+
+\bibitem{robertson_okapi_trec3}
+S.~E. Robertson, S.~Walker, S.~Jones, M.~Hancock-Beaulieu, and M.~Gatford,
+  ``Okapi at trec-3,'' in {\em Proceedings of The Third Text REtrieval
+  Conference, TREC 1994}, pp.~109--126, National Institute of Standards and
+  Technology, 1994.
+\newblock Consulté le 26 mai 2026.
+
+\bibitem{sentence_transformers_minilm}
+{Sentence Transformers}, ``all-minilm-l6-v2 model card.''
+  \url{https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2}, 2026.
+\newblock Modèle Hugging Face consulté le 26 mai 2026.
 
 \bibitem{pytest}
 Pytest, ``Pytest documentation.'' \url{https://docs.pytest.org/}, 2026.
@@ -92,5 +169,11 @@ Pytest, ``Pytest documentation.'' \url{https://docs.pytest.org/}, 2026.
 M.~O. Source, ``Jest documentation.''
   \url{https://jestjs.io/docs/getting-started}, 2026.
 \newblock Documentation consultée le 13 mai 2026.
+
+\bibitem{firstaidqa}
+S.~S. Muna, R.~I. Salvi, M.~R. Mushfique, and A.~Abrar, ``Firstaidqa: A
+  synthetic dataset for first aid and emergency response in low-connectivity
+  settings.'' \url{https://arxiv.org/abs/2511.01289}, 2025.
+\newblock arXiv:2511.01289, consulté le 26 mai 2026.
 
 \end{thebibliography}

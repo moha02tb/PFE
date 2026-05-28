@@ -5,10 +5,13 @@
 
 \section{Introduction}
 
-Après la conception, cette partie décrit la réalisation concrète de PharmacieConnect. Elle présente
-l'environnement de travail, les technologies utilisées, l'organisation du dépôt et les principales
-fonctionnalités développées dans le backend, le tableau de bord administrateur et l'application mobile. La
-fin du chapitre est consacrée à l'intégration, à la configuration, aux tests et aux difficultés rencontrées.
+Après la phase de conception, ce chapitre présente le passage de PharmacieConnect vers une version
+exécutable et testable. Il décrit l'environnement de développement, les choix techniques réellement
+mobilisés, l'organisation du dépôt et les principales fonctionnalités implémentées dans le backend,
+le tableau de bord administrateur, l'application mobile et l'assistant de premiers secours. L'objectif
+n'est pas seulement d'énumérer les outils utilisés, mais de montrer comment chaque composant contribue
+aux besoins identifiés : consultation des gardes, gestion administrative, import CSV, traçabilité,
+géolocalisation et validation des accès.
 
 \section{Environnement matériel et logiciel}
 
@@ -17,7 +20,7 @@ interface web d'administration et une application mobile.
 
 \begin{table}[H]
     \centering
-    \caption{Environnement de développement}
+    \caption{Environnement de développement -- Source : Auteur}
     \begin{tabular}{L{5cm}L{8cm}}
         \toprule
         \textbf{Élément} & \textbf{Description} \\
@@ -36,13 +39,14 @@ interface web d'administration et une application mobile.
 
 \section{Technologies utilisées}
 
-Les choix techniques découlent directement des besoins du projet. Le backend devait fournir des API
-claires et sécurisées. L'administration nécessitait une interface web capable de gérer les données depuis
-un navigateur. L'application mobile, de son côté, devait rester simple à utiliser tout en intégrant la
-recherche, la carte et la consultation des gardes.
+Les choix techniques ont été retenus en fonction des responsabilités de chaque partie du système. Le
+backend devait exposer des routes REST structurées, contrôler les accès et centraliser les règles métier.
+L'administration web devait offrir une gestion rapide des pharmacies, gardes, imports et journaux d'audit.
+L'application mobile devait rester utilisable dans un parcours citoyen court : rechercher, filtrer,
+localiser et consulter les informations essentielles.
 
 \begin{longtable}{L{4cm}L{10cm}}
-    \caption{Technologies utilisées dans le projet}\\
+    \caption{Technologies utilisées dans le projet -- Source : Auteur}\\
     \toprule
     \textbf{Technologie} & \textbf{Utilisation} \\
     \midrule
@@ -51,20 +55,21 @@ recherche, la carte et la consultation des gardes.
     \textbf{Technologie} & \textbf{Utilisation} \\
     \midrule
     \endhead
-    FastAPI & Développement de l'API REST, endpoints publics et endpoints protégés. \\
-    SQLAlchemy & Modélisation des entités et accès à la base de données. \\
-    Pydantic & Validation des données entrantes et structuration des réponses. \\
-    JWT & Authentification, jetons d'accès et jetons de rafraîchissement. \\
-    React & Construction de l'interface d'administration. \\
-    Vite & Outil de développement et de build pour le tableau de bord administrateur. \\
-    Axios & Communication entre le tableau de bord administrateur et l'API. \\
-    Tailwind CSS & Mise en forme de l'interface d'administration. \\
-    Expo & Développement et exécution de l'application mobile. \\
-    React Native & Création des écrans et composants mobiles. \\
-    i18next & Gestion de l'internationalisation. \\
+    FastAPI & Exposition des routes REST publiques et protégées du backend \cite{fastapi}. \\
+    SQLAlchemy & Modélisation des entités persistantes et accès aux données \cite{sqlalchemy}. \\
+    Pydantic & Validation des entrées et structuration des réponses de l'API \cite{pydantic}. \\
+    JWT & Gestion des jetons d'accès et de rafraîchissement \cite{jwt}. \\
+    React & Construction de l'interface d'administration \cite{react}. \\
+    Vite & Développement local et génération du build du tableau de bord \cite{vite}. \\
+    Axios & Centralisation des appels HTTP entre le tableau de bord et l'API \cite{axios_docs}. \\
+    Tailwind CSS & Mise en forme des écrans d'administration \cite{tailwind_docs}. \\
+    Expo & Exécution et validation de l'application mobile \cite{expo}. \\
+    React Native & Création des écrans mobiles multiplateformes \cite{reactnative}. \\
+    React Navigation & Navigation entre les écrans mobiles \cite{react_navigation_docs}. \\
+    i18next & Gestion des langues et des ressources de traduction \cite{i18next_docs}. \\
     OpenStreetMap / Nominatim & Référence cartographique et géocodage lorsque l'enrichissement des coordonnées est nécessaire \cite{nominatim}. \\
-    BM25 (Okapi) & Algorithme de récupération lexicale pour l'assistant de premiers secours. \\
-    Sentence Transformers & Modèle d'embeddings sémantiques (\texttt{all-MiniLM-L6-v2}) pour la récupération dense. \\
+    BM25 (Okapi) & Récupération lexicale utilisée dans l'assistant de premiers secours \cite{robertson_okapi_trec3}. \\
+    Sentence Transformers & Embeddings sémantiques avec \texttt{all-MiniLM-L6-v2} pour la récupération dense \cite{sentence_transformers_minilm}. \\
     Retrieval Pipeline & Pipeline hybride de fusion lexicale/sémantique avec reclassement et extraction de réponses. \\
     Pytest & Tests automatisés du backend et de l'assistant \cite{pytest}. \\
     Jest & Tests automatisés côté application mobile \cite{jest}. \\
@@ -98,7 +103,7 @@ recherche, la carte et la consultation des gardes.
     \tbadge{OliveGreen}{Pytest}\;
     \tbadge{BrickRed}{Jest} \\
 \end{tabular}
-\caption{Stack technologique de PharmacieConnect}
+\caption{Stack technologique de PharmacieConnect -- Source : Auteur}
 \label{fig:tech-stack}
 \end{figure}
 
@@ -110,7 +115,7 @@ clients et le backend.
 
 \begin{table}[H]
     \centering
-    \caption{Organisation générale du dépôt}
+    \caption{Organisation générale du dépôt -- Source : Auteur}
     \begin{tabular}{L{4.4cm}L{8.6cm}}
         \toprule
         \textbf{Dossier} & \textbf{Contenu} \\
@@ -159,7 +164,7 @@ Lorsqu'une connexion réussit, le serveur retourne un jeton d'accès et un jeton
   "access_token": "[jeton d'accès]",
   "refresh_token": "[jeton de rafraîchissement]",
   "token_type": "bearer",
-  "expires_in": 1800
+  "expires_in": 900
 }
 \end{lstlisting}
 
@@ -259,11 +264,13 @@ utilisateur.
 
 \section{Réalisation de l'assistant conversationnel de premiers secours}
 
-L'assistant conversationnel constitue une valeur ajoutée importante de la plateforme PharmacieConnect. Il
-fournit des réponses rapides, fiables et sûres aux questions de premiers secours, complétant harmonieusement
-la recherche de pharmacies de garde. L'assistant repose sur une architecture de récupération d'informations
-hybride (lexicale et sémantique) plutôt que sur la génération, afin de garantir des réponses basées sur des
-preuves et d'éliminer les risques d'hallucination.
+L'assistant conversationnel complète le parcours principal de PharmacieConnect en proposant une aide de
+premiers secours à côté de la recherche de pharmacies de garde. Pour limiter le risque de réponses non
+ancrées dans les données disponibles, l'implémentation privilégie une architecture de récupération
+d'informations hybride : une recherche lexicale par BM25 \cite{robertson_okapi_trec3} et une recherche
+sémantique fondée sur des embeddings \texttt{all-MiniLM-L6-v2} \cite{sentence_transformers_minilm}. Les
+réponses sont donc construites à partir de passages récupérés, puis accompagnées d'un score de confiance
+et d'avertissements pour les situations critiques.
 
 \subsection{Architecture générale}
 
@@ -273,8 +280,8 @@ L'architecture de l'assistant suit un pipeline en plusieurs étapes :
     \item \textbf{Analyse de la requête} : Normalisation, tokenisation, détection de type et sujet.
     \item \textbf{Récupération parallèle} : Deux algorithmes complémentaires :
         \begin{itemize}
-            \item \textbf{BM25 (Okapi)} : Récupération lexicale basée sur fréquence des termes ;
-            \item \textbf{Embeddings sémantiques} : Modèle \texttt{all-MiniLM-L6-v2} pour capturer le sens.
+            \item \textbf{BM25 (Okapi)} : récupération lexicale sensible aux termes de la question ;
+            \item \textbf{Embeddings sémantiques} : représentation vectorielle des questions et passages avec \texttt{all-MiniLM-L6-v2}.
         \end{itemize}
     \item \textbf{Fusion hybride} : Normalisation et fusion des scores :
         \begin{itemize}
@@ -282,19 +289,21 @@ L'architecture de l'assistant suit un pipeline en plusieurs étapes :
             \item 0.35 pour embeddings sémantiques ;
             \item 0.10 pour bonus de correspondance thématique.
         \end{itemize}
-    \item \textbf{Reclassement et extraction} : Reclassement par similarité, alignement thématique et couverture. Réponse extractive composée du texte récupéré.
-    \item \textbf{Contrôle de confiance} : Calcul multi-signaux (score, similarité, cohérence). Fallback sur confiance insuffisante.
+    \item \textbf{Reclassement et extraction} : reclassement par similarité, alignement thématique et couverture, puis réponse extractive composée du texte récupéré.
+    \item \textbf{Contrôle de confiance} : calcul multi-signaux (score, similarité, cohérence) et réponse de fallback lorsque la confiance est insuffisante.
     \item \textbf{Sécurité médicale} : Avertissement auto pour sujets à risque (étouffement, choc, hémorragie).
 \end{enumerate}
 
 \subsection{Données d'apprentissage et nettoyage}
 
-Le jeu de données initial repose sur FirstAidQA, enrichi et nettoyé pour améliorer la qualité. Les processus
-de qualification et d'augmentation sont décrits ci-après.
+Le jeu de données de départ s'appuie sur FirstAidQA, un corpus synthétique orienté premiers secours et
+situations d'urgence \cite{firstaidqa}. Dans PharmacieConnect, ce corpus a été nettoyé, segmenté et
+complété par des exemples ciblés afin d'obtenir un index mieux adapté aux questions courtes posées depuis
+l'application mobile.
 
 \begin{table}[H]
     \centering
-    \caption{Statistiques du jeu de données de l'assistant}
+    \caption{Statistiques du jeu de données de l'assistant -- Source : Auteur}
     \begin{tabular}{L{6.5cm}L{6.5cm}}
         \toprule
         \textbf{Métrique} & \textbf{Valeur} \\
@@ -319,7 +328,7 @@ et évalue les performances selon plusieurs métriques.
 
 \begin{table}[H]
     \centering
-    \caption{Performances de l'assistant après entraînement}
+    \caption{Performances de l'assistant après entraînement -- Source : Auteur}
     \begin{tabular}{L{3.5cm}L{2.2cm}L{2.0cm}L{4.3cm}}
         \toprule
         \textbf{Métrique} & \textbf{Valeur} & \textbf{Cible} & \textbf{Interprétation} \\
@@ -338,18 +347,18 @@ et évalue les performances selon plusieurs métriques.
 
 \textbf{Analyse des résultats} :
 \begin{itemize}
-    \item Récupération robuste au niveau document (Recall@5 = 94.38\%) ;
-    \item Classement fiable (MRR = 0.8627), bons documents en haut de la liste ;
-    \item Extraction de spans un point faible (F1 = 0.2990), oracle top-5 F1 = 0.3904 ;
-    \item Limitation due à l'appariement réponse-document, non à couverture de récupération ;
-    \item Fallback mesuré (2.69\%) confirme bon fonctionnement du mécanisme de confiance.
+    \item la récupération documentaire est satisfaisante, avec un Recall@5 de 94.38\% ;
+    \item le MRR de 0.8627 indique que les documents utiles apparaissent généralement dans les premiers rangs ;
+    \item l'extraction précise de spans reste le point le plus faible, avec un Evidence F1 de 0.2990 ;
+    \item l'écart observé vient surtout de l'appariement entre réponses attendues et passages récupérés ;
+    \item le taux de fallback de 2.69\% montre que le mécanisme de confiance intervient dans les cas incertains.
 \end{itemize}
 
 La valeur d'Evidence F1 inférieure à la cible (0.2990 vs 0.35) s'explique principalement par le mode
 d'appariement entre les réponses de référence et les documents indexés. Le pipeline extrait des passages
 complets plutôt que des spans précis, ce qui pénalise le score F1 au niveau des tokens. Une amélioration
 possible consiste à réétiqueter les données avec des spans d'extraction annotés manuellement, ou à
-intégrer un modèle de question-réponse extractif (de type BERT fine-tuné sur SQuAD) en remplacement de
+intégrer ultérieurement un module extractif supervisé, évalué sur des spans annotés, en remplacement de
 l'extraction heuristique actuelle.
 
 \subsection{API et intégration avec l'application mobile}
@@ -385,7 +394,11 @@ sources et avertissements de sécurité.
 
 \subsection{Tests et validation}
 
-L'assistant bénéficie de deux suites de tests : (1) Smoke Tests avec 14 scénarios pour urgences courantes (étouffement, choc, perte de conscience), tous passant à 100\% ; (2) Tests unitaires avec 3 suites couvrant normalisation, fusion hybride et confiance calculée. Le système fonctionne de manière fiable et aucune hallucination ne peut survenir (extraction basée sur texte récupéré).
+L'assistant bénéficie de deux niveaux de validation : des smoke tests couvrant 14 scénarios d'urgence
+courants, dont l'étouffement, le choc et la perte de conscience, ainsi que trois suites unitaires portant
+sur la normalisation, la fusion hybride et le calcul de confiance. Comme les réponses sont extraites de
+passages récupérés, le risque de contenu non ancré est réduit ; il n'est cependant pas présenté comme nul,
+ce qui justifie la présence d'un score de confiance et de messages de sécurité.
 
 \section{Captures d'écran}
 
@@ -395,63 +408,63 @@ administrateur et pour l'application mobile.
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth,height=0.72\textheight,keepaspectratio]{admin-login.png}
-    \caption{Écran de connexion du tableau de bord administrateur}
+    \caption{Écran de connexion du tableau de bord administrateur -- Source : Auteur}
     \label{fig:screenshot-admin-login}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth,height=0.72\textheight,keepaspectratio]{admin-dashboard.png}
-    \caption{Vue du tableau de bord administrateur}
+    \caption{Vue du tableau de bord administrateur -- Source : Auteur}
     \label{fig:screenshot-admin-dashboard}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth,height=0.72\textheight,keepaspectratio]{admin-pharmacy-registry.png}
-    \caption{Vue du registre des pharmacies}
+    \caption{Vue du registre des pharmacies -- Source : Auteur}
     \label{fig:screenshot-admin-pharmacies}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth,height=0.72\textheight,keepaspectratio]{admin-management.png}
-    \caption{Vue de gestion des pharmacies et des gardes}
+    \caption{Vue de gestion des pharmacies et des gardes -- Source : Auteur}
     \label{fig:screenshot-admin-management}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth,height=0.72\textheight,keepaspectratio]{admin-garde-calendar.png}
-    \caption{Vue du calendrier des gardes}
+    \caption{Vue du calendrier des gardes -- Source : Auteur}
     \label{fig:screenshot-admin-calendar}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth,height=0.72\textheight,keepaspectratio]{admin-map.png}
-    \caption{Vue cartographique du réseau de pharmacies}
+    \caption{Vue cartographique du réseau de pharmacies -- Source : Auteur}
     \label{fig:screenshot-admin-map}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth,height=0.72\textheight,keepaspectratio]{admin-upload-pharmacies.png}
-    \caption{Interface d'import des pharmacies}
+    \caption{Interface d'import des pharmacies -- Source : Auteur}
     \label{fig:screenshot-admin-import-pharmacies}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth,height=0.72\textheight,keepaspectratio]{admin-upload-garde.png}
-    \caption{Interface d'import du planning de garde}
+    \caption{Interface d'import du planning de garde -- Source : Auteur}
     \label{fig:screenshot-admin-import-garde}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth,height=0.72\textheight,keepaspectratio]{admin-audit-logs.png}
-    \caption{Vue des journaux d'audit}
+    \caption{Vue des journaux d'audit -- Source : Auteur}
     \label{fig:screenshot-admin-audit}
 \end{figure}
 
@@ -460,19 +473,19 @@ administrateur et pour l'application mobile.
     \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\textwidth,height=0.62\textheight,keepaspectratio]{mobile-login.jpeg}
-        \captionof{figure}{Connexion mobile}
+        \captionof{figure}{Connexion mobile -- Source : Auteur}
         \label{fig:screenshot-mobile-login}
     \end{minipage}\hfill
     \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\textwidth,height=0.62\textheight,keepaspectratio]{mobile-home.jpeg}
-        \captionof{figure}{Accueil et recherche mobile}
+        \captionof{figure}{Accueil et recherche mobile -- Source : Auteur}
         \label{fig:screenshot-mobile-home}
     \end{minipage}\hfill
     \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\textwidth,height=0.62\textheight,keepaspectratio]{mobile-map.jpeg}
-        \captionof{figure}{Carte mobile des pharmacies}
+        \captionof{figure}{Carte mobile des pharmacies -- Source : Auteur}
         \label{fig:screenshot-mobile-map}
     \end{minipage}
 \end{figure}
@@ -482,19 +495,19 @@ administrateur et pour l'application mobile.
     \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\textwidth,height=0.62\textheight,keepaspectratio]{mobile-garde-calendar.jpeg}
-        \captionof{figure}{Calendrier mobile des gardes}
+        \captionof{figure}{Calendrier mobile des gardes -- Source : Auteur}
         \label{fig:screenshot-mobile-gardes}
     \end{minipage}\hfill
     \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\textwidth,height=0.62\textheight,keepaspectratio]{mobile-medicines.jpeg}
-        \captionof{figure}{Catalogue mobile des médicaments}
+        \captionof{figure}{Catalogue mobile des médicaments -- Source : Auteur}
         \label{fig:screenshot-mobile-medicines}
     \end{minipage}\hfill
     \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\textwidth,height=0.62\textheight,keepaspectratio]{mobile-firstaid-assistant.jpeg}
-        \captionof{figure}{Assistant mobile de premiers secours}
+        \captionof{figure}{Assistant mobile de premiers secours -- Source : Auteur}
         \label{fig:screenshot-mobile-chatbot}
     \end{minipage}
 \end{figure}
@@ -508,7 +521,7 @@ définis.
 
 \begin{table}[H]
     \centering
-    \caption{Principales intégrations API}
+    \caption{Principales intégrations API -- Source : Auteur}
     \begin{tabular}{L{3.8cm}L{5.2cm}L{4cm}}
         \toprule
         \textbf{Client} & \textbf{Endpoints utilisés} & \textbf{Objectif} \\
@@ -527,7 +540,7 @@ valeurs qui changent selon l'environnement, comme la base de données ou les cl�
 
 \begin{table}[H]
     \centering
-    \caption{Variables d'environnement principales}
+    \caption{Variables d'environnement principales -- Source : Auteur}
     \begin{tabular}{L{6.2cm}L{6.8cm}}
         \toprule
         \textbf{Variable} & \textbf{Rôle} \\
@@ -567,7 +580,7 @@ restrictions régionales, indicateurs et imports.
 
 \begin{table}[H]
     \centering
-    \caption{Stratégie de validation}
+    \caption{Stratégie de validation -- Source : Auteur}
     \begin{tabular}{L{4cm}L{9cm}}
         \toprule
         \textbf{Type de test} & \textbf{Objectif} \\
@@ -589,7 +602,7 @@ remplace pas une recette complète en production, mais elle confirme que les mod
 ou passent leurs tests automatisés dans l'environnement local.
 
 \begin{longtable}{L{3.6cm}L{4.7cm}L{5.7cm}}
-    \caption{Résultats de validation exécutés}\\
+    \caption{Résultats de validation exécutés -- Source : Auteur}\\
     \toprule
     \textbf{Partie vérifiée} & \textbf{Commande} & \textbf{Résultat observé} \\
     \midrule
@@ -642,7 +655,7 @@ donne un cadre clair pour vérifier les échanges API avant un déploiement fina
 
 \begin{table}[H]
     \centering
-    \caption{Preuves de lancement et de build}
+    \caption{Preuves de lancement et de build -- Source : Auteur}
     \begin{tabular}{L{4cm}L{4.8cm}L{4.2cm}}
         \toprule
         \textbf{Composant} & \textbf{Commande de vérification} & \textbf{État} \\
@@ -660,7 +673,7 @@ donne un cadre clair pour vérifier les échanges API avant un déploiement fina
 Les principaux scénarios fonctionnels vérifiés sont présentés dans le tableau suivant.
 
 \begin{longtable}{L{4cm}L{5cm}L{5cm}}
-    \caption{Scénarios fonctionnels testés}\\
+    \caption{Scénarios fonctionnels testés -- Source : Auteur}\\
     \toprule
     \textbf{Scénario} & \textbf{Étapes} & \textbf{Résultat attendu} \\
     \midrule
@@ -687,7 +700,7 @@ Plusieurs difficultés sont apparues pendant la réalisation. Elles ont principa
 des données, les droits d'accès et l'intégration entre les trois parties du projet.
 
 \begin{longtable}{L{5cm}L{9cm}}
-    \caption{Difficultés rencontrées et solutions adoptées}\\
+    \caption{Difficultés rencontrées et solutions adoptées -- Source : Auteur}\\
     \toprule
     \textbf{Difficulté} & \textbf{Solution adoptée} \\
     \midrule

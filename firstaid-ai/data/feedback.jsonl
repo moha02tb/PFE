@@ -1,0 +1,3 @@
+{"timestamp": "2026-05-26T01:27:22+00:00", "query": "How do I treat a burn?", "top_category": "burn", "confidence": "high", "escalate": false, "helpful": true}
+{"timestamp": "2026-05-26T01:27:22+00:00", "query": "How do I help someone choking?", "top_category": "airway", "confidence": "high", "escalate": true, "helpful": true}
+{"timestamp": "2026-05-26T01:27:22+00:00", "query": "My friend is having a stroke", "top_category": "trauma", "confidence": "medium", "escalate": true, "helpful": false}

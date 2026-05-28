@@ -150,6 +150,7 @@ const createLeafletMapHtml = (initialRegion, palette) => {
     palette,
     tileProviders: TILE_PROVIDERS,
   });
+  const surfaceBg = palette?.surface || '#eef3f8';
 
   return `<!doctype html>
 <html>
@@ -162,7 +163,7 @@ const createLeafletMapHtml = (initialRegion, palette) => {
       height: 100%;
       margin: 0;
       padding: 0;
-      background: #eef3f8;
+      background: ${surfaceBg};
       overflow: hidden;
     }
 
@@ -170,7 +171,7 @@ const createLeafletMapHtml = (initialRegion, palette) => {
       width: 100%;
       height: 100%;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #eef3f8;
+      background: ${surfaceBg};
     }
 
     .leaflet-control-zoom {
@@ -207,9 +208,9 @@ const createLeafletMapHtml = (initialRegion, palette) => {
       align-items: center;
       justify-content: center;
       padding: 24px;
-      color: #10233a;
+      color: ${palette?.text || '#10233a'};
       text-align: center;
-      background: #eef3f8;
+      background: ${surfaceBg};
       font: 600 15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
   </style>
@@ -464,7 +465,7 @@ export default function MapboxMapScreen({ route }) {
   const { t } = useTranslation();
   const { isRTL } = useLanguage();
   const insets = useSafeAreaInsets();
-  const { colors, radius, shadows } = useAppTheme();
+  const { colors, radius, shadows, isDarkMode } = useAppTheme();
   const styles = useMemo(
     () => createStyles(colors, radius, shadows, isRTL, insets),
     [colors, radius, shadows, isRTL, insets]
@@ -481,7 +482,7 @@ export default function MapboxMapScreen({ route }) {
   const [pharmacies, setPharmacies] = useState(initialPharmacies);
   const [selectedPharmacy, setSelectedPharmacy] = useState(initialTarget);
   const [searchTerm, setSearchTerm] = useState('');
-  const [tileProvider, setTileProvider] = useState('standard');
+  const [tileProvider, setTileProvider] = useState(isDarkMode ? 'dark' : 'standard');
   const [showLayers, setShowLayers] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [fetchState, setFetchState] = useState('idle');
@@ -504,12 +505,16 @@ export default function MapboxMapScreen({ route }) {
         success: colors.success,
         warning: colors.warning,
         error: colors.error,
+        surface: colors.surface,
+        text: colors.text,
       }),
     [
       colors.error,
       colors.primary,
       colors.primaryMuted,
       colors.success,
+      colors.surface,
+      colors.text,
       colors.warning,
       initialRegion,
     ]
@@ -857,6 +862,14 @@ export default function MapboxMapScreen({ route }) {
     if (!mapReady) return;
     sendMapMessage('setData', mapData);
   }, [mapData, mapReady, sendMapMessage]);
+
+  useEffect(() => {
+    setTileProvider((current) => {
+      if (isDarkMode && current === 'standard') return 'dark';
+      if (!isDarkMode && current === 'dark') return 'standard';
+      return current;
+    });
+  }, [isDarkMode]);
 
   useEffect(() => {
     if (lastRouteParamsRef.current === params) return undefined;

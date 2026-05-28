@@ -39,7 +39,9 @@
     "stars": "étoiles",
     "locationPermissionDenied": "Permission refusée pour accéder à la localisation",
     "locationError": "Erreur lors de la récupération de la localisation",
-    "enableLocationFirst": "Veuillez activer la géolocalisation d'abord."
+    "enableLocationFirst": "Veuillez activer la géolocalisation d'abord.",
+    "offlineFallback": "Données hors ligne affichées — serveur injoignable.",
+    "dismissBanner": "Masquer la notification"
   },
   "settings": {
     "title": "Paramètres",
@@ -107,6 +109,8 @@
     "badge": "Premiers secours",
     "subtitle": "Conseils rapides de premiers secours. Cela ne remplace pas les urgences ni un médecin.",
     "welcome": "Je suis un assistant de premiers secours. Demandez-moi pour les brûlures, les saignements, l'étouffement, l'évanouissement, la fièvre ou les réactions allergiques. En cas de signes graves, appelez les urgences immédiatement.",
+    "welcomeTitle": "Comment puis-je vous aider ?",
+    "welcomeSubtitle": "Choisissez un sujet rapide ci-dessous ou décrivez la situation de premiers secours avec vos propres mots.",
     "disclaimer": "Les signes d'urgence comme la difficulté à respirer, un saignement sévère, des convulsions, une douleur thoracique ou une perte de connaissance nécessitent une aide médicale urgente.",
     "placeholder": "Décrivez la situation de premiers secours...",
     "send": "Envoyer",

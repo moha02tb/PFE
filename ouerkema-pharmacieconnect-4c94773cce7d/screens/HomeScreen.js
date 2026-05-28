@@ -39,6 +39,7 @@ import {
 } from '../components/design-system';
 import PharmacyDetailsModal from '../components/PharmacyDetailsModal';
 import LocationPicker from '../components/LocationPicker';
+import { EmptyPharmaciesIllustration } from '../components/illustrations';
 import { useRating } from './RatingContext';
 import { useAppTheme } from '../utils/theme';
 import {
@@ -74,6 +75,7 @@ export default function HomeScreen({ navigation }) {
   const [detailsModalVisible, setDetailsModalVisible] = useState(false);
   const [locationPickerVisible, setLocationPickerVisible] = useState(false);
   const [resolvingLocation, setResolvingLocation] = useState(false);
+  const [loadError, setLoadError] = useState(null);
   const { history: locationHistory, addToHistory } = useLocationHistory();
 
   const debouncedSearchTerm = useDebounce(searchTerm, 250);
@@ -115,6 +117,7 @@ export default function HomeScreen({ navigation }) {
 
   const loadData = useCallback(
     async ({ coords = userLocation, target = searchTarget } = {}) => {
+      setLoadError(null);
       try {
         if (target && !(target?.latitude && target?.longitude)) {
           if (target?.queryText) {
@@ -159,6 +162,12 @@ export default function HomeScreen({ navigation }) {
         logger.error('HomeScreen', 'Error loading pharmacies data', error);
         const fallbackData = loadPharmacies(t);
         setBasePharmacies(fallbackData);
+        setLoadError(
+          t(
+            'home.offlineFallback',
+            "Showing offline data — couldn't reach the server."
+          )
+        );
         return fallbackData;
       } finally {
         setInitialLoading(false);
@@ -663,6 +672,39 @@ export default function HomeScreen({ navigation }) {
         </AppCard>
       </EntranceView>
 
+      {loadError ? (
+        <EntranceView delay={120} distance={10}>
+          <AppCard
+            borderAccent
+            style={styles.offlineBanner}
+            contentStyle={styles.offlineBannerContent}
+          >
+            <View style={styles.offlineBannerRow}>
+              <MaterialCommunityIcons
+                name="cloud-off-outline"
+                size={18}
+                color={colors.warning}
+              />
+              <AppText
+                variant="bodySmall"
+                color={colors.text}
+                style={styles.offlineBannerText}
+              >
+                {loadError}
+              </AppText>
+              <TouchableOpacity
+                onPress={() => setLoadError(null)}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel={t('home.dismissBanner', 'Dismiss notice')}
+              >
+                <Ionicons name="close" size={16} color={colors.iconMuted} />
+              </TouchableOpacity>
+            </View>
+          </AppCard>
+        </EntranceView>
+      ) : null}
+
       <EntranceView delay={150} distance={10}>
         <SectionTitle
           eyebrow={t('home.careDirectory', 'Care directory')}
@@ -737,7 +779,7 @@ export default function HomeScreen({ navigation }) {
         ListHeaderComponent={renderHeader()}
         ListEmptyComponent={
           <EmptyState
-            icon="search-outline"
+            illustration={<EmptyPharmaciesIllustration size={132} />}
             title={t('home.noPharmacies', 'No pharmacies found')}
             message={t('home.noPharmaciesMessage', 'Try another keyword or refresh your location.')}
             actionTitle={t('home.refresh', 'Refresh')}
@@ -779,6 +821,22 @@ const createStyles = (colors, radius, shadows, isRTL, topInset) =>
       paddingHorizontal: 16,
       paddingTop: Math.max(topInset + 24, 96),
       paddingBottom: 140,
+    },
+    offlineBanner: {
+      marginBottom: 14,
+    },
+    offlineBannerContent: {
+      paddingVertical: 12,
+      paddingHorizontal: 14,
+    },
+    offlineBannerRow: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    offlineBannerText: {
+      flex: 1,
+      textAlign: isRTL ? 'right' : 'left',
     },
     heroCard: {
       backgroundColor: colors.primary,

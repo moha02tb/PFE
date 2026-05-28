@@ -1,21 +1,20 @@
 import React from 'react';
-import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
-import { getColors } from '../../utils/colors';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SPACING } from '../../utils/spacing';
-import { TEXT_STYLES, getTextStyle } from '../../utils/typography';
+import { useAppTheme } from '../../utils/theme';
+import AppText from './Text';
 
 /**
  * LoadingSpinner Component - Branded loading indicator
  */
 const LoadingSpinner = ({
   size = 'large',
-  isDarkMode = false,
   message = null,
   color = null,
   containerStyle = null,
 }) => {
-  const colors = getColors(isDarkMode);
-  const spinnerColor = color || (isDarkMode ? '#4D9FFF' : '#0066CC');
+  const { colors } = useAppTheme();
+  const spinnerColor = color || colors.primary;
 
   const styles = StyleSheet.create({
     container: {
@@ -29,10 +28,7 @@ const LoadingSpinner = ({
       alignItems: 'center',
     },
     message: {
-      ...TEXT_STYLES.bodyMedium,
-      color: colors.textSecondary,
       marginTop: SPACING.lg,
-      textAlign: 'center',
     },
   });
 
@@ -40,7 +36,16 @@ const LoadingSpinner = ({
     <View style={[styles.container, containerStyle]}>
       <View style={styles.content}>
         <ActivityIndicator size={size} color={spinnerColor} />
-        {message && <Text style={styles.message}>{message}</Text>}
+        {message ? (
+          <AppText
+            variant="bodyMedium"
+            color={colors.textSecondary}
+            align="center"
+            style={styles.message}
+          >
+            {message}
+          </AppText>
+        ) : null}
       </View>
     </View>
   );

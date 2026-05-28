@@ -3,6 +3,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 're
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppTheme } from '../utils/theme';
 import { AppCard, AppText } from './design-system';
+import { AuthHeroOrnament } from './illustrations';
 
 export default function AuthShell({
   badge,
@@ -35,44 +36,13 @@ export default function AuthShell({
       overflow: 'hidden',
       ...shadows.floating,
     },
-    topLine: {
+    ornament: {
       position: 'absolute',
       top: 0,
-      left: 0,
-      right: 0,
-      height: 5,
-      backgroundColor: 'rgba(255,255,255,0.18)',
-    },
-    orbOne: {
-      position: 'absolute',
-      width: 170,
-      height: 170,
-      borderRadius: 85,
-      backgroundColor: 'rgba(255,255,255,0.08)',
-      top: -50,
-      right: isRTL ? undefined : -54,
-      left: isRTL ? -54 : undefined,
-    },
-    orbTwo: {
-      position: 'absolute',
-      width: 120,
-      height: 120,
-      borderRadius: 60,
-      backgroundColor: 'rgba(106, 202, 255, 0.2)',
-      bottom: -26,
-      right: isRTL ? undefined : 28,
-      left: isRTL ? 28 : undefined,
-    },
-    gridLine: {
-      position: 'absolute',
-      bottom: 22,
-      left: isRTL ? 24 : undefined,
-      right: isRTL ? undefined : 24,
-      width: 96,
-      height: 96,
-      borderRadius: radius.xl,
-      borderWidth: 1,
-      borderColor: 'rgba(255,255,255,0.08)',
+      bottom: 0,
+      left: isRTL ? 0 : undefined,
+      right: isRTL ? undefined : 0,
+      transform: [{ scaleX: isRTL ? -1 : 1 }],
     },
     badge: {
       alignSelf: isRTL ? 'flex-end' : 'flex-start',
@@ -139,10 +109,9 @@ export default function AuthShell({
         >
           <View style={styles.stack}>
             <View style={styles.hero}>
-              <View style={styles.topLine} />
-              <View style={styles.orbOne} />
-              <View style={styles.orbTwo} />
-              <View style={styles.gridLine} />
+              <View style={styles.ornament} pointerEvents="none">
+                <AuthHeroOrnament width={320} height={200} />
+              </View>
               {badge ? <View style={styles.badge}>{badge}</View> : null}
               <AppText variant="displaySmall" color="#FFFFFF">{title}</AppText>
               <AppText variant="bodyMedium" color="rgba(255,255,255,0.84)" style={{ marginTop: 8 }}>

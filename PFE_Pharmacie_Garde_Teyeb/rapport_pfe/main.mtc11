@@ -6,20 +6,20 @@
 {\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.5.1}Endpoints publics}{\reset@font\mtcSSfont 33}{subsection.4.5.1}}
 {\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.5.2}Authentification et sessions}{\reset@font\mtcSSfont 33}{subsection.4.5.2}}
 {\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.5.3}Services métier}{\reset@font\mtcSSfont 33}{subsection.4.5.3}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.5.4}Imports CSV}{\reset@font\mtcSSfont 33}{subsection.4.5.4}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.5.4}Imports CSV}{\reset@font\mtcSSfont 34}{subsection.4.5.4}}
 {\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.5.5}Audit et indicateurs}{\reset@font\mtcSSfont 34}{subsection.4.5.5}}
 {\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.6}Réalisation du tableau de bord administrateur}{\reset@font\mtcSfont 34}{section.4.6}}
 {\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.6.1}Pages principales}{\reset@font\mtcSSfont 34}{subsection.4.6.1}}
 {\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.6.2}Gestion des sessions côté administration}{\reset@font\mtcSSfont 34}{subsection.4.6.2}}
 {\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.7}Réalisation application mobile}{\reset@font\mtcSfont 34}{section.4.7}}
 {\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.7.1}Recherche et détail des pharmacies}{\reset@font\mtcSSfont 34}{subsection.4.7.1}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.7.2}Carte et géolocalisation}{\reset@font\mtcSSfont 34}{subsection.4.7.2}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.7.2}Carte et géolocalisation}{\reset@font\mtcSSfont 35}{subsection.4.7.2}}
 {\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.7.3}Calendrier des gardes}{\reset@font\mtcSSfont 35}{subsection.4.7.3}}
 {\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.7.4}Catalogue de médicaments}{\reset@font\mtcSSfont 35}{subsection.4.7.4}}
 {\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.7.5}Paramètres, langues et thème}{\reset@font\mtcSSfont 35}{subsection.4.7.5}}
 {\reset@font\mtcSfont\mtc@string\contentsline{section}{\noexpand \leavevmode \numberline {4.8}Réalisation de l'assistant conversationnel de premiers secours}{\reset@font\mtcSfont 35}{section.4.8}}
 {\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.8.1}Architecture générale}{\reset@font\mtcSSfont 35}{subsection.4.8.1}}
-{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.8.2}Données d'apprentissage et nettoyage}{\reset@font\mtcSSfont 35}{subsection.4.8.2}}
+{\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.8.2}Données d'apprentissage et nettoyage}{\reset@font\mtcSSfont 36}{subsection.4.8.2}}
 {\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.8.3}Entraînement et métriques de performance}{\reset@font\mtcSSfont 36}{subsection.4.8.3}}
 {\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.8.4}API et intégration avec l'application mobile}{\reset@font\mtcSSfont 37}{subsection.4.8.4}}
 {\reset@font\mtcSSfont\mtc@string\contentsline{subsection}{\noexpand \leavevmode \numberline {4.8.5}Tests et validation}{\reset@font\mtcSSfont 37}{subsection.4.8.5}}

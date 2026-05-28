@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '../utils/theme';
 import { AppButton, AppCard, AppInput, AppText } from '../components/design-system';
+import { ChatbotWelcomeIllustration } from '../components/illustrations';
 import {
   askFirstAidAssistant,
   CHATBOT_MIN_QUERY_LENGTH,
@@ -189,6 +190,9 @@ export default function ChatbotScreen() {
     }
   };
 
+  const isInitialState =
+    messages.length === 1 && messages[0].id === 'welcome' && !isSending;
+  const visibleMessages = isInitialState ? [] : messages;
   const submitDisabled = isSending || draft.trim().length < CHATBOT_MIN_QUERY_LENGTH;
   const serviceStatusColor =
     serviceStatus === 'ready'
@@ -264,6 +268,28 @@ export default function ChatbotScreen() {
         contentContainerStyle={{ paddingBottom: 24 }}
         keyboardShouldPersistTaps="handled"
       >
+        {isInitialState ? (
+          <AppCard style={styles.welcomeCard} elevation={2}>
+            <View style={styles.welcomeContent}>
+              <ChatbotWelcomeIllustration size={120} />
+              <AppText variant="headerSmall" align="center" style={{ marginTop: 6 }}>
+                {t('chatbot.welcomeTitle', 'How can I help you today?')}
+              </AppText>
+              <AppText
+                variant="bodySmall"
+                color={colors.textSecondary}
+                align="center"
+                style={{ marginTop: 6, maxWidth: 280 }}
+              >
+                {t(
+                  'chatbot.welcomeSubtitle',
+                  'Pick a quick topic below or describe a first-aid situation in your own words.'
+                )}
+              </AppText>
+            </View>
+          </AppCard>
+        ) : null}
+
         <View style={styles.prompts}>
           {QUICK_PROMPTS.map((prompt) => {
             const promptLabel = t(`chatbot.prompts.${prompt.key}`, prompt.key);
@@ -286,7 +312,7 @@ export default function ChatbotScreen() {
           })}
         </View>
 
-        {messages.map((message) => {
+        {visibleMessages.map((message) => {
           const isUser = message.role === 'user';
           return (
             <AppCard
@@ -417,6 +443,15 @@ const createStyles = (colors, radius, shadows, isRTL) =>
     messages: {
       flex: 1,
       marginTop: 12,
+    },
+    welcomeCard: {
+      marginHorizontal: 16,
+      marginTop: 4,
+      marginBottom: 12,
+    },
+    welcomeContent: {
+      alignItems: 'center',
+      paddingVertical: 8,
     },
     prompts: {
       flexDirection: isRTL ? 'row-reverse' : 'row',

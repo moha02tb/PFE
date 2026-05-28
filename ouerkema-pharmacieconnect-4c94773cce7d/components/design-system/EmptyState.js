@@ -1,18 +1,20 @@
 import React, { useEffect, useRef } from 'react';
-import { AccessibilityInfo, Animated, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Animated, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '../../utils/theme';
 import AppButton from './Button';
+import AppText from './Text';
 
 export default function EmptyState({
   icon = 'search-outline',
+  illustration = null,
   title,
   message,
   actionTitle,
   onAction,
   containerStyle,
 }) {
-  const { colors, radius, textStyles } = useAppTheme();
+  const { colors, radius } = useAppTheme();
   const float = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -59,6 +61,11 @@ export default function EmptyState({
       borderWidth: 1,
       borderColor: colors.border,
     },
+    illustrationWrap: {
+      marginBottom: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     iconWrap: {
       width: 72,
       height: 72,
@@ -70,28 +77,32 @@ export default function EmptyState({
       borderColor: colors.border,
       marginBottom: 18,
     },
-    title: {
-      ...textStyles.headerSmall,
-      color: colors.text,
-      textAlign: 'center',
-      marginBottom: 8,
-    },
-    message: {
-      ...textStyles.bodyMedium,
-      color: colors.textSecondary,
-      textAlign: 'center',
-      marginBottom: onAction ? 18 : 0,
-      maxWidth: 280,
-    },
   });
 
   return (
     <View style={[styles.container, containerStyle]}>
-      <Animated.View style={[styles.iconWrap, iconMotion]}>
-        <Ionicons name={icon} size={28} color={colors.primary} />
-      </Animated.View>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.message}>{message}</Text>
+      {illustration ? (
+        <Animated.View style={[styles.illustrationWrap, iconMotion]}>{illustration}</Animated.View>
+      ) : (
+        <Animated.View style={[styles.iconWrap, iconMotion]}>
+          <Ionicons name={icon} size={28} color={colors.primary} />
+        </Animated.View>
+      )}
+      {title ? (
+        <AppText variant="headerSmall" align="center" style={{ marginBottom: 8 }}>
+          {title}
+        </AppText>
+      ) : null}
+      {message ? (
+        <AppText
+          variant="bodyMedium"
+          color={colors.textSecondary}
+          align="center"
+          style={{ marginBottom: onAction ? 18 : 0, maxWidth: 280 }}
+        >
+          {message}
+        </AppText>
+      ) : null}
       {actionTitle && onAction ? (
         <AppButton title={actionTitle} onPress={onAction} variant="tonal" />
       ) : null}

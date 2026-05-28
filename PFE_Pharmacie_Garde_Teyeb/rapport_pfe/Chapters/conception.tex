@@ -5,41 +5,44 @@
 
 \section{Introduction}
 
-La conception traduit les besoins identifiés en une organisation technique directement exploitable dans
-le projet. Elle précise la répartition des responsabilités entre les composants, la structure des données,
-les mécanismes de sécurité et les choix retenus pour relier le backend, le tableau de bord, l'application
-mobile et l'assistant de premiers secours.
+La conception transforme les besoins identifiés en une organisation technique directement applicable à
+PharmacieConnect. Elle précise la répartition des responsabilités entre l'API backend, le tableau de bord,
+l'application mobile, la base de données et l'assistant de premiers secours. Elle fixe également les règles
+de sécurité, les entités principales et les choix techniques qui permettront de maintenir une donnée fiable
+entre l'import, l'administration et la consultation mobile.
 
 \section{Architecture globale}
 
-PharmacieConnect repose sur une architecture client-serveur organisée autour d'un backend unique.
-L'application mobile et le tableau de bord administrateur ne communiquent pas directement avec la base de
-données : toutes les opérations passent par l'API backend. Ce choix évite que les règles de validation,
-les restrictions régionales ou les contrôles d'accès soient réécrits différemment dans chaque interface.
+PharmacieConnect repose sur une architecture client-serveur organisée autour d'un backend unique. Les deux
+interfaces clientes, mobile et web, ne communiquent pas directement avec la base de données : toutes les
+opérations passent par l'API backend. Ce choix centralise les règles de validation, les restrictions
+régionales, l'audit et les contrôles d'accès, ce qui réduit le risque d'avoir des comportements différents
+entre le tableau de bord et l'application mobile.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.95\textwidth]{plantuml/architecture_globale}
-    \caption{Architecture globale de PharmacieConnect}
+    \caption{Architecture globale de PharmacieConnect\\ \small Source : Auteur}
     \label{fig:architecture-globale}
 \end{figure}
 
-L'application mobile utilise principalement les endpoints publics, les services liés au compte utilisateur
-et l'accès à l'assistant. Le tableau de bord administrateur s'appuie sur des endpoints protégés pour les
-opérations de gestion. Le backend devient ainsi la couche commune entre les interfaces clientes, les
-services spécialisés et la base de données.
+L'application mobile utilise principalement les endpoints publics de consultation, les routes liées au
+compte utilisateur et l'API de l'assistant. Le tableau de bord administrateur s'appuie sur des endpoints
+protégés pour les opérations de gestion : création, modification, suppression, import CSV, consultation des
+indicateurs et audit. Le backend devient ainsi la couche commune qui applique les règles métier avant toute
+lecture ou écriture persistante.
 
 \section{Backend FastAPI}
 
-Le backend s'appuie sur FastAPI pour exposer les endpoints REST et organiser le traitement des requêtes.
-Sa structure sépare les routes HTTP, les services métier, les modèles de données et les schémas de
-validation. Cette séparation correspond aux besoins réels du projet : les imports CSV, les gardes, les
-médicaments, les restrictions régionales et l'audit peuvent évoluer sans modifier directement les écrans
-web ou mobiles.
+Le backend s'appuie sur FastAPI pour exposer les endpoints REST et organiser le traitement des requêtes
+\cite{fastapi}. Sa structure sépare les routes HTTP, les services métier, les modèles de données et les
+schémas de validation. Cette séparation correspond aux besoins réels du projet : les imports CSV, les
+gardes, les médicaments, les restrictions régionales et l'audit peuvent évoluer côté serveur sans imposer
+une réécriture directe des écrans web ou mobiles.
 
 \begin{table}[H]
     \centering
-    \caption{Organisation du backend}
+    \caption{Organisation du backend\\ \small Source : Auteur}
     \begin{tabular}{L{4cm}L{9cm}}
         \toprule
         \textbf{Élément} & \textbf{Rôle} \\
@@ -61,13 +64,15 @@ nécessaires avant l'accès à la base via SQLAlchemy.
 
 \section{Tableau de bord React/Vite}
 
-Côté administration, React et Vite ont été utilisés pour construire une interface web modulaire. Les
-pages, les composants réutilisables, les contextes applicatifs et le client API centralisé y sont séparés
-afin de garder une organisation cohérente côté frontend.
+Côté administration, React et Vite ont été utilisés pour construire une interface web modulaire
+\cite{react,vite}. Les pages, les composants réutilisables, les contextes applicatifs et le client API
+centralisé y sont séparés afin de garder une organisation cohérente côté frontend. Cette organisation
+répond aux opérations fréquentes du tableau de bord : consulter les registres, importer des fichiers,
+corriger les données et suivre les actions sensibles.
 
 \begin{table}[H]
     \centering
-    \caption{Organisation de l'administration web}
+    \caption{Organisation de l'administration web\\ \small Source : Auteur}
     \begin{tabular}{L{4cm}L{9cm}}
         \toprule
         \textbf{Élément} & \textbf{Rôle} \\
@@ -87,13 +92,14 @@ expire.
 
 \section{Application mobile Expo/React Native}
 
-Pour la partie mobile, Expo et React Native offrent une base adaptée aux écrans destinés au citoyen.
-L'organisation de l'application suit les parcours attendus par l'utilisateur final : recherche, carte,
-calendrier de garde, médicaments, authentification et paramètres.
+Pour la partie mobile, Expo et React Native offrent une base adaptée aux écrans destinés au citoyen
+\cite{expo,reactnative}. L'organisation de l'application suit les parcours attendus par l'utilisateur final :
+recherche d'une pharmacie, carte, calendrier de garde, catalogue de médicaments, authentification,
+paramètres et assistant de premiers secours.
 
 \begin{table}[H]
     \centering
-    \caption{Organisation de l'application mobile}
+    \caption{Organisation de l'application mobile\\ \small Source : Auteur}
     \begin{tabular}{L{4cm}L{9cm}}
         \toprule
         \textbf{Élément} & \textbf{Rôle} \\
@@ -113,11 +119,12 @@ logique dans plusieurs parties de l'application.
 
 \section{Modèle de données}
 
-Le modèle de données est défini avec SQLAlchemy. Les entités principales utilisées par le backend sont
-résumées dans le tableau suivant.
+Le modèle de données est défini avec SQLAlchemy \cite{sqlalchemy}. Les entités principales utilisées par le
+backend sont résumées dans le tableau suivant. Elles traduisent les objets manipulés par PharmacieConnect :
+comptes, pharmacies, gardes, médicaments, sessions, tentatives de connexion, recherches et audit.
 
 \begin{longtable}{L{4cm}L{10cm}}
-    \caption{Entités principales du modèle de données}\\
+    \caption{Entités principales du modèle de données\\ \small Source : Auteur}\\
     \toprule
     \textbf{Entité} & \textbf{Description} \\
     \midrule
@@ -140,20 +147,20 @@ résumées dans le tableau suivant.
 
 \section{Diagramme de classes}
 
-Le diagramme de classes doit représenter les entités principales, leurs attributs utiles et les relations
-entre les comptes, les pharmacies, les gardes, les médicaments et les journaux d'audit.
+Le diagramme de classes représente les entités principales, leurs attributs utiles et les relations entre les
+comptes, les pharmacies, les gardes, les médicaments et les journaux d'audit.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.95\textwidth]{plantuml/class_diagram}
-    \caption{Diagramme de classes}
+    \caption{Diagramme de classes\\ \small Source : Auteur}
     \label{fig:class-diagram}
 \end{figure}
 
 Le diagramme de la figure~\ref{fig:class-diagram} synthétise les entités centrales du modèle métier de
 PharmacieConnect et les liens qui les unissent. L'entité \texttt{Administrateur} (caractérisée par
 \texttt{email}, \texttt{password\_hash}, \texttt{role} et un éventuel
-\texttt{allowed\_governorates}) et l'entité \texttt{Utilisateur} (avec \texttt{email},
+\texttt{region\_scope}) et l'entité \texttt{Utilisateur} (avec \texttt{email},
 \texttt{password\_hash}, \texttt{email\_verified} et \texttt{is\_active}) représentent les deux profils
 de comptes manipulés par la plateforme : la gestion côté tableau de bord d'une part, la consultation
 côté mobile d'autre part. L'entité \texttt{Pharmacie} (\texttt{nom}, \texttt{adresse},
@@ -173,33 +180,34 @@ toute action de gestion laisse une trace exploitable côté audit.
 
 \section{Diagrammes de séquence}
 
-Les diagrammes de séquence servent à décrire les échanges entre les interfaces clientes, le backend, les
-services métier et la base de données.
+Les diagrammes de séquence décrivent les échanges entre les interfaces clientes, le backend, les services
+métier et la base de données. Ils montrent notamment où sont effectuées les vérifications de session, les
+contrôles d'accès et les lectures de données.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.95\textwidth]{plantuml/sequence_auth_jwt}
-    \caption{Diagramme de séquence : authentification JWT}
+    \caption{Diagramme de séquence : authentification JWT\\ \small Source : Auteur}
     \label{fig:sequence-auth}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.95\textwidth]{plantuml/sequence_pharmacy_search}
-    \caption{Diagramme de séquence : recherche d'une pharmacie}
+    \caption{Diagramme de séquence : recherche d'une pharmacie\\ \small Source : Auteur}
     \label{fig:sequence-search}
 \end{figure}
 
 \section{Diagramme d'activité}
 
-Le diagramme d'activité prévu détaille le traitement d'un import CSV. Ce scénario est important, car il
-regroupe plusieurs règles sensibles : contrôle du fichier, validation des colonnes, vérification des lignes,
-enregistrement des données valides et journalisation du résultat.
+Le diagramme d'activité détaille le traitement d'un import CSV. Ce scénario est important, car il regroupe
+plusieurs règles sensibles : contrôle du fichier, validation des colonnes, vérification des lignes,
+enregistrement des données valides, rejet des lignes incorrectes et journalisation du résultat.
 
 \begin{figure}[H]
     \centering
     \includegraphics[height=0.85\textheight,keepaspectratio]{plantuml/activity_csv_import}
-    \caption{Diagramme d'activité : import CSV contrôlé}
+    \caption{Diagramme d'activité : import CSV contrôlé\\ \small Source : Auteur}
     \label{fig:activity-import-csv}
 \end{figure}
 
@@ -212,29 +220,31 @@ backend, la base de données et la configuration.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.95\textwidth]{plantuml/component_diagram}
-    \caption{Diagramme de composants}
+    \caption{Diagramme de composants\\ \small Source : Auteur}
     \label{fig:component-diagram}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.95\textwidth]{plantuml/deployment_diagram}
-    \caption{Diagramme de déploiement}
+    \caption{Diagramme de déploiement\\ \small Source : Auteur}
     \label{fig:deployment-diagram}
 \end{figure}
 
 \section{Sécurité}
 \label{sec:securite}
 
-La sécurité est traitée au niveau du backend, car les règles d'accès ne doivent pas dépendre uniquement
-des interfaces clientes. Les mécanismes retenus s'appuient sur les recommandations OWASP pour la
-protection des API~\cite{owasp} et couvrent l'ensemble du cycle de vie d'une requête : authentification,
-autorisation, validation des données, journalisation et configuration du déploiement.
+La sécurité est traitée au niveau du backend, car les règles d'accès ne doivent pas dépendre uniquement des
+interfaces clientes. Les mécanismes retenus s'appuient sur les recommandations OWASP pour la protection des
+API~\cite{owasp} et couvrent l'ensemble du cycle de vie d'une requête : authentification, autorisation,
+validation des données, journalisation et configuration du déploiement. Dans PharmacieConnect, cette
+centralisation protège particulièrement les routes d'administration, les imports CSV, les restrictions
+régionales et les journaux d'audit.
 
 \subsection{Authentification JWT et gestion des sessions}
 
 La gestion des sessions dans PharmacieConnect distingue deux jetons aux durées de vie volontairement
-différentes. À la connexion, le backend émet un jeton d'accès valable 30~minutes, signé avec
+différentes. À la connexion, le backend émet un jeton d'accès valable 15~minutes par défaut, signé avec
 HS256, et un jeton de rafraîchissement valable 7~jours. Le premier accompagne chaque requête
 protégée dans l'en-tête \texttt{Authorization: Bearer} ; sa courte durée limite les conséquences
 d'une interception. Le second est conservé en base dans l'entité \texttt{RefreshToken} et effacé
@@ -248,13 +258,12 @@ l'API contournerait alors les vérifications \cite{jwt}.
 \subsection{Contrôle d'accès basé sur les rôles (\gls{rbac})}
 
 PharmacieConnect organise les accès administratifs selon trois rôles : \texttt{super\_admin},
-\texttt{admin} et \texttt{assistant}. Chaque endpoint protégé évalue le rôle du demandeur avant
-d'exécuter quoi que ce soit. Pour le rôle \texttt{assistant}, un deuxième filtre s'applique :
-l'attribut \texttt{allowed\_governorates} liste les gouvernorats sur lesquels l'assistant est
-habilité à agir. Toute tentative d'opération hors de ce périmètre est rejetée même si le jeton
-d'accès est valide. Cette combinaison rôle\,/\,périmètre répond directement au besoin de
-délégation régionale : plusieurs assistants peuvent coexister sans avoir accès aux données
-des autres délégations.
+\texttt{admin} et \texttt{assistant}. Chaque endpoint protégé évalue le rôle du demandeur avant d'exécuter
+l'opération. Pour le rôle \texttt{assistant}, un deuxième filtre s'applique : l'attribut
+\texttt{region\_scope} limite les actions au périmètre régional autorisé. Toute tentative d'opération hors
+de ce périmètre est rejetée même si le jeton d'accès est valide. Cette combinaison rôle\,/\,périmètre répond
+directement au besoin de délégation régionale : plusieurs assistants peuvent coexister sans modifier les
+données qui ne relèvent pas de leur zone.
 
 \subsection{Hachage des mots de passe}
 
@@ -264,7 +273,7 @@ deux comptes utilisant le même mot de passe donnent des empreintes différentes
 toute comparaison directe entre entrées. Le facteur de coût est réglé pour que la vérification
 lors de la connexion reste imperceptible pour l'utilisateur, tout en rendant une attaque par
 volume prohibitivement longue. La comparaison à la connexion s'opère uniquement sur les empreintes
-stockées ; le mot de passe en clair n'est jamais conservé en base.
+stockées ; le mot de passe en clair n'est jamais conservé en base \cite{passlib_bcrypt}.
 
 \subsection{Validation des entrées avec Pydantic}
 
@@ -273,28 +282,24 @@ intégralement. Pour PharmacieConnect, cela concerne notamment les formats d'ema
 les plages de coordonnées des pharmacies (latitude bornée entre $-90$ et $90$, longitude entre
 $-180$ et $180$), les dates des plannings de garde, les codes PCT des médicaments et la taille
 maximale des fichiers CSV importés. Regrouper ces contrôles dans les schémas évite de les
-répliquer dans chaque route et intercepte les données malformées avant tout accès à la base.
+répliquer dans chaque route et intercepte les données malformées avant tout accès à la base \cite{pydantic}.
 
 \subsection{Politique \gls{cors} et hôtes autorisés}
 
-Le backend déclare explicitement les origines autorisées à le solliciter via la variable
-d'environnement \texttt{FRONTEND\_URL}. Toute requête provenant d'une origine non déclarée est
-rejetée par le middleware CORS avant même d'atteindre une route. En complément,
-\texttt{TrustedHostMiddleware} inspecte l'en-tête d'hôte de chaque requête et bloque celles
-dont l'hôte n'est pas inscrit dans \texttt{TRUSTED\_HOSTS}. Ces deux listes sont externalisées
-dans la configuration d'environnement : aucune valeur d'origine ou d'hôte n'est codée dans
-le code source, ce qui facilite l'adaptation lors d'un déploiement en production.
+Le backend déclare explicitement les origines autorisées via les variables d'environnement de configuration
+CORS. Toute origine non prévue par la configuration ne doit pas accéder aux routes depuis un navigateur.
+En complément, \texttt{TrustedHostMiddleware} inspecte l'en-tête d'hôte de chaque requête et bloque celles
+dont l'hôte n'est pas inscrit dans \texttt{TRUSTED\_HOSTS}. Ces paramètres sont externalisés afin d'adapter
+la configuration entre le développement local et un déploiement en production.
 
 \subsection{Traçabilité et journalisation des actions}
 
-Deux mécanismes de traçabilité coexistent dans PharmacieConnect. La table \texttt{LoginAttempt}
-enregistre chaque tentative de connexion — succès ou échec — avec l'adresse IP source et
-l'horodatage, ce qui permet de repérer une activité suspecte sur un compte donné. En parallèle,
-le service \texttt{AuditService} journalise les opérations administratives significatives :
-création, modification, suppression d'entités, imports CSV et changements de droits. Chaque
-entrée d'audit identifie l'acteur, décrit l'opération, référence la cible et horodate l'événement.
-Cette granularité permet de reconstituer précisément l'historique des modifications apportées
-aux données de la plateforme.
+Deux mécanismes de traçabilité coexistent dans PharmacieConnect. La table \texttt{LoginAttempt} enregistre
+les tentatives de connexion avec leur statut, l'adresse IP source et l'horodatage. En parallèle, le service
+\texttt{AuditService} journalise les opérations administratives significatives : création, modification,
+suppression d'entités, imports CSV et changements de droits. Chaque entrée d'audit identifie l'acteur,
+décrit l'opération, référence la cible et indique le résultat. Cette granularité permet de reconstituer
+l'historique des modifications apportées aux données de la plateforme.
 
 \subsection{Sécurité du déploiement}
 
@@ -313,7 +318,7 @@ Pour un déploiement en production, les mesures complémentaires recommandées s
 \section{Justification des choix techniques}
 
 \begin{longtable}{L{4cm}L{10cm}}
-    \caption{Justification des choix techniques}\\
+    \caption{Justification des choix techniques\\ \small Source : Auteur}\\
     \toprule
     \textbf{Choix} & \textbf{Justification} \\
     \midrule
@@ -322,20 +327,20 @@ Pour un déploiement en production, les mesures complémentaires recommandées s
     \textbf{Choix} & \textbf{Justification} \\
     \midrule
     \endhead
-    FastAPI & Framework Python adapté aux API REST, avec validation Pydantic et documentation OpenAPI automatique \cite{fastapi}. \\
-    React et Vite & Ensemble adapté à la création d'une interface d'administration rapide, modulaire et maintenable \cite{react,vite}. \\
-    Expo et React Native & Permettent de développer une application mobile avec une base de code JavaScript et un accès simplifié aux fonctionnalités natives \cite{expo,reactnative}. \\
-    SQLAlchemy & ORM permettant de structurer l'accès aux données tout en conservant un contrôle sur les modèles et les requêtes \cite{sqlalchemy}. \\
-    SQLite et PostgreSQL & SQLite facilite le développement local, tandis que PostgreSQL constitue une option plus adaptée à un environnement configuré \cite{postgresql}. \\
-    JWT & Mécanisme adapté à la sécurisation des API et à la séparation entre jeton d'accès et jeton de rafraîchissement. \\
-    CSV & Format simple pour importer des volumes de données de pharmacies, gardes et médicaments. \\
+    FastAPI & Utilisé pour exposer les endpoints publics et protégés, valider les requêtes et produire une documentation API exploitable pendant les tests \cite{fastapi}. \\
+    React et Vite & Utilisés pour structurer le tableau de bord administrateur, avec des pages séparées pour les pharmacies, les gardes, les médicaments, l'audit et les paramètres \cite{react,vite}. \\
+    Expo et React Native & Utilisés pour construire l'application mobile avec les écrans de recherche, carte, calendrier, médicaments, profil et assistant \cite{expo,reactnative}. \\
+    SQLAlchemy & Utilisé pour représenter les entités métier et isoler l'accès aux tables dans les services backend \cite{sqlalchemy}. \\
+    SQLite et PostgreSQL & SQLite facilite la validation locale, tandis que PostgreSQL reste plus adapté à un déploiement avec connexions concurrentes \cite{postgresql}. \\
+    JWT & Utilisé pour séparer un jeton d'accès court et un jeton de rafraîchissement, afin de protéger les routes administratives et les comptes utilisateurs \cite{jwt}. \\
+    CSV & Utilisé comme format d'import pour les pharmacies, les gardes et les médicaments, avec validation des colonnes et retour des erreurs. \\
     \bottomrule
 \end{longtable}
 
 \section{Conclusion}
 
-La conception retenue sépare le backend, l'administration web, l'application mobile, l'assistant et la
-base de données tout en les reliant par des contrats d'API explicites. Cette organisation facilite les
-tests et rend les évolutions futures plus maîtrisables : ajout d'une règle de garde, modification d'un
-import ou enrichissement de l'assistant peuvent être traités dans le composant concerné. Le chapitre
-suivant passe de cette conception à la réalisation technique et à la validation de la solution.
+La conception retenue sépare le backend, l'administration web, l'application mobile, l'assistant et la base
+de données tout en les reliant par des contrats d'API explicites. Cette organisation facilite les tests et
+rend les évolutions futures plus maîtrisables : ajout d'une règle de garde, modification d'un import,
+évolution d'un rôle ou enrichissement de l'assistant peuvent être traités dans le composant concerné. Le
+chapitre suivant passe de cette conception à la réalisation technique et à la validation de la solution.

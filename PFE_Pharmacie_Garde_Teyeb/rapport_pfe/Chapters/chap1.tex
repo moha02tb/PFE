@@ -13,28 +13,29 @@ manière dont le projet a été organisé.
 
 \section{Présentation du domaine pharmaceutique}
 
-En Tunisie, le réseau pharmaceutique doit assurer une permanence du service au-delà des horaires
-d'ouverture habituels. Des pharmacies sont désignées pour répondre aux besoins des patients la nuit,
-pendant les week-ends et lors des jours fériés. Ce fonctionnement repose sur des plannings rotatifs,
-souvent organisés par zone ou par gouvernorat, et impose une mise à jour régulière des informations
-publiées.
+Le domaine pharmaceutique ne se limite pas à la vente de médicaments : il participe aussi à la continuité
+des soins, notamment lorsque les pharmacies de garde assurent une disponibilité en dehors des horaires
+ordinaires \cite{cnopt_tableau_garde,cnopt_cropt_gardes}. Dans le cadre de PharmacieConnect, cette réalité métier se traduit par des
+données précises à gérer : pharmacie, adresse, téléphone, gouvernorat, position GPS, date de garde, horaire
+et type de garde.
 
-Pour que ce dispositif soit utile, les informations associées — adresse exacte, numéro de
-téléphone, plages horaires, type de garde — doivent être accessibles et à jour. Une donnée
-erronée ou obsolète peut directement empêcher un citoyen d'obtenir un médicament ou un
-conseil urgent. La maintenance des données de garde est donc une contrainte opérationnelle
-réelle, pas seulement un aspect secondaire du système.
+La valeur de ces données dépend directement de leur actualité. Une pharmacie mal localisée, une date de
+garde incorrecte ou un numéro de téléphone obsolète peut empêcher l'utilisateur de trouver rapidement une
+solution. C'est pourquoi le projet traite la maintenance des données comme une exigence centrale : les
+imports CSV sont validés, les comptes administratifs sont contrôlés par rôle et les actions sensibles sont
+enregistrées dans les journaux d'audit.
 
 \section{Contexte général}
 
-PharmacieConnect regroupe les informations liées aux pharmacies, aux plannings de garde, aux médicaments
-et aux parcours de premiers secours. La plateforme s'adresse principalement à deux profils. Le citoyen
-utilise l'application mobile pour chercher une pharmacie, consulter les gardes, accéder au catalogue de
-médicaments ou interroger l'assistant. L'administrateur utilise le tableau de bord web pour gérer, vérifier
-et mettre à jour les données diffusées.
+PharmacieConnect regroupe les informations liées aux pharmacies, aux plannings de garde, aux médicaments et
+aux premiers secours. La plateforme distingue deux usages complémentaires. Le citoyen utilise l'application
+mobile pour chercher une pharmacie, consulter les gardes, accéder au catalogue de médicaments ou poser une
+question à l'assistant. L'administrateur et les utilisateurs autorisés utilisent le tableau de bord web pour
+importer, corriger, contrôler et suivre les données diffusées.
 
-Le backend constitue la couche centrale de la plateforme. Il regroupe la validation, la sécurité et les
-règles métier, tout en évitant aux interfaces clientes d'accéder directement à la base de données.
+Le backend constitue la couche commune entre ces interfaces. Il expose les endpoints publics nécessaires à
+la consultation mobile et les endpoints protégés utilisés par l'administration. Cette séparation évite que
+les règles de validation, de rôle et de journalisation soient dupliquées dans les clients.
 
 \section{Cadre du stage externe et organisme d'accueil}
 
@@ -51,7 +52,7 @@ d'administration pour la mise à jour des données.
 
 \begin{table}[H]
     \centering
-    \caption{Cadre institutionnel du projet}
+    \caption{Cadre institutionnel du projet\\ \small Source : Auteur}
     \begin{tabular}{L{4.5cm}L{8.5cm}}
         \toprule
         \textbf{Élément} & \textbf{Description} \\
@@ -91,68 +92,74 @@ Les défis retenus pour le projet sont les suivants :
 
 \section{Étude de l'existant}
 
-Les informations sur les pharmacies de garde peuvent être consultées à travers plusieurs supports. Les
-listes statiques, publiées sous forme de page web, d'image ou de document, restent simples à transmettre
-mais ne répondent pas toujours aux usages mobiles. Dès qu'il faut filtrer par ville, vérifier une date,
-localiser l'adresse ou corriger une erreur, leur format devient une limite.
+L'étude de l'existant a été orientée par les besoins du projet. Il ne s'agit pas seulement de vérifier si
+une solution affiche une pharmacie, mais d'évaluer sa capacité à répondre à plusieurs critères : disponibilité
+des gardes, usage mobile, géolocalisation, fraîcheur des données, workflow de mise à jour, administration,
+authentification, import de données, auditabilité et couverture tunisienne.
 
-La recherche manuelle, par appels téléphoniques, réseaux sociaux ou sources locales, peut parfois donner
-une réponse rapide. Elle reste toutefois fragile : l'information peut être ancienne, incomplète ou
-diffusée sans indication claire de date, de zone et d'horaire.
+Les listes statiques diffusées sous forme de page web, d'image ou de document restent faciles à partager,
+mais elles deviennent limitées lorsqu'un utilisateur veut filtrer par gouvernorat, choisir une date précise
+ou ouvrir l'adresse sur une carte. Elles ne renseignent pas toujours le processus de mise à jour ni l'origine
+de la correction lorsqu'une donnée change \cite{cnopt_tableau_garde,medtn}.
 
-Les applications ou sites spécialisés offrent une expérience plus adaptée, surtout lorsqu'ils proposent la
-géolocalisation ou la recherche par date. Leur efficacité dépend néanmoins de la qualité de la base de
-données, de la fréquence des mises à jour, de la traçabilité des corrections et de la capacité à déléguer
-l'administration sans ouvrir tout le système à tous les intervenants.
+Les sites spécialisés et les applications mobiles offrent une expérience plus adaptée à la consultation.
+Cependant, leur efficacité dépend de la qualité de la base de données, de la fréquence de mise à jour et de
+la présence d'un espace d'administration capable de contrôler les imports, les droits et les corrections.
+Cette distinction est importante pour PharmacieConnect, car le projet vise à couvrir à la fois la
+consultation citoyenne et la gestion opérationnelle des données.
 
 \section{Analyse du marché et solutions existantes}
 
-Pour mieux situer PharmacieConnect, plusieurs familles de solutions ont été comparées. Les sources
-institutionnelles, comme le Conseil National de l'Ordre des Pharmaciens de Tunisie, constituent une
-référence pour les informations professionnelles et réglementaires \cite{cnopt}. Des annuaires médicaux
-comme Med.tn publient aussi des pages de pharmacies de garde, avec des informations pratiques et des
-coordonnées \cite{medtn}. Les solutions cartographiques comme Google Maps ou OpenStreetMap facilitent la
-localisation d'une pharmacie, mais elles ne couvrent pas toujours le planning de garde ni les workflows
-d'administration métier \cite{googlemaps,openstreetmap}. Enfin, l'application Apothicare, publiée par le
-Conseil national de l'ordre des pharmaciens de Tunisie, montre l'intérêt d'un accès mobile aux pharmacies
-ouvertes et de garde \cite{apothicare}.
+Pour situer PharmacieConnect, plusieurs familles de solutions ont été comparées. Le Conseil National de
+l'Ordre des Pharmaciens de Tunisie constitue une source institutionnelle liée à l'organisation de la
+profession \cite{cnopt}. Des annuaires médicaux comme Med.tn publient des informations pratiques sur les
+pharmacies de garde \cite{medtn}. Les solutions cartographiques, telles que Google Maps et OpenStreetMap,
+facilitent la localisation d'une pharmacie, mais elles ne constituent pas un outil métier de planification
+des gardes ni de validation des imports \cite{googlemaps,openstreetmap}. Enfin, l'application Apothicare,
+associée au Conseil national de l'ordre des pharmaciens de Tunisie, illustre l'intérêt d'un accès mobile aux
+pharmacies ouvertes ou de garde \cite{apothicare}.
+
+La comparaison suivante reste fonctionnelle : elle évalue les capacités observables ou annoncées par les
+solutions citées. Lorsque l'information n'est pas confirmée par une source publique, la mention doit être
+vérifiée avant la version finale \cite{cnopt,medtn,googlemaps,openstreetmap,apothicare}.
 
 \begin{table}[H]
     \centering
-    \caption{Comparaison fonctionnelle des solutions existantes}
+    \caption{Comparaison fonctionnelle des solutions existantes\\ \small Source : Auteur, à partir de \cite{cnopt,medtn,googlemaps,openstreetmap,apothicare}}
     \label{tab:comparaison-solutions}
-    \small
+    \scriptsize
     \begin{tabular}{L{2.6cm}C{1.1cm}C{1.3cm}C{1.5cm}C{1.6cm}C{1.4cm}C{1.7cm}}
         \toprule
-        \textbf{Solution} & \textbf{API REST} & \textbf{App mobile native} & \textbf{Gestion planning} & \textbf{Authentification} & \textbf{Import données} & \textbf{Couverture Tunisie} \\
+        \textbf{Solution} & \textbf{API REST} & \textbf{App mobile} & \textbf{Gestion planning} & \textbf{Auth.} & \textbf{Import données} & \textbf{Couverture} \\
         \midrule
         Sources officielles (CNOPT) & Non & Non & Partiel & Non & Non & Oui \\
         Annuaires médicaux (Med.tn) & Non & Non & Partiel & Non & Non & Oui \\
         Cartographie (Google Maps / OSM) & Oui & Oui & Non & Non & Non & Partiel \\
         Apps mobiles (Apothicare) & Non & Oui & Oui & Partiel & Non & Oui \\
         Listes statiques & Non & Non & Non & Non & Non & Partiel \\
-        \textbf{PharmacieConnect} & \textbf{Oui} & \textbf{Oui} & \textbf{Oui} & \textbf{Oui} & \textbf{Oui} & \textbf{Oui} \\
+        \shortstack[l]{\textbf{Pharmacie}\\\textbf{Connect}} & \textbf{Oui} & \textbf{Oui} & \textbf{Oui} & \textbf{Oui} & \textbf{Oui} & \textbf{Oui} \\
         \bottomrule
     \end{tabular}
 \end{table}
 
 \section{Critique de l'existant}
 
-L'étude de l'existant montre que la difficulté ne se limite pas à l'affichage des données. Les informations
-peuvent être dispersées, présentées sous des formats différents ou mises à jour de manière irrégulière.
-Pour un utilisateur mobile, cette situation rend la recherche moins fluide, surtout lorsqu'il souhaite
-filtrer par gouvernorat, par date ou par proximité. Pour l'administrateur, elle crée aussi un problème de
-contrôle : il faut savoir qui a modifié quoi, quand, et avec quelles données d'entrée.
+L'étude de l'existant montre que le principal risque ne concerne pas uniquement l'affichage des pharmacies.
+Il concerne aussi la maîtrise de la donnée. Une solution peut permettre la consultation, mais rester limitée
+si elle ne précise pas comment les plannings sont importés, corrigés, validés et tracés. Pour un utilisateur
+mobile, cette limite se traduit par une recherche moins fiable. Pour l'administrateur, elle se traduit par
+une difficulté à savoir qui a modifié une donnée, quand et à partir de quelle source.
 
-La même difficulté apparaît lorsque le volume de données augmente. Une simple saisie manuelle ne suffit
-plus si plusieurs assistants régionaux interviennent, si les fichiers importés contiennent des doublons ou
-si certaines coordonnées géographiques sont absentes. Sans import contrôlé, validation, gestion des rôles
-et journalisation, la base peut devenir incohérente sans que l'origine du problème soit identifiable.
+Cette difficulté augmente avec le volume de données et le nombre d'intervenants. Une saisie manuelle devient
+insuffisante lorsque plusieurs assistants régionaux doivent gérer des pharmacies, des gardes et des fichiers
+CSV. Sans validation des colonnes, contrôle des doublons, restriction des rôles et journalisation, la base
+peut devenir incohérente sans que l'origine de l'erreur soit identifiable.
 
 \section{Solution proposée : PharmacieConnect}
 
-\textbf{PharmacieConnect} est structurée autour de trois composants principaux, auxquels s'ajoute un
-assistant conversationnel de premiers secours intégré au parcours mobile :
+\textbf{PharmacieConnect} est proposée comme une réponse intégrée aux limites observées. La solution est
+structurée autour de trois composants principaux, auxquels s'ajoute un assistant conversationnel de premiers
+secours intégré au parcours mobile :
 
 \begin{itemize}
     \item une API backend FastAPI qui centralise les données, gère l'authentification, applique les règles
@@ -165,12 +172,12 @@ assistant conversationnel de premiers secours intégré au parcours mobile :
     l'assistant de premiers secours.
 \end{itemize}
 
-Cette organisation répond directement aux limites observées dans les solutions existantes, notamment la
-dispersion des informations, la difficulté de mise à jour et l'absence d'un workflow administratif complet.
-Les données sont centralisées, les accès sont contrôlés et les interfaces sont adaptées aux deux usages
-principaux : la consultation mobile et l'administration. L'assistant ajoute un usage complémentaire :
-orienter l'utilisateur vers des gestes de premiers secours prudents, sans remplacer un professionnel de
-santé ni les services d'urgence.
+Cette organisation répond aux limites relevées dans l'existant : dispersion des informations, difficulté de
+mise à jour, absence de traçabilité et manque de séparation entre consultation publique et gestion
+administrative. Les données sont centralisées dans le backend, les accès sont contrôlés selon les rôles et
+les interfaces sont adaptées aux deux usages principaux : la consultation mobile et l'administration. L'assistant
+ajoute un usage complémentaire en orientant l'utilisateur vers des réponses prudentes de premiers secours,
+sans remplacer un professionnel de santé ni les services d'urgence.
 
 \section{Objectifs}
 
@@ -188,15 +195,14 @@ Les objectifs fonctionnels et techniques du projet sont :
 
 \section{Méthodologie de développement}
 
-Le projet a adopté une organisation par sprints \cite{scrumguide} adaptée au contexte d'un PFE :
-conception, développement et tests ont relevé de l'étudiant, tandis que les encadrants ont
-validé les avancements et orienté les arbitrages à chaque fin de cycle. Aucun module n'a été
-intégré sans avoir été vérifié au préalable, ce qui a limité l'accumulation d'anomalies entre
-les composants.
+Le projet a adopté une organisation par sprints inspirée de Scrum \cite{scrumguide}, adaptée au contexte
+d'un PFE. Chaque sprint a été associé à un objectif concret et à des livrables vérifiables. Les arbitrages
+ont porté sur les modules réellement développés : contrats d'API, imports CSV, authentification, gestion des
+rôles, pages d'administration, écrans mobiles et tests de validation.
 
 \begin{table}[H]
     \centering
-    \caption{Organisation des sprints de réalisation}
+    \caption{Organisation des sprints de réalisation\\ \small Source : Auteur}
     \label{tab:sprints-scrum}
     \begin{tabular}{L{2.6cm}L{5.1cm}L{5.3cm}}
         \toprule
@@ -213,23 +219,24 @@ les composants.
 \end{table}
 
 Cette méthode a limité les risques liés à une intégration tardive. Les modules sensibles, notamment
-l'authentification, les imports CSV, les restrictions régionales et les journaux d'audit, ont été vérifiés
-progressivement par des tests automatisés ou des scénarios fonctionnels.
+l'authentification, les imports CSV, les restrictions régionales, les journaux d'audit et la recherche mobile,
+ont été vérifiés progressivement par des tests automatisés ou par des scénarios fonctionnels.
 
 \section{Outils de gestion de projet}
 \label{sec:outils-gestion}
 
-La conduite du projet s'est appuyée sur la suite Atlassian, hébergée sur un compte cloud, afin de
-structurer la planification, le suivi des tâches et la gestion du code source. Deux outils ont été
-utilisés conjointement : \textbf{Jira} pour le pilotage des sprints et le suivi des tickets,
-\textbf{Bitbucket} pour le versionnement du code et la revue des contributions. Leur intégration native
-a assuré une traçabilité complète entre les exigences fonctionnelles et le code effectivement livré.
+La conduite du projet s'est appuyée sur des outils de suivi et de versionnement afin de relier les besoins,
+les tâches et le code livré. \textbf{Jira} a été utilisé pour organiser les tickets, les sprints et les
+anomalies \cite{atlassian_jira_sprints}. \textbf{Bitbucket} a été utilisé pour héberger le dépôt Git, suivre les
+branches et préparer les fusions de code \cite{atlassian_bitbucket_guides}. Cette organisation a fourni une traçabilité
+entre les fonctionnalités prévues et les modules effectivement réalisés.
 
 \subsection{Jira pour la planification et le suivi}
 
-Jira a été utilisé pour la planification des sprints et le suivi des tâches selon la méthodologie Scrum.
-Chaque sprint défini dans le tableau~\ref{tab:sprints-scrum} a été créé comme un sprint Jira, décomposé
-en \emph{user stories} et sous-tâches. Les éléments suivants ont structuré le suivi :
+Jira a été utilisé pour la planification des sprints et le suivi des tâches. Chaque sprint défini dans le
+tableau~\ref{tab:sprints-scrum} a été décliné en tickets, puis en sous-tâches lorsque le module le
+nécessitait. Les tickets ont notamment couvert les imports CSV, les pages d'administration, les restrictions
+régionales, les tests et les corrections d'interface.
 
 \begin{itemize}
     \item un tableau Kanban/Scrum organisé en quatre colonnes : \emph{À faire}, \emph{En cours},
@@ -242,7 +249,8 @@ en \emph{user stories} et sous-tâches. Les éléments suivants ont structuré l
 
 \subsection{Bitbucket pour le versionnement du code}
 
-Bitbucket a hébergé le dépôt Git du projet. L'organisation du dépôt a suivi le modèle Gitflow :
+Bitbucket a hébergé le dépôt Git du projet. L'organisation du dépôt a suivi une logique inspirée de Gitflow
+\cite{atlassian_gitflow} :
 
 \begin{itemize}
     \item branche \texttt{main} pour les versions stables ;
@@ -260,7 +268,7 @@ a garanti une traçabilité de bout en bout. Le dépôt monorepo regroupait quat
 
 \begin{table}[H]
     \centering
-    \caption{Outils de gestion de projet utilisés}
+    \caption{Outils de gestion de projet utilisés\\ \small Source : Auteur}
     \label{tab:outils-gestion}
     \begin{tabular}{L{2.4cm}L{4.6cm}L{6.0cm}}
         \toprule
@@ -274,11 +282,10 @@ a garanti une traçabilité de bout en bout. Le dépôt monorepo regroupait quat
 
 \subsection{Intégration Jira--Bitbucket}
 
-L'intégration native entre Jira et Bitbucket a permis la mise à jour automatique du statut des tickets
-lors d'événements de versionnement (création de branche, ouverture de \emph{pull request}, fusion vers
-\texttt{develop}). Cette automatisation a fourni une traçabilité complète depuis l'expression d'un
-besoin (ticket Jira) jusqu'au code déployé (\emph{commit} fusionné), tout en réduisant les opérations
-manuelles de mise à jour de l'état des tâches.
+L'intégration entre Jira et Bitbucket a permis de relier les tickets aux branches, aux commits et aux
+\emph{pull requests} \cite{atlassian_jira_bitbucket}. Dans le cadre du projet, cette liaison a facilité le suivi entre
+une exigence fonctionnelle, par exemple l'import des gardes ou la consultation des audit logs, et les
+modifications de code correspondantes.
 
 \section{Conclusion}
 

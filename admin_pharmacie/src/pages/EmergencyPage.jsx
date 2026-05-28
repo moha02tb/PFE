@@ -5,14 +5,18 @@ import {
   ArrowDownToLine,
   Bell,
   Bot,
+  BrainCircuit,
   CheckCircle2,
   Clock3,
   Database,
   FileSearch,
+  Gauge,
   HardDrive,
   Info,
+  Layers,
   ListChecks,
   MapPinned,
+  MessageSquare,
   RefreshCw,
   Server,
   Smartphone,
@@ -23,7 +27,7 @@ import {
 import AdminLineChart from '../components/charts/AdminLineChart';
 import AdminBarChart from '../components/charts/AdminBarChart';
 import AdminDoughnutChart from '../components/charts/AdminDoughnutChart';
-import { Badge, Button, EmptyState, SectionHeader } from '../components/ui';
+import { Badge, Button, EmptyState, Input, SectionHeader, Skeleton, Tabs } from '../components/ui';
 import api from '../lib/api';
 
 const statusConfig = {
@@ -66,10 +70,14 @@ const iconMap = {
   AlertTriangle,
   Bell,
   Bot,
+  BrainCircuit,
   CheckCircle2,
   Clock3,
   Database,
+  Gauge,
+  Layers,
   MapPinned,
+  MessageSquare,
   Server,
   Smartphone,
   Timer,
@@ -278,6 +286,44 @@ const fallbackHealthData = {
     ['2026-05-20 13:42:03', 'Info', 'Database', 'Connection pool recycled successfully.'],
   ],
   charts: fallbackCharts,
+  chatbot: {
+    status: 'warning',
+    url: 'http://localhost:8001',
+    ready: true,
+    model: 'paraphrase-multilingual-mpnet-base-v2',
+    collection: 'firstaid_chunks',
+    chunks: 4128,
+    healthLatencyMs: 42,
+    readyLatencyMs: 68,
+    answerLatencyMs: 412,
+    answerConfidence: 0.62,
+    answerMode: 'normal',
+    lastChecked: '14:32',
+    lastError: null,
+    metrics: [
+      ['Service status', 'Warning', 'warning'],
+      ['Ready', 'Yes', 'healthy'],
+      ['RAG model', 'paraphrase-multilingual-mpnet-base-v2', 'info'],
+      ['Collection', 'firstaid_chunks', 'info'],
+      ['Indexed chunks', '4,128', 'info'],
+      ['Health probe latency', '42 ms', 'healthy'],
+      ['Ready probe latency', '68 ms', 'healthy'],
+      ['Answer probe latency', '412 ms', 'warning'],
+      ['Probe confidence', '62%', 'healthy'],
+    ],
+    endpoints: [
+      ['GET', '/health', 200, '42 ms', 'healthy', '14:32'],
+      ['GET', '/ready', 200, '68 ms', 'healthy', '14:32'],
+      ['POST', '/answer', 200, '412 ms', 'warning', '14:32'],
+    ],
+    kpi: {
+      label: 'Chatbot Latency',
+      value: '412 ms',
+      helper: '4,128 chunks indexed',
+      icon: 'Bot',
+      status: 'warning',
+    },
+  },
 };
 
 const normalizeChartData = (payloadCharts = {}) => ({
@@ -286,6 +332,29 @@ const normalizeChartData = (payloadCharts = {}) => ({
   requestVolume: Array.isArray(payloadCharts.requestVolume) ? payloadCharts.requestVolume : fallbackCharts.requestVolume,
   endpointLatency: Array.isArray(payloadCharts.endpointLatency) ? payloadCharts.endpointLatency : fallbackCharts.endpointLatency,
 });
+
+const normalizeChatbotData = (payload) => {
+  if (!payload || typeof payload !== 'object') return fallbackHealthData.chatbot;
+  const fb = fallbackHealthData.chatbot;
+  return {
+    status: payload.status || fb.status,
+    url: payload.url || fb.url,
+    ready: typeof payload.ready === 'boolean' ? payload.ready : fb.ready,
+    model: payload.model ?? fb.model,
+    collection: payload.collection ?? fb.collection,
+    chunks: typeof payload.chunks === 'number' ? payload.chunks : fb.chunks,
+    healthLatencyMs: payload.healthLatencyMs ?? null,
+    readyLatencyMs: payload.readyLatencyMs ?? null,
+    answerLatencyMs: payload.answerLatencyMs ?? null,
+    answerConfidence: typeof payload.answerConfidence === 'number' ? payload.answerConfidence : null,
+    answerMode: payload.answerMode ?? null,
+    lastChecked: payload.lastChecked || fb.lastChecked,
+    lastError: payload.lastError ?? null,
+    metrics: Array.isArray(payload.metrics) && payload.metrics.length ? payload.metrics : fb.metrics,
+    endpoints: Array.isArray(payload.endpoints) && payload.endpoints.length ? payload.endpoints : fb.endpoints,
+    kpi: payload.kpi || fb.kpi,
+  };
+};
 
 const normalizeHealthData = (payload = {}) => ({
   kpis: Array.isArray(payload.kpis) && payload.kpis.length ? payload.kpis : fallbackHealthData.kpis,
@@ -302,6 +371,7 @@ const normalizeHealthData = (payload = {}) => ({
   jobs: Array.isArray(payload.jobs) && payload.jobs.length ? payload.jobs : fallbackHealthData.jobs,
   logs: Array.isArray(payload.logs) && payload.logs.length ? payload.logs : fallbackHealthData.logs,
   charts: normalizeChartData(payload.charts),
+  chatbot: normalizeChatbotData(payload.chatbot),
 });
 
 const getStatus = (status) => statusConfig[status] || statusConfig.info;
@@ -412,6 +482,114 @@ const SystemPulse = ({ status, lastRefresh, score }) => {
   );
 };
 
+const TAB_ITEMS = [
+  { value: 'overview', label: 'Overview' },
+  { value: 'services', label: 'Services & Endpoints' },
+  { value: 'chatbot', label: 'Chatbot' },
+  { value: 'data', label: 'Database & Imports' },
+  { value: 'jobs', label: 'Jobs & Logs' },
+];
+
+const bannerVariants = {
+  loading: {
+    icon: RefreshCw,
+    iconSpin: true,
+    title: 'Refreshing live data...',
+    classes: 'border-blue-500/20 bg-blue-500/5 text-blue-700 dark:text-blue-200',
+  },
+  fallback: {
+    icon: AlertTriangle,
+    title: 'Showing demo fallback data',
+    classes: 'border-amber-500/20 bg-amber-500/5 text-amber-700 dark:text-amber-200',
+  },
+  error: {
+    icon: XCircle,
+    title: 'Latest refresh failed',
+    classes: 'border-red-500/20 bg-red-500/5 text-red-700 dark:text-red-200',
+  },
+};
+
+const StatusBanner = ({ variant, message, onDismiss }) => {
+  const config = bannerVariants[variant];
+  if (!config) return null;
+  const Icon = config.icon;
+
+  return (
+    <div className={`flex items-start gap-3 rounded-[10px] border p-4 text-sm shadow-soft ${config.classes}`} role="status">
+      <Icon className={`mt-0.5 h-5 w-5 flex-shrink-0 ${config.iconSpin ? 'animate-spin' : ''}`} />
+      <div className="min-w-0 flex-1">
+        <p className="font-bold">{config.title}</p>
+        {message ? <p className="mt-1 leading-6 opacity-90">{message}</p> : null}
+      </div>
+      {onDismiss ? (
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="text-xs font-semibold underline-offset-2 hover:underline"
+          aria-label="Dismiss"
+        >
+          Dismiss
+        </button>
+      ) : null}
+    </div>
+  );
+};
+
+const LiveChip = ({ refreshing, secondsUntilNext, paused, onToggle }) => (
+  <div className="inline-flex items-center gap-2 rounded-full border border-border bg-surface-elevated/85 px-3 py-1.5 text-xs shadow-soft">
+    <span className="relative flex h-2 w-2">
+      <span className={`absolute inline-flex h-full w-full rounded-full ${paused ? 'bg-muted-foreground/50' : 'bg-emerald-500'} ${paused ? '' : 'opacity-60 animate-ping'}`} />
+      <span className={`relative inline-flex h-2 w-2 rounded-full ${paused ? 'bg-muted-foreground/60' : 'bg-emerald-500'}`} />
+    </span>
+    <span className="font-semibold text-foreground">
+      {paused ? 'Auto-refresh paused' : refreshing ? 'Updating...' : `Live · next in ${secondsUntilNext}s`}
+    </span>
+    <button
+      type="button"
+      onClick={onToggle}
+      className="text-muted-foreground transition-colors hover:text-foreground"
+      aria-label={paused ? 'Resume auto-refresh' : 'Pause auto-refresh'}
+    >
+      {paused ? 'Resume' : 'Pause'}
+    </button>
+  </div>
+);
+
+const KpiSkeleton = () => (
+  <div className="bento-card p-5">
+    <div className="flex items-start justify-between gap-3">
+      <div className="min-w-0 flex-1 space-y-3">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-7 w-32" />
+      </div>
+      <Skeleton className="h-10 w-10 rounded-[10px]" />
+    </div>
+    <Skeleton className="mt-3 h-3 w-40" />
+  </div>
+);
+
+const PulseSkeleton = () => (
+  <section className="bento-card p-5">
+    <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex items-center gap-4">
+        <Skeleton className="h-14 w-14 rounded-[12px]" />
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-7 w-40" />
+          <Skeleton className="h-3 w-32" />
+        </div>
+      </div>
+      <div className="min-w-[220px] space-y-3">
+        <div className="flex justify-between gap-3">
+          <Skeleton className="h-3 w-32" />
+          <Skeleton className="h-7 w-16" />
+        </div>
+        <Skeleton className="h-2.5 w-full rounded-full" />
+      </div>
+    </div>
+  </section>
+);
+
 const EmergencyPage = () => {
   const [healthData, setHealthData] = useState(fallbackHealthData);
   const [loading, setLoading] = useState(true);
@@ -419,6 +597,12 @@ const EmergencyPage = () => {
   const [lastError, setLastError] = useState('');
   const [lastRefresh, setLastRefresh] = useState('Not refreshed yet');
   const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [endpointQuery, setEndpointQuery] = useState('');
+  const [logLevelFilter, setLogLevelFilter] = useState('all');
+  const [secondsUntilNext, setSecondsUntilNext] = useState(POLL_INTERVAL_MS / 1000);
+  const [autoRefreshPaused, setAutoRefreshPaused] = useState(false);
+  const [dismissedError, setDismissedError] = useState(false);
   const mountedRef = useRef(false);
   const hasLoadedRef = useRef(false);
   const requestInFlightRef = useRef(false);
@@ -441,7 +625,9 @@ const EmergencyPage = () => {
       setHealthData(normalizeHealthData(response.data));
       setUsingFallback(false);
       setLastError('');
+      setDismissedError(false);
       setLastRefresh(formatRefreshTime());
+      setSecondsUntilNext(POLL_INTERVAL_MS / 1000);
       hasLoadedRef.current = true;
     } catch (error) {
       if (!mountedRef.current) return;
@@ -473,18 +659,58 @@ const EmergencyPage = () => {
   useEffect(() => {
     mountedRef.current = true;
     fetchHealthData();
-
-    const intervalId = window.setInterval(() => {
-      fetchHealthData({ background: true });
-    }, POLL_INTERVAL_MS);
-
     return () => {
       mountedRef.current = false;
-      window.clearInterval(intervalId);
     };
   }, [fetchHealthData]);
 
-  const { kpis, services, endpoints, databaseMetrics, importMetrics, jobs, logs, charts } = healthData;
+  useEffect(() => {
+    if (autoRefreshPaused) return undefined;
+    const intervalId = window.setInterval(() => {
+      setSecondsUntilNext((prev) => {
+        if (prev <= 1) {
+          fetchHealthData({ background: true });
+          return POLL_INTERVAL_MS / 1000;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(intervalId);
+  }, [autoRefreshPaused, fetchHealthData]);
+
+  const handleExportReport = useCallback(() => {
+    try {
+      const snapshot = {
+        exportedAt: new Date().toISOString(),
+        lastRefresh,
+        usingFallback,
+        healthScore: undefined,
+        healthData,
+      };
+      const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      link.download = `monitoring-report-${timestamp}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      // ignore export failure
+    }
+  }, [healthData, lastRefresh, usingFallback]);
+
+  const handleViewLogs = useCallback(() => {
+    setActiveTab('jobs');
+    window.requestAnimationFrame(() => {
+      const el = document.getElementById('monitoring-logs');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, []);
+
+  const { kpis, services, endpoints, databaseMetrics, importMetrics, jobs, logs, charts, chatbot } = healthData;
 
   const serviceDistribution = useMemo(() => {
     const counts = services.reduce(
@@ -545,9 +771,39 @@ const EmergencyPage = () => {
   const hasRequestVolume = charts.requestVolume.length > 0;
   const hasEndpointLatency = charts.endpointLatency.length > 0;
 
+  const filteredEndpoints = useMemo(() => {
+    const q = endpointQuery.trim().toLowerCase();
+    if (!q) return endpoints;
+    return endpoints.filter((row) =>
+      row.some((cell) => String(cell).toLowerCase().includes(q))
+    );
+  }, [endpoints, endpointQuery]);
+
+  const filteredLogs = useMemo(() => {
+    if (logLevelFilter === 'all') return logs;
+    return logs.filter(([, level]) => String(level).toLowerCase() === logLevelFilter);
+  }, [logs, logLevelFilter]);
+
+  const logLevelCounts = useMemo(() => {
+    const counts = { all: logs.length, error: 0, warning: 0, info: 0 };
+    logs.forEach(([, level]) => {
+      const key = String(level).toLowerCase();
+      if (counts[key] !== undefined) counts[key] += 1;
+    });
+    return counts;
+  }, [logs]);
+
+  const bannerVariant = loading && !hasLoadedRef.current
+    ? 'loading'
+    : lastError && !dismissedError
+      ? (usingFallback ? 'fallback' : 'error')
+      : null;
+
+  const showSkeleton = loading && !hasLoadedRef.current;
+
   return (
     <div className="page-shell">
-      <div className="page-content gap-8">
+      <div className="page-content gap-6">
         <SectionHeader
           eyebrow="Platform Operations"
           title="Monitoring Center"
@@ -558,11 +814,11 @@ const EmergencyPage = () => {
                 <RefreshCw className={`h-4 w-4 ${loading || refreshing ? 'animate-spin' : ''}`} />
                 {loading || refreshing ? 'Checking...' : 'Run health check'}
               </Button>
-              <Button variant="secondary">
+              <Button variant="secondary" onClick={handleViewLogs}>
                 <FileSearch className="h-4 w-4" />
                 View logs
               </Button>
-              <Button variant="secondary">
+              <Button variant="secondary" onClick={handleExportReport}>
                 <ArrowDownToLine className="h-4 w-4" />
                 Export report
               </Button>
@@ -570,16 +826,35 @@ const EmergencyPage = () => {
           }
         />
 
-        {(loading || usingFallback || lastError) ? (
-          <div className="rounded-[10px] border border-border bg-surface-elevated/80 p-4 text-sm text-muted-foreground shadow-soft">
-            {loading
-              ? 'Loading live system health data...'
-              : lastError}
+        <div className="sticky top-0 z-10 -mx-2 flex flex-col gap-3 rounded-[12px] border border-border bg-surface/80 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-surface/65 sm:flex-row sm:items-center sm:justify-between">
+          <Tabs value={activeTab} onChange={setActiveTab} items={TAB_ITEMS} className="flex-wrap" />
+          <LiveChip
+            refreshing={refreshing}
+            secondsUntilNext={secondsUntilNext}
+            paused={autoRefreshPaused}
+            onToggle={() => setAutoRefreshPaused((p) => !p)}
+          />
+        </div>
+
+        {bannerVariant ? (
+          <StatusBanner
+            variant={bannerVariant}
+            message={bannerVariant === 'loading' ? 'Hitting /api/admin/system-health...' : lastError}
+            onDismiss={bannerVariant === 'loading' ? undefined : () => setDismissedError(true)}
+          />
+        ) : null}
+
+        {activeTab === 'overview' ? (
+          showSkeleton ? <PulseSkeleton /> : <SystemPulse status={overallStatus} lastRefresh={lastRefresh} score={healthScore} />
+        ) : null}
+
+        {activeTab === 'overview' && showSkeleton ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            {Array.from({ length: 5 }).map((_, idx) => <KpiSkeleton key={idx} />)}
           </div>
         ) : null}
 
-        <SystemPulse status={overallStatus} lastRefresh={lastRefresh} score={healthScore} />
-
+        {activeTab === 'overview' && !showSkeleton ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
           {kpis.map(({ label, value, helper, icon, status }) => {
             const config = getStatus(status);
@@ -601,7 +876,9 @@ const EmergencyPage = () => {
             );
           })}
         </div>
+        ) : null}
 
+        {activeTab === 'overview' && !showSkeleton ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <ProgressMetric label="Uptime" value={clamp(uptimeValue)} helper="Availability target tracking" status="healthy" />
           <ProgressMetric
@@ -623,7 +900,9 @@ const EmergencyPage = () => {
             status={importSuccessRate < 90 ? 'warning' : 'healthy'}
           />
         </div>
+        ) : null}
 
+        {activeTab === 'overview' && !showSkeleton ? (
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
           <ChartCard title="API Latency Trend" description="Latency in milliseconds across the last 12 checks." className="xl:col-span-2">
             {hasLatencyTrend ? (
@@ -659,7 +938,9 @@ const EmergencyPage = () => {
             )}
           </ChartCard>
         </div>
+        ) : null}
 
+        {activeTab === 'overview' && !showSkeleton ? (
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <ChartCard title="Error Rate Trend" description="Percentage of failed requests over time.">
             {hasErrorTrend ? (
@@ -690,7 +971,9 @@ const EmergencyPage = () => {
             )}
           </ChartCard>
         </div>
+        ) : null}
 
+        {activeTab === 'overview' && !showSkeleton ? (
         <ChartCard title="Endpoint Latency Comparison" description="Horizontal comparison of key endpoint latency.">
           {hasEndpointLatency ? (
             <div className="h-56 min-w-0">
@@ -705,7 +988,9 @@ const EmergencyPage = () => {
             <ChartEmptyState title="No endpoint latency data" description="The endpoint comparison chart is empty for this refresh." />
           )}
         </ChartCard>
+        ) : null}
 
+        {activeTab === 'services' ? (
         <SectionCard
           title="Service Health"
           description="Live-style service cards using real backend checks where available, with safe demo fallback data."
@@ -746,47 +1031,201 @@ const EmergencyPage = () => {
             })}
           </div>
         </SectionCard>
+        ) : null}
 
+        {activeTab === 'services' ? (
         <SectionCard
           title="Endpoint Monitoring"
           description="Representative API probes for authentication, pharmacy data, medicines, chatbot, and CSV uploads."
           icon={Server}
         >
-          <div className="overflow-x-auto rounded-[10px] border border-border">
-            <table className="w-full min-w-[760px] text-left">
-              <thead className="bg-surface-muted">
-                <tr>
-                  {['Method', 'Endpoint', 'Status code', 'Latency', 'Status', 'Last checked'].map((heading) => (
-                    <th key={heading} className="px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
-                      {heading}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border bg-surface-elevated/70">
-                {endpoints.map(([method, endpoint, statusCode, latency, status, checked]) => (
-                  <tr key={`${method}-${endpoint}`} className="transition-colors hover:bg-surface-muted/70">
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex rounded-[6px] border px-2 py-1 text-xs font-bold ${methodStyles[method]}`}>
-                        {method}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <code className="rounded-[4px] bg-surface-muted px-2 py-1 text-xs text-foreground">{endpoint}</code>
-                    </td>
-                    <td className="px-4 py-3 text-sm font-semibold text-foreground">{statusCode}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">{latency}</td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={status} />
-                    </td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">{checked}</td>
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative w-full sm:max-w-xs">
+              <FileSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={endpointQuery}
+                onChange={(e) => setEndpointQuery(e.target.value)}
+                placeholder="Search method, path, or status..."
+                className="pl-9"
+                aria-label="Search endpoints"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Showing <span className="font-semibold text-foreground">{filteredEndpoints.length}</span> of {endpoints.length} probes
+            </p>
+          </div>
+          {filteredEndpoints.length === 0 ? (
+            <EmptyState
+              icon={Info}
+              title="No matching endpoints"
+              description="Try a different search term, or clear the filter to see all probes."
+              actionLabel="Clear filter"
+              onAction={() => setEndpointQuery('')}
+            />
+          ) : (
+            <div className="overflow-x-auto rounded-[10px] border border-border">
+              <table className="w-full min-w-[760px] text-left">
+                <thead className="bg-surface-muted">
+                  <tr>
+                    {['Method', 'Endpoint', 'Status code', 'Latency', 'Status', 'Last checked'].map((heading) => (
+                      <th key={heading} className="px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                        {heading}
+                      </th>
+                    ))}
                   </tr>
+                </thead>
+                <tbody className="divide-y divide-border bg-surface-elevated/70">
+                  {filteredEndpoints.map(([method, endpoint, statusCode, latency, status, checked]) => (
+                    <tr key={`${method}-${endpoint}`} className="transition-colors hover:bg-surface-muted/70">
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex rounded-[6px] border px-2 py-1 text-xs font-bold ${methodStyles[method]}`}>
+                          {method}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <code className="rounded-[4px] bg-surface-muted px-2 py-1 text-xs text-foreground">{endpoint}</code>
+                      </td>
+                      <td className="px-4 py-3 text-sm font-semibold text-foreground">{statusCode}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">{latency}</td>
+                      <td className="px-4 py-3">
+                        <StatusBadge status={status} />
+                      </td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">{checked}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </SectionCard>
+        ) : null}
+
+        {activeTab === 'chatbot' ? (
+        <SectionCard
+          title="Chatbot Monitoring"
+          description="Live probes of the First-Aid RAG service (sentence-transformers + ChromaDB) backing the mobile assistant."
+          icon={Bot}
+        >
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+            <article className={`bento-card p-5 xl:col-span-4 ${getStatus(chatbot.status).panel}`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">First-Aid RAG</p>
+                  <h3 className="mt-2 font-display text-xl font-bold text-foreground">
+                    {chatbot.ready ? 'Ready' : 'Not ready'}
+                  </h3>
+                  <p className="mt-1 break-all text-xs text-muted-foreground">{chatbot.url}</p>
+                </div>
+                <StatusBadge status={chatbot.status} />
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="rounded-[10px] border border-border bg-surface-elevated/70 p-3">
+                  <p className="text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-muted-foreground">Answer latency</p>
+                  <p className="mt-1 text-sm font-bold text-foreground">
+                    {chatbot.answerLatencyMs ? `${chatbot.answerLatencyMs} ms` : 'Skipped'}
+                  </p>
+                </div>
+                <div className="rounded-[10px] border border-border bg-surface-elevated/70 p-3">
+                  <p className="text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-muted-foreground">Confidence</p>
+                  <p className="mt-1 text-sm font-bold text-foreground">
+                    {typeof chatbot.answerConfidence === 'number'
+                      ? `${Math.round(chatbot.answerConfidence * 100)}%`
+                      : '-'}
+                  </p>
+                </div>
+                <div className="rounded-[10px] border border-border bg-surface-elevated/70 p-3">
+                  <p className="text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-muted-foreground">Indexed chunks</p>
+                  <p className="mt-1 text-sm font-bold text-foreground">
+                    {typeof chatbot.chunks === 'number' ? chatbot.chunks.toLocaleString() : '-'}
+                  </p>
+                </div>
+                <div className="rounded-[10px] border border-border bg-surface-elevated/70 p-3">
+                  <p className="text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-muted-foreground">Last checked</p>
+                  <p className="mt-1 text-sm font-bold text-foreground">{chatbot.lastChecked || '-'}</p>
+                </div>
+              </div>
+              <div className="mt-4 space-y-2 rounded-[10px] border border-border bg-surface-elevated/70 p-3">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <BrainCircuit className="h-4 w-4 text-primary" />
+                  <span className="truncate" title={chatbot.model || ''}>
+                    {chatbot.model || 'Model unknown'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Layers className="h-4 w-4 text-primary" />
+                  <span className="truncate" title={chatbot.collection || ''}>
+                    {chatbot.collection || 'Collection unknown'}
+                  </span>
+                </div>
+                {chatbot.answerMode ? (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <MessageSquare className="h-4 w-4 text-primary" />
+                    <span>Answer mode: {chatbot.answerMode}</span>
+                  </div>
+                ) : null}
+                {chatbot.lastError ? (
+                  <div className="flex items-start gap-2 text-xs text-red-600 dark:text-red-300">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                    <span className="break-words">{chatbot.lastError}</span>
+                  </div>
+                ) : null}
+              </div>
+            </article>
+
+            <div className="xl:col-span-8">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {chatbot.metrics.map(([label, value, status]) => (
+                  <div key={label} className="rounded-[10px] border border-border bg-surface-elevated/75 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-sm font-semibold text-muted-foreground">{label}</p>
+                      <StatusBadge status={status} label="" />
+                    </div>
+                    <p className="mt-3 truncate font-display text-lg font-bold text-foreground" title={String(value)}>
+                      {value}
+                    </p>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+
+              <div className="mt-4 overflow-x-auto rounded-[10px] border border-border">
+                <table className="w-full min-w-[560px] text-left">
+                  <thead className="bg-surface-muted">
+                    <tr>
+                      {['Method', 'Endpoint', 'Status code', 'Latency', 'Status', 'Last checked'].map((heading) => (
+                        <th key={heading} className="px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                          {heading}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border bg-surface-elevated/70">
+                    {chatbot.endpoints.map(([method, endpoint, statusCode, latency, status, checked]) => (
+                      <tr key={`chatbot-${method}-${endpoint}`} className="transition-colors hover:bg-surface-muted/70">
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex rounded-[6px] border px-2 py-1 text-xs font-bold ${methodStyles[method] || methodStyles.GET}`}>
+                            {method}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <code className="rounded-[4px] bg-surface-muted px-2 py-1 text-xs text-foreground">{endpoint}</code>
+                        </td>
+                        <td className="px-4 py-3 text-sm font-semibold text-foreground">{statusCode}</td>
+                        <td className="px-4 py-3 text-sm text-muted-foreground">{latency}</td>
+                        <td className="px-4 py-3">
+                          <StatusBadge status={status} />
+                        </td>
+                        <td className="px-4 py-3 text-sm text-muted-foreground">{checked}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </SectionCard>
+        ) : null}
 
+        {activeTab === 'data' ? (
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <SectionCard
             title="Database Health"
@@ -824,7 +1263,9 @@ const EmergencyPage = () => {
             </div>
           </SectionCard>
         </div>
+        ) : null}
 
+        {activeTab === 'jobs' ? (
         <SectionCard
           title="Background Jobs"
           description="Operational jobs that keep pharmacy data, medicine data, backups, notifications, and logs current."
@@ -852,37 +1293,77 @@ const EmergencyPage = () => {
             ))}
           </div>
         </SectionCard>
+        ) : null}
 
+        {activeTab === 'jobs' ? (
         <SectionCard
           title="Recent System Logs"
           description="Latest error, warning, and info events across core services."
           icon={HardDrive}
         >
-          <div className="space-y-3">
-            {logs.map(([timestamp, level, service, message]) => {
-              const status = level === 'Error' ? 'down' : level === 'Warning' ? 'warning' : 'info';
-              const Icon = level === 'Error' ? XCircle : level === 'Warning' ? AlertTriangle : Info;
-
+          <div id="monitoring-logs" className="mb-4 flex flex-wrap items-center gap-2">
+            {[
+              { key: 'all', label: `All (${logLevelCounts.all})`, status: 'info' },
+              { key: 'error', label: `Errors (${logLevelCounts.error})`, status: 'down' },
+              { key: 'warning', label: `Warnings (${logLevelCounts.warning})`, status: 'warning' },
+              { key: 'info', label: `Info (${logLevelCounts.info})`, status: 'info' },
+            ].map(({ key, label, status }) => {
+              const active = logLevelFilter === key;
+              const config = getStatus(status);
               return (
-                <div key={`${timestamp}-${service}-${message}`} className="flex flex-col gap-3 rounded-[10px] border border-border bg-surface-elevated/75 p-4 md:flex-row md:items-start md:justify-between">
-                  <div className="flex min-w-0 gap-3">
-                    <div className={`mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] ${getStatus(status).panel} ${getStatus(status).text}`}>
-                      <Icon className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <StatusBadge status={status} label={level} />
-                        <p className="text-sm font-bold text-foreground">{service}</p>
-                      </div>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{message}</p>
-                    </div>
-                  </div>
-                  <p className="whitespace-nowrap text-xs font-semibold text-muted-foreground">{timestamp}</p>
-                </div>
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setLogLevelFilter(key)}
+                  aria-pressed={active}
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    active
+                      ? `${config.panel} ${config.text} border-transparent`
+                      : 'border-border bg-surface-elevated/70 text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <span className={`h-1.5 w-1.5 rounded-full ${config.dot}`} />
+                  {label}
+                </button>
               );
             })}
           </div>
+          {filteredLogs.length === 0 ? (
+            <EmptyState
+              icon={Info}
+              title="No matching log entries"
+              description="No events recorded for this level. Try switching to All."
+              actionLabel="Show all"
+              onAction={() => setLogLevelFilter('all')}
+            />
+          ) : (
+            <div className="space-y-3">
+              {filteredLogs.map(([timestamp, level, service, message]) => {
+                const status = level === 'Error' ? 'down' : level === 'Warning' ? 'warning' : 'info';
+                const Icon = level === 'Error' ? XCircle : level === 'Warning' ? AlertTriangle : Info;
+
+                return (
+                  <div key={`${timestamp}-${service}-${message}`} className="flex flex-col gap-3 rounded-[10px] border border-border bg-surface-elevated/75 p-4 md:flex-row md:items-start md:justify-between">
+                    <div className="flex min-w-0 gap-3">
+                      <div className={`mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] ${getStatus(status).panel} ${getStatus(status).text}`}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <StatusBadge status={status} label={level} />
+                          <p className="text-sm font-bold text-foreground">{service}</p>
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-muted-foreground">{message}</p>
+                      </div>
+                    </div>
+                    <p className="whitespace-nowrap text-xs font-semibold text-muted-foreground">{timestamp}</p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </SectionCard>
+        ) : null}
       </div>
     </div>
   );

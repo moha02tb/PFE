@@ -1,14 +1,14 @@
 \babel@toc {french}{}\relax 
-\contentsline {chapter}{Dédicace}{i}{chapter*.1}%
+\contentsline {chapter}{Dédicaces}{i}{chapter*.1}%
 \contentsline {chapter}{Remerciements / Préface}{ii}{chapter*.2}%
 \contentsline {chapter}{Résumé}{iii}{chapter*.3}%
 \contentsline {chapter}{Liste des figures}{iv}{section*.4}%
 \contentsline {chapter}{Liste des tableaux}{v}{section*.6}%
-\contentsline {chapter}{Liste des acronymes}{vii}{section*.10}%
+\contentsline {chapter}{Liste des acronymes}{viii}{section*.10}%
 \contentsline {chapter}{Introduction générale}{1}{chapter*.13}%
 \contentsline {section}{Contexte général}{1}{section*.14}%
 \contentsline {section}{Problématique}{1}{section*.15}%
-\contentsline {section}{Objectifs du projet}{1}{section*.16}%
+\contentsline {section}{Objectifs du projet}{2}{section*.16}%
 \contentsline {section}{Méthodologie adoptée}{2}{section*.17}%
 \contentsline {section}{Organisation du rapport}{2}{section*.18}%
 \contentsline {chapter}{\numberline {1}Cadre conceptuel et étude de l'existant}{3}{chapter.1}%
@@ -26,7 +26,7 @@
 \contentsline {section}{\numberline {1.12}Outils de gestion de projet}{8}{section.1.12}%
 \contentsline {subsection}{\numberline {1.12.1}Jira pour la planification et le suivi}{8}{subsection.1.12.1}%
 \contentsline {subsection}{\numberline {1.12.2}Bitbucket pour le versionnement du code}{8}{subsection.1.12.2}%
-\contentsline {subsection}{\numberline {1.12.3}Intégration Jira--Bitbucket}{8}{subsection.1.12.3}%
+\contentsline {subsection}{\numberline {1.12.3}Intégration Jira--Bitbucket}{9}{subsection.1.12.3}%
 \contentsline {section}{\numberline {1.13}Conclusion}{9}{section.1.13}%
 \contentsline {chapter}{\numberline {2}Analyse et spécification des besoins}{10}{chapter.2}%
 \contentsline {section}{\numberline {2.1}Introduction}{11}{section.2.1}%
@@ -34,11 +34,11 @@
 \contentsline {section}{\numberline {2.3}Besoins fonctionnels détaillés}{11}{section.2.3}%
 \contentsline {section}{\numberline {2.4}Besoins non fonctionnels}{12}{section.2.4}%
 \contentsline {section}{\numberline {2.5}Règles de gestion}{12}{section.2.5}%
-\contentsline {section}{\numberline {2.6}Descriptions textuelles des cas d'utilisation}{12}{section.2.6}%
-\contentsline {subsection}{\numberline {2.6.1}Cas d'utilisation : authentification}{12}{subsection.2.6.1}%
+\contentsline {section}{\numberline {2.6}Descriptions textuelles des cas d'utilisation}{13}{section.2.6}%
+\contentsline {subsection}{\numberline {2.6.1}Cas d'utilisation : authentification}{13}{subsection.2.6.1}%
 \contentsline {subsection}{\numberline {2.6.2}Cas d'utilisation : recherche d'une pharmacie}{13}{subsection.2.6.2}%
-\contentsline {subsection}{\numberline {2.6.3}Cas d'utilisation : consultation des pharmacies de garde}{13}{subsection.2.6.3}%
-\contentsline {subsection}{\numberline {2.6.4}Cas d'utilisation : gestion des pharmacies}{13}{subsection.2.6.4}%
+\contentsline {subsection}{\numberline {2.6.3}Cas d'utilisation : consultation des pharmacies de garde}{14}{subsection.2.6.3}%
+\contentsline {subsection}{\numberline {2.6.4}Cas d'utilisation : gestion des pharmacies}{14}{subsection.2.6.4}%
 \contentsline {section}{\numberline {2.7}Diagramme de cas d'utilisation}{14}{section.2.7}%
 \contentsline {section}{\numberline {2.8}Conclusion}{16}{section.2.8}%
 \contentsline {chapter}{\numberline {3}Conception}{17}{chapter.3}%
@@ -46,22 +46,22 @@
 \contentsline {section}{\numberline {3.2}Architecture globale}{18}{section.3.2}%
 \contentsline {section}{\numberline {3.3}Backend FastAPI}{18}{section.3.3}%
 \contentsline {section}{\numberline {3.4}Tableau de bord React/Vite}{19}{section.3.4}%
-\contentsline {section}{\numberline {3.5}Application mobile Expo/React Native}{19}{section.3.5}%
+\contentsline {section}{\numberline {3.5}Application mobile Expo/React Native}{20}{section.3.5}%
 \contentsline {section}{\numberline {3.6}Modèle de données}{20}{section.3.6}%
-\contentsline {section}{\numberline {3.7}Diagramme de classes}{20}{section.3.7}%
+\contentsline {section}{\numberline {3.7}Diagramme de classes}{21}{section.3.7}%
 \contentsline {section}{\numberline {3.8}Diagrammes de séquence}{21}{section.3.8}%
 \contentsline {section}{\numberline {3.9}Diagramme d'activité}{23}{section.3.9}%
 \contentsline {section}{\numberline {3.10}Diagramme de composants et de déploiement}{24}{section.3.10}%
-\contentsline {section}{\numberline {3.11}Sécurité}{25}{section.3.11}%
+\contentsline {section}{\numberline {3.11}Sécurité}{26}{section.3.11}%
 \contentsline {subsection}{\numberline {3.11.1}Authentification JWT et gestion des sessions}{26}{subsection.3.11.1}%
 \contentsline {subsection}{\numberline {3.11.2}Contrôle d'accès basé sur les rôles (\gls {rbac})}{26}{subsection.3.11.2}%
 \contentsline {subsection}{\numberline {3.11.3}Hachage des mots de passe}{26}{subsection.3.11.3}%
 \contentsline {subsection}{\numberline {3.11.4}Validation des entrées avec Pydantic}{26}{subsection.3.11.4}%
-\contentsline {subsection}{\numberline {3.11.5}Politique \gls {cors} et hôtes autorisés}{26}{subsection.3.11.5}%
+\contentsline {subsection}{\numberline {3.11.5}Politique \gls {cors} et hôtes autorisés}{27}{subsection.3.11.5}%
 \contentsline {subsection}{\numberline {3.11.6}Traçabilité et journalisation des actions}{27}{subsection.3.11.6}%
 \contentsline {subsection}{\numberline {3.11.7}Sécurité du déploiement}{27}{subsection.3.11.7}%
 \contentsline {section}{\numberline {3.12}Justification des choix techniques}{27}{section.3.12}%
-\contentsline {section}{\numberline {3.13}Conclusion}{27}{section.3.13}%
+\contentsline {section}{\numberline {3.13}Conclusion}{28}{section.3.13}%
 \contentsline {chapter}{\numberline {4}Réalisation et tests}{29}{chapter.4}%
 \contentsline {section}{\numberline {4.1}Introduction}{31}{section.4.1}%
 \contentsline {section}{\numberline {4.2}Environnement matériel et logiciel}{31}{section.4.2}%
@@ -71,20 +71,20 @@
 \contentsline {subsection}{\numberline {4.5.1}Endpoints publics}{33}{subsection.4.5.1}%
 \contentsline {subsection}{\numberline {4.5.2}Authentification et sessions}{33}{subsection.4.5.2}%
 \contentsline {subsection}{\numberline {4.5.3}Services métier}{33}{subsection.4.5.3}%
-\contentsline {subsection}{\numberline {4.5.4}Imports CSV}{33}{subsection.4.5.4}%
+\contentsline {subsection}{\numberline {4.5.4}Imports CSV}{34}{subsection.4.5.4}%
 \contentsline {subsection}{\numberline {4.5.5}Audit et indicateurs}{34}{subsection.4.5.5}%
 \contentsline {section}{\numberline {4.6}Réalisation du tableau de bord administrateur}{34}{section.4.6}%
 \contentsline {subsection}{\numberline {4.6.1}Pages principales}{34}{subsection.4.6.1}%
 \contentsline {subsection}{\numberline {4.6.2}Gestion des sessions côté administration}{34}{subsection.4.6.2}%
 \contentsline {section}{\numberline {4.7}Réalisation application mobile}{34}{section.4.7}%
 \contentsline {subsection}{\numberline {4.7.1}Recherche et détail des pharmacies}{34}{subsection.4.7.1}%
-\contentsline {subsection}{\numberline {4.7.2}Carte et géolocalisation}{34}{subsection.4.7.2}%
+\contentsline {subsection}{\numberline {4.7.2}Carte et géolocalisation}{35}{subsection.4.7.2}%
 \contentsline {subsection}{\numberline {4.7.3}Calendrier des gardes}{35}{subsection.4.7.3}%
 \contentsline {subsection}{\numberline {4.7.4}Catalogue de médicaments}{35}{subsection.4.7.4}%
 \contentsline {subsection}{\numberline {4.7.5}Paramètres, langues et thème}{35}{subsection.4.7.5}%
 \contentsline {section}{\numberline {4.8}Réalisation de l'assistant conversationnel de premiers secours}{35}{section.4.8}%
 \contentsline {subsection}{\numberline {4.8.1}Architecture générale}{35}{subsection.4.8.1}%
-\contentsline {subsection}{\numberline {4.8.2}Données d'apprentissage et nettoyage}{35}{subsection.4.8.2}%
+\contentsline {subsection}{\numberline {4.8.2}Données d'apprentissage et nettoyage}{36}{subsection.4.8.2}%
 \contentsline {subsection}{\numberline {4.8.3}Entraînement et métriques de performance}{36}{subsection.4.8.3}%
 \contentsline {subsection}{\numberline {4.8.4}API et intégration avec l'application mobile}{37}{subsection.4.8.4}%
 \contentsline {subsection}{\numberline {4.8.5}Tests et validation}{37}{subsection.4.8.5}%
@@ -106,4 +106,9 @@
 \contentsline {section}{Limites}{48}{section*.57}%
 \contentsline {section}{Apport personnel}{49}{section*.58}%
 \contentsline {section}{Perspectives}{49}{section*.59}%
-\contentsline {chapter}{Bibliographie}{50}{section*.60}%
+\contentsline {chapter}{\numberline {A}Annexes}{50}{appendix.A}%
+\contentsline {section}{\numberline {A.1}Descriptions complémentaires des cas d'utilisation}{50}{section.A.1}%
+\contentsline {section}{\numberline {A.2}Commandes de lancement}{50}{section.A.2}%
+\contentsline {section}{\numberline {A.3}Commandes de test}{51}{section.A.3}%
+\contentsline {section}{\numberline {A.4}Exemples CSV}{51}{section.A.4}%
+\contentsline {chapter}{Bibliographie}{53}{section*.70}%

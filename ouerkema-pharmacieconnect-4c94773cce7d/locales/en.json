@@ -39,7 +39,9 @@
     "stars": "stars",
     "locationPermissionDenied": "Permission denied to access location",
     "locationError": "Error retrieving location",
-    "enableLocationFirst": "Please enable location first."
+    "enableLocationFirst": "Please enable location first.",
+    "offlineFallback": "Showing offline data — couldn't reach the server.",
+    "dismissBanner": "Dismiss notice"
   },
   "settings": {
     "title": "Settings",
@@ -108,6 +110,8 @@
     "badge": "First Aid",
     "subtitle": "Fast basic first-aid guidance. This does not replace emergency care or a doctor.",
     "welcome": "I am a first-aid assistant. Ask about burns, bleeding, choking, fainting, fever, or allergic reactions. For severe danger signs, call emergency services immediately.",
+    "welcomeTitle": "How can I help you today?",
+    "welcomeSubtitle": "Pick a quick topic below or describe a first-aid situation in your own words.",
     "disclaimer": "Emergency warning signs such as breathing trouble, severe bleeding, seizures, chest pain, or loss of consciousness need urgent medical help.",
     "placeholder": "Describe the first-aid situation...",
     "send": "Send",

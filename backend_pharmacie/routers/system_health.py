@@ -1,9 +1,11 @@
 """Admin system health monitoring endpoints."""
 
 import json
+import os
 from datetime import datetime, timedelta, timezone
 from time import perf_counter
 
+import httpx
 import models
 from database import get_db
 from dependencies import admin_required
@@ -14,6 +16,10 @@ from sqlalchemy.orm import Session
 router = APIRouter(prefix="/system-health", tags=["Admin System Health"])
 
 APP_STARTED_AT = datetime.now(timezone.utc)
+
+CHATBOT_API_URL = os.getenv("CHATBOT_API_URL", "http://localhost:8001").rstrip("/")
+CHATBOT_PROBE_TIMEOUT = float(os.getenv("CHATBOT_PROBE_TIMEOUT", "3.0"))
+CHATBOT_PROBE_QUERY = os.getenv("CHATBOT_PROBE_QUERY", "burn first aid")
 
 
 def _now() -> datetime:
@@ -386,22 +392,199 @@ def _collect_logs(db: Session) -> list[list]:
     return logs
 
 
+def _collect_chatbot_health() -> dict:
+    """Probe the local First-Aid RAG service (CHATBOT_API_URL) and return its health.
+
+    Reads `/health` and `/ready` for status + model metadata, and runs a tiny
+    `/answer` probe to measure inference latency and confidence. Returns a
+    structure ready to render in the admin Monitoring page.
+    """
+    base = CHATBOT_API_URL
+    current_time = _format_time(_now())
+
+    result = {
+        "status": "down",
+        "url": base,
+        "ready": False,
+        "model": None,
+        "collection": None,
+        "chunks": None,
+        "healthLatencyMs": None,
+        "readyLatencyMs": None,
+        "answerLatencyMs": None,
+        "answerConfidence": None,
+        "answerMode": None,
+        "lastChecked": current_time,
+        "lastError": None,
+    }
+
+    try:
+        with httpx.Client(timeout=CHATBOT_PROBE_TIMEOUT) as client:
+            t0 = perf_counter()
+            health_resp = client.get(f"{base}/health")
+            result["healthLatencyMs"] = _ms(t0)
+            health_resp.raise_for_status()
+
+            t1 = perf_counter()
+            ready_resp = client.get(f"{base}/ready")
+            result["readyLatencyMs"] = _ms(t1)
+            ready_payload = {}
+            try:
+                ready_payload = ready_resp.json() or {}
+            except ValueError:
+                ready_payload = {}
+
+            if ready_resp.status_code == 200 and ready_payload.get("status") == "ready":
+                result["ready"] = True
+                result["model"] = ready_payload.get("model")
+                result["collection"] = ready_payload.get("collection")
+                result["chunks"] = ready_payload.get("chunks")
+            else:
+                result["ready"] = False
+                result["lastError"] = ready_payload.get("detail") or f"ready returned HTTP {ready_resp.status_code}"
+
+            if result["ready"]:
+                t2 = perf_counter()
+                try:
+                    answer_resp = client.post(
+                        f"{base}/answer",
+                        json={"query": CHATBOT_PROBE_QUERY, "top_k": 3},
+                    )
+                    result["answerLatencyMs"] = _ms(t2)
+                    if answer_resp.status_code == 200:
+                        payload = answer_resp.json() or {}
+                        result["answerConfidence"] = payload.get("confidence")
+                        result["answerMode"] = payload.get("answer_mode")
+                    else:
+                        result["lastError"] = f"answer probe returned HTTP {answer_resp.status_code}"
+                except Exception as probe_exc:
+                    result["answerLatencyMs"] = _ms(t2)
+                    result["lastError"] = f"answer probe failed: {probe_exc}"
+    except httpx.HTTPError as exc:
+        result["lastError"] = f"chatbot service unreachable: {exc}"
+        result["status"] = "down"
+        result["metrics"] = [
+            ["Service status", "Unavailable", "down"],
+            ["Ready", "No", "down"],
+            ["RAG model", "Unavailable", "down"],
+            ["Collection", "Unavailable", "down"],
+            ["Indexed chunks", "Unavailable", "down"],
+            ["Health probe latency", "Unavailable", "down"],
+            ["Ready probe latency", "Unavailable", "down"],
+            ["Answer probe latency", "Unavailable", "down"],
+            ["Probe confidence", "Unavailable", "down"],
+        ]
+        result["kpi"] = {
+            "label": "Chatbot Status",
+            "value": "Down",
+            "helper": "First-Aid RAG service unreachable",
+            "icon": "Bot",
+            "status": "down",
+        }
+        return result
+    except Exception as exc:
+        result["lastError"] = f"unexpected chatbot probe error: {exc}"
+
+    answer_ms = result["answerLatencyMs"]
+    if not result["ready"]:
+        result["status"] = "down"
+        status_label = "Loading" if (result["lastError"] or "").startswith("ready returned") else "Down"
+    elif answer_ms is None:
+        result["status"] = "warning"
+        status_label = "Ready (probe skipped)"
+    else:
+        result["status"] = _status_for_latency(answer_ms, warning_at=900, down_at=3000)
+        status_label = "Healthy" if result["status"] == "healthy" else result["status"].title()
+
+    confidence_label = (
+        f"{round(result['answerConfidence'] * 100)}%"
+        if isinstance(result["answerConfidence"], (int, float))
+        else "Unavailable"
+    )
+    confidence_status = (
+        "healthy" if isinstance(result["answerConfidence"], (int, float)) and result["answerConfidence"] >= 0.6
+        else "warning" if isinstance(result["answerConfidence"], (int, float)) and result["answerConfidence"] >= 0.3
+        else "info"
+    )
+
+    result["metrics"] = [
+        ["Service status", status_label, result["status"]],
+        ["Ready", "Yes" if result["ready"] else "No", "healthy" if result["ready"] else "down"],
+        ["RAG model", result["model"] or "Unavailable", "info"],
+        ["Collection", result["collection"] or "Unavailable", "info"],
+        ["Indexed chunks", f"{result['chunks']:,}" if isinstance(result["chunks"], int) else "Unavailable", "info"],
+        ["Health probe latency", _format_ms(result["healthLatencyMs"]), _status_for_latency(result["healthLatencyMs"] or 0, 200, 800) if result["healthLatencyMs"] else "down"],
+        ["Ready probe latency", _format_ms(result["readyLatencyMs"]), _status_for_latency(result["readyLatencyMs"] or 0, 250, 1000) if result["readyLatencyMs"] else "down"],
+        ["Answer probe latency", _format_ms(answer_ms) if answer_ms else "Skipped", result["status"] if answer_ms else "info"],
+        ["Probe confidence", confidence_label, confidence_status],
+    ]
+
+    result["kpi"] = {
+        "label": "Chatbot Latency",
+        "value": _format_ms(answer_ms) if answer_ms else status_label,
+        "helper": f"{result['chunks']:,} chunks indexed" if isinstance(result["chunks"], int) else "RAG service probe",
+        "icon": "Bot",
+        "status": result["status"],
+    }
+
+    return result
+
+
+def _chatbot_endpoint_rows(chatbot_health: dict) -> list[list]:
+    current_time = chatbot_health.get("lastChecked", _format_time(_now()))
+    is_down = chatbot_health.get("status") == "down"
+
+    answer_status = chatbot_health.get("status") or "info"
+    answer_latency = chatbot_health.get("answerLatencyMs")
+    answer_latency_text = _format_ms(answer_latency) if answer_latency else "Skipped"
+
+    health_latency = chatbot_health.get("healthLatencyMs")
+    ready_latency = chatbot_health.get("readyLatencyMs")
+
+    return [
+        ["GET", "/health", 200 if not is_down else 503, _format_ms(health_latency) if health_latency else "Unavailable", "healthy" if health_latency else "down", current_time],
+        ["GET", "/ready", 200 if chatbot_health.get("ready") else 503, _format_ms(ready_latency) if ready_latency else "Unavailable", "healthy" if chatbot_health.get("ready") else "warning" if not is_down else "down", current_time],
+        ["POST", "/answer", 200 if answer_latency else 503, answer_latency_text, answer_status, current_time],
+    ]
+
+
 def _collect_system_health(db: Session) -> dict:
     database = _collect_database_health(db)
     imports = _collect_import_health(db)
+    chatbot = _collect_chatbot_health()
     uptime_seconds = int((_now() - APP_STARTED_AT).total_seconds())
+    services = _collect_services(database)
+    for service in services:
+        if service["name"] == "Chatbot API":
+            service["status"] = chatbot["status"]
+            service["responseTime"] = (
+                _format_ms(chatbot["answerLatencyMs"]) if chatbot.get("answerLatencyMs") else
+                _format_ms(chatbot["readyLatencyMs"]) if chatbot.get("readyLatencyMs") else
+                "Unavailable"
+            )
+            service["lastChecked"] = chatbot["lastChecked"]
+            service["description"] = (
+                f"Local RAG ({chatbot.get('model') or 'unknown model'}), "
+                f"{chatbot['chunks']:,} chunks" if isinstance(chatbot.get("chunks"), int)
+                else "First-Aid RAG service (local Chroma + sentence-transformers)."
+            )
+            break
 
     return {
         "generatedAt": _iso(_now()),
         "serverTime": _iso(_now()),
         "uptimeSeconds": uptime_seconds,
         "kpis": _collect_kpis(database, db),
-        "services": _collect_services(database),
+        "services": services,
         "endpoints": _collect_endpoint_health(database, db),
         "databaseMetrics": database["metrics"],
         "importMetrics": imports["metrics"],
         "jobs": _collect_jobs(db),
         "logs": _collect_logs(db),
+        "chatbot": {
+            **chatbot,
+            "endpoints": _chatbot_endpoint_rows(chatbot),
+        },
     }
 
 
@@ -452,3 +635,15 @@ async def get_system_logs(
     db: Session = Depends(get_db),
 ):
     return {"generatedAt": _iso(_now()), "logs": _collect_logs(db)}
+
+
+@router.get("/chatbot")
+async def get_chatbot_health(
+    current_admin: models.Administrateur = Depends(admin_required),
+):
+    chatbot = _collect_chatbot_health()
+    return {
+        "generatedAt": _iso(_now()),
+        **chatbot,
+        "endpoints": _chatbot_endpoint_rows(chatbot),
+    }

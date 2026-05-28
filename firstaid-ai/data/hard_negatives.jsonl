@@ -1,0 +1,107 @@
+{"query": "my chest hurts after exercise", "positive": "chest pain cardiac arrest first aid call emergency services and have person sit down", "negative": "chest cold cough treatment for influenza and upper respiratory infection"}
+{"query": "severe chest pain radiating to my left arm", "positive": "heart attack signs chest pain left arm sweating call SAMU 190 give aspirin", "negative": "musculoskeletal chest wall pain rest and ibuprofen"}
+{"query": "crushing chest pain and sweating", "positive": "myocardial infarction immediate aspirin call ambulance keep calm", "negative": "anxiety panic attack breathing exercises and reassurance"}
+{"query": "chest pain shortness of breath", "positive": "cardiac emergency call ambulance start CPR if no pulse", "negative": "asthma exacerbation bronchodilator inhaler use spacer"}
+{"query": "sudden chest tightness and dizziness", "positive": "cardiac event first aid loosen clothing have person sit and rest", "negative": "common cold treatment rest hydration over-the-counter remedies"}
+{"query": "my friend is having trouble breathing", "positive": "airway obstruction Heimlich maneuver call emergency services", "negative": "common cold stuffy nose decongestant rest fluids"}
+{"query": "patient is gasping for air with blue lips", "positive": "severe respiratory distress call emergency CPR if unresponsive", "negative": "anxiety hyperventilation breathing into paper bag calm reassurance"}
+{"query": "child cannot breathe and has blue lips", "positive": "infant choking back blows abdominal thrusts call ambulance", "negative": "cold weather lip discoloration warm the child gradually"}
+{"query": "my baby has skin hot to the touch", "positive": "burn first aid cool water 10 minutes do not apply ice", "negative": "infant fever paracetamol cool environment monitor temperature"}
+{"query": "redness and blistering on my arm after touching pan", "positive": "second degree burn cool water for 20 minutes cover with sterile gauze", "negative": "skin allergic reaction antihistamine remove the irritant"}
+{"query": "burning skin from chemical exposure", "positive": "chemical burn flush with running water 20 minutes call poison control", "negative": "fever with skin warm rash measure temperature paracetamol"}
+{"query": "scalded my hand with hot water", "positive": "thermal burn run under cool water apply non-stick dressing", "negative": "high fever in adult cool compress and antipyretic medication"}
+{"query": "my child has very hot forehead", "positive": "pediatric fever cool environment paracetamol monitor temperature", "negative": "child burn injury cool the area with running water"}
+{"query": "I cannot move my arm after falling", "positive": "suspected fracture immobilize the limb apply cold pack splint", "negative": "muscle sprain RICE protocol rest ice compression elevation"}
+{"query": "my ankle is swollen after twisting it", "positive": "ankle sprain RICE protocol rest ice compression elevation", "negative": "ankle fracture cannot bear weight immobilize and call ambulance"}
+{"query": "leg deformity after a fall", "positive": "open fracture call ambulance do not move the limb stabilize", "negative": "muscle strain stretch gently and apply ice"}
+{"query": "broken bone visible through skin", "positive": "open fracture cover wound stop bleeding call emergency services", "negative": "minor abrasion clean and bandage at home"}
+{"query": "joint swollen and painful", "positive": "sprain ice compression elevation rest avoid weight bearing", "negative": "bone fracture deformity inability to move call ambulance"}
+{"query": "child swallowed cleaning liquid", "positive": "poisoning call poison control do not induce vomiting keep container", "negative": "skin reaction wash hands water and soap antihistamine if needed"}
+{"query": "ingested bleach by accident", "positive": "chemical poisoning call poison control immediately do not vomit", "negative": "skin contact with bleach rinse with water remove clothing"}
+{"query": "overdose on medication", "positive": "drug poisoning call ambulance keep container place in recovery position", "negative": "allergic skin rash from medication antihistamine and stop drug"}
+{"query": "patient ate something toxic and is vomiting", "positive": "poisoning supportive care call poison control transport to hospital", "negative": "food allergy hives and itching antihistamine and observe"}
+{"query": "swallowed unknown pills found at home", "positive": "potential overdose call ambulance keep pills for identification", "negative": "minor stomach upset rest and clear fluids monitor symptoms"}
+{"query": "swelling and rash after bee sting", "positive": "anaphylaxis EpiPen call ambulance loosen clothing", "negative": "minor insect sting scrape stinger apply cold pack"}
+{"query": "face is drooping and speech is slurred", "positive": "stroke FAST test call ambulance note time of onset", "negative": "seizure with face twitching protect head and time the episode"}
+{"query": "sudden weakness on one side of body", "positive": "stroke immediate call ambulance keep person still note onset time", "negative": "fainting episode lay down elevate legs check blood pressure"}
+{"query": "patient is convulsing with eyes rolling", "positive": "seizure protect head clear surroundings time the episode", "negative": "stroke FAST test call ambulance note when symptoms started"}
+{"query": "vision loss and weakness on one side", "positive": "stroke FAST symptoms call SAMU 190 no food or drink", "negative": "migraine with aura dim lights rest and water"}
+{"query": "uncontrolled shaking and loss of consciousness", "positive": "tonic-clonic seizure protect head place on side after", "negative": "syncope simple faint lay down raise legs reassure"}
+{"query": "my 2 year old has a fever of 40 degrees", "positive": "pediatric fever first aid cool environment paracetamol hydration", "negative": "adult fever rest fluids over-the-counter antipyretic"}
+{"query": "infant has trouble breathing during feeding", "positive": "infant choking 5 back blows 5 chest thrusts call ambulance", "negative": "adult choking Heimlich abdominal thrusts call emergency"}
+{"query": "baby unconscious not breathing", "positive": "infant CPR 30 compressions 2 breaths 100-120 per minute call ambulance", "negative": "adult CPR 30 compressions hand placement on lower sternum"}
+{"query": "newborn umbilical cord bleeding", "positive": "neonatal cord bleeding apply gentle pressure with sterile gauze call ambulance", "negative": "adult deep cut direct pressure elevate the limb and bandage"}
+{"query": "elderly fall with hip pain", "positive": "geriatric hip fracture call ambulance do not move stabilize", "negative": "young adult muscle pull RICE protocol rest and ice"}
+{"query": "minor scratch from kitchen knife", "positive": "small cut wash clean water apply pressure cover with bandage", "negative": "severe bleeding call ambulance tourniquet keep pressure firm"}
+{"query": "tiny cut on finger bleeding a little", "positive": "minor laceration clean water apply pressure plaster bandage", "negative": "arterial bleeding call ambulance direct pressure tourniquet"}
+{"query": "spurting blood from deep leg cut", "positive": "severe arterial bleeding tourniquet 5 cm above call ambulance", "negative": "minor superficial cut wash and cover with plaster"}
+{"query": "small bruise on the leg", "positive": "minor contusion ice pack elevate observe for 24 hours", "negative": "deep internal bleeding shock symptoms call ambulance immediately"}
+{"query": "small splinter under the skin", "positive": "foreign body splinter tweezers remove wash clean cover", "negative": "deep puncture wound call ambulance tetanus prophylaxis"}
+{"query": "minor nosebleed in dry weather", "positive": "epistaxis pinch nose lean forward 10 minutes ice on bridge", "negative": "severe bleeding call ambulance direct pressure tourniquet"}
+{"query": "mild sunburn on arms", "positive": "first degree burn cool water aloe vera hydrate", "negative": "third degree burn call ambulance do not remove clothing"}
+{"query": "small insect bite with redness", "positive": "minor sting cold pack hydrocortisone observe for allergy", "negative": "anaphylactic shock EpiPen call ambulance lay flat raise legs"}
+{"query": "small headache and tired", "positive": "minor headache rest hydration paracetamol", "negative": "subarachnoid hemorrhage call ambulance keep still"}
+{"query": "feeling slightly dizzy in the morning", "positive": "lightheaded hydrate sit down rise slowly monitor", "negative": "stroke FAST symptoms call ambulance immediately"}
+{"query": "mild scratchy throat", "positive": "minor sore throat warm fluids honey rest", "negative": "anaphylactic throat swelling EpiPen call ambulance"}
+{"query": "small kitchen burn on fingertip", "positive": "minor burn cool water 10 minutes plaster", "negative": "extensive burn call ambulance do not pop blisters"}
+{"query": "child with chest pain after running", "positive": "pediatric muscle strain rest hydration observe", "negative": "adult cardiac event aspirin call ambulance"}
+{"query": "child with rash from new soap", "positive": "contact dermatitis remove irritant wash with water antihistamine", "negative": "anaphylaxis EpiPen call ambulance"}
+{"query": "older child with twisted ankle", "positive": "pediatric sprain RICE protocol rest ice elevation", "negative": "open fracture call ambulance immobilize the limb"}
+{"query": "infant suddenly stops crying turns blue", "positive": "infant cardiac arrest CPR 30 compressions 2 breaths call ambulance", "negative": "infant colic feeding crying spell soothe and burp"}
+{"query": "fainted briefly while standing", "positive": "syncope lay flat raise legs monitor recovery", "negative": "cardiac arrest CPR no pulse call ambulance"}
+{"query": "patient lost consciousness but is breathing normally", "positive": "unconscious breathing recovery position monitor airway", "negative": "cardiac arrest start CPR no pulse no breathing"}
+{"query": "headache and stiff neck and light hurts eyes", "positive": "possible meningitis call ambulance immediately no delay", "negative": "tension headache rest dark room hydration"}
+{"query": "shivering uncontrollably in the cold", "positive": "hypothermia warm gradually dry clothes warm drinks if alert", "negative": "fever rigors cool environment antipyretic monitor temperature"}
+{"query": "sweating and shaking diabetic patient", "positive": "hypoglycemia give fast sugar juice candy monitor recovery", "negative": "anxiety attack reassurance slow breathing"}
+{"query": "dry mouth and confusion in diabetic", "positive": "hyperglycemia call ambulance hydration if alert", "negative": "dehydration in heat oral rehydration solution rest in shade"}
+{"query": "high fever with stiff neck and rash", "positive": "meningococcal disease call ambulance keep person isolated", "negative": "viral cold rest and hydration over-the-counter medication"}
+{"query": "child with sudden severe abdominal pain", "positive": "appendicitis hospital evaluation NPO no food", "negative": "common cramp warm compress reassurance"}
+{"query": "headache after head injury yesterday", "positive": "delayed concussion symptoms evaluate at hospital", "negative": "tension headache caffeine and rest"}
+{"query": "vomiting blood", "positive": "GI hemorrhage call ambulance lay on side", "negative": "stomach virus rest and clear fluids"}
+{"query": "blood in stool", "positive": "GI bleeding hospital evaluation hydration", "negative": "hemorrhoids witch hazel ointment sitz bath"}
+{"query": "sudden severe headache worst ever", "positive": "subarachnoid hemorrhage call ambulance keep still", "negative": "migraine dark room rest hydration"}
+{"query": "patient bitten by snake", "positive": "snake bite immobilize the limb call ambulance no tourniquet", "negative": "insect sting remove stinger cold pack antihistamine"}
+{"query": "scorpion sting in the leg", "positive": "scorpion envenomation cold compress call ambulance keep limb low", "negative": "bee sting scrape stinger antihistamine observe"}
+{"query": "dog bite with bleeding", "positive": "animal bite wash with soap and water cover seek medical for rabies", "negative": "minor scratch clean and bandage at home"}
+{"query": "spider bite with localized swelling", "positive": "spider bite observation cold pack analgesia hospital if severe", "negative": "allergic skin reaction antihistamine and cold compress"}
+{"query": "tick attached to skin", "positive": "tick removal grasp close to skin pull straight up disinfect", "negative": "leech removal salt or alcohol pull off carefully"}
+{"query": "drowning victim pulled from pool not breathing", "positive": "drowning resuscitation 5 rescue breaths then CPR 30 to 2", "negative": "asthma attack inhaler use call ambulance"}
+{"query": "child fell into water and was rescued", "positive": "submersion injury check breathing pulse start CPR if needed", "negative": "child fall on land check for head injury"}
+{"query": "near drowning victim coughing water", "positive": "secondary drowning risk hospital evaluation observation", "negative": "common cough flu hydration rest"}
+{"query": "person electrocuted by live wire", "positive": "electric shock turn off power use wooden stick CPR if needed", "negative": "lightning storm shelter and stay low"}
+{"query": "child stuck finger in outlet", "positive": "electric shock pediatric call ambulance check breathing pulse", "negative": "child finger trapped in door cold compress and ice"}
+{"query": "severe asthma attack inhaler not helping", "positive": "asthma exacerbation EpiPen if anaphylaxis call ambulance", "negative": "common cold runny nose decongestant rest"}
+{"query": "wheezing with allergic reaction", "positive": "anaphylactic bronchospasm EpiPen call ambulance", "negative": "common cold congestion warm tea steam"}
+{"query": "blue lips and gasping in child", "positive": "pediatric respiratory failure call ambulance prepare CPR", "negative": "cold weather blue lips warm the child"}
+{"query": "sudden onset shortness of breath", "positive": "pulmonary embolism call ambulance keep still", "negative": "anxiety panic breathing exercises"}
+{"query": "patient hyperventilating after stress", "positive": "hyperventilation calm breathing slow into hands reassurance", "negative": "asthma exacerbation inhaler call ambulance"}
+{"query": "child with febrile seizure", "positive": "pediatric febrile seizure protect head time it cool environment", "negative": "pediatric epileptic seizure protect head no tongue blade"}
+{"query": "patient with status epilepticus", "positive": "prolonged seizure call ambulance immediately", "negative": "single brief seizure place on side observe recovery"}
+{"query": "post-seizure confusion and tired", "positive": "postictal state recovery position observe airway", "negative": "stroke confusion call ambulance immediately"}
+{"query": "child has hives and difficulty breathing", "positive": "pediatric anaphylaxis EpiPen call ambulance", "negative": "minor allergic rash antihistamine and observe"}
+{"query": "swollen lips after eating peanuts", "positive": "food anaphylaxis EpiPen call ambulance sit up", "negative": "local allergic reaction antihistamine and cold compress"}
+{"query": "rash with no other symptoms", "positive": "minor allergic dermatitis antihistamine and cold compress", "negative": "anaphylactic systemic reaction EpiPen call ambulance"}
+{"query": "patient pale cold sweaty and weak", "positive": "shock lay flat raise legs keep warm call ambulance", "negative": "fainting brief loss recovery position monitor"}
+{"query": "severe blood loss with weakness", "positive": "hemorrhagic shock direct pressure tourniquet ambulance", "negative": "fainting from standing too long lay down elevate legs"}
+{"query": "burns over large area of body", "positive": "major burn ambulance keep warm IV fluids in hospital", "negative": "small superficial burn cool water and dressing"}
+{"query": "fingertip burn from hot pan", "positive": "minor burn cool water 10 minutes plaster", "negative": "extensive third degree burn ambulance and IV fluids"}
+{"query": "small cut from kitchen knife not deep", "positive": "minor laceration wash apply pressure cover with bandage", "negative": "deep artery cut tourniquet and ambulance"}
+{"query": "deep stab wound on chest", "positive": "penetrating chest trauma call ambulance do not remove object", "negative": "small surface scratch wash and cover"}
+{"query": "minor abrasion from fall", "positive": "graze wash with soap and water cover", "negative": "deep wound bleeding heavily direct pressure tourniquet"}
+{"query": "head bumped lightly on door", "positive": "minor head bump observe for 24 hours monitor symptoms", "negative": "severe head injury loss of consciousness ambulance"}
+{"query": "lost consciousness briefly after head hit", "positive": "concussion possible call ambulance monitor for vomiting confusion", "negative": "simple bump no symptoms observe at home"}
+{"query": "ear bleeding after head trauma", "positive": "skull base fracture call ambulance do not block ear", "negative": "ear infection drainage antibiotic see doctor"}
+{"query": "vomiting blood after car accident", "positive": "internal trauma ambulance keep airway clear no food", "negative": "stomach upset rest and clear fluids"}
+{"query": "patient cannot move legs after fall", "positive": "spinal injury immobilize do not move ambulance", "negative": "muscle strain rest and ice"}
+{"query": "neck pain after car crash", "positive": "cervical spine injury immobilize call ambulance no movement", "negative": "muscle strain warm compress and rest"}
+{"query": "back pain after fall from height", "positive": "spinal trauma immobilize ambulance flat surface", "negative": "muscle ache stretch and apply heat"}
+{"query": "carbon monoxide poisoning symptoms", "positive": "CO poisoning move to fresh air ambulance CPR if needed", "negative": "common cold flu rest hydration"}
+{"query": "family found unresponsive near gas heater", "positive": "suspected CO toxicity ventilate area ambulance high flow oxygen", "negative": "low blood pressure dehydration oral fluids"}
+{"query": "minor cough and runny nose", "positive": "common cold rest fluids over-the-counter cold remedy", "negative": "respiratory failure ambulance oxygen support"}
+{"query": "minor stomach ache after eating", "positive": "indigestion rest light food monitor", "negative": "abdominal trauma internal bleeding call ambulance"}
+{"query": "minor sore throat from cold", "positive": "viral pharyngitis warm fluids honey rest", "negative": "epiglottitis airway emergency call ambulance"}
+{"query": "skin redness no other symptoms", "positive": "minor irritation wash cool compress observe", "negative": "severe burn third degree call ambulance"}
+{"query": "small bee sting with localized pain", "positive": "minor bee sting scrape stinger cold pack monitor", "negative": "anaphylaxis EpiPen call ambulance lay flat"}
+{"query": "minor dehydration after sports", "positive": "mild dehydration oral rehydration solution rest", "negative": "heat stroke call ambulance cool aggressively"}
+{"query": "small kitchen splash on wrist", "positive": "minor scald cool running water dressing", "negative": "extensive scalding burn ambulance hospital care"}
+{"query": "patient complains of mild fatigue", "positive": "minor tiredness rest hydration sleep schedule", "negative": "sepsis fever altered mental status ambulance"}

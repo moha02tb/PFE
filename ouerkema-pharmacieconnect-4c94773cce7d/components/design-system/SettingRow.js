@@ -78,6 +78,8 @@ export default function SettingRow({
           onValueChange={onSwitchChange}
           thumbColor={colors.textInverse}
           trackColor={{ false: colors.borderStrong, true: colors.primary }}
+          accessibilityLabel={title}
+          accessibilityRole="switch"
         />
       ) : rightLabel ? (
         <AppText variant="bodySmall" color={colors.textSecondary}>
