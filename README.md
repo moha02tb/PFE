@@ -1,98 +1,56 @@
-# PharmacieConnect
+# Pharmacie Connect — PFE Project
 
-Monorepo for the PharmacieConnect platform.
+## Project Structure
 
-## Repository Layout
+| Folder | Role | Port |
+|--------|------|------|
+| `backend_pharmacie/` | FastAPI REST API | 8000 |
+| `mobile/` | Expo React Native app | — |
+| `admin_pharmacie/` | Vite/React admin dashboard | 5173 |
+| `firstaid-ai/` | First aid RAG chatbot service | 8001 |
+| `PFE_Pharmacie_Garde_Teyeb/rapport_pfe/` | LaTeX report | — |
+| `docs/` | Project documentation | — |
+| `scripts/` | QA, screenshot, and dataset scripts | — |
 
-- `backend_pharmacie/` - FastAPI backend, database migrations, and tests
-- `admin_pharmacie/` - React + Vite admin dashboard
-- `ouerkema-pharmacieconnect-4c94773cce7d/` - Expo / React Native mobile app
-- `docs/` - Maintained project documentation
-
-## Start Here
-
-- Project docs: [docs/README.md](./docs/README.md)
-- Getting started: [docs/deployment/getting-started.md](./docs/deployment/getting-started.md)
-- Architecture overview: [docs/architecture/overview.md](./docs/architecture/overview.md)
-- Backend API guide: [docs/api/backend-api.md](./docs/api/backend-api.md)
-- API reference: [docs/api/api-reference.md](./docs/api/api-reference.md)
-- Admin web guide: [docs/deployment/admin-web.md](./docs/deployment/admin-web.md)
-- Mobile app guide: [docs/deployment/mobile-app.md](./docs/deployment/mobile-app.md)
-- Troubleshooting: [docs/deployment/troubleshooting.md](./docs/deployment/troubleshooting.md)
-
-## Documentation
-
-Detailed documentation is organized by topic under `docs/`:
-
-- [Architecture](./docs/architecture/) - system overview, backend architecture, and design system notes
-- [API](./docs/api/) - backend API guide and endpoint reference
-- [Deployment](./docs/deployment/) - local setup, admin web, mobile app, and troubleshooting
-- [Performance](./docs/performance/) - timeout, connectivity, caching, and query optimization notes
-- [Security](./docs/security/) - backend security and FastAPI standards
-- [Testing](./docs/testing/) - contribution workflow, code standards, frontend standards, and mobile fix logs
-- [UML](./docs/uml/) - diagram index and technical diagram reference material
-
-## Development Workflow
+## Quick Start
 
 ### Backend
 
 ```bash
-cd backend_pharmacie
-python -m venv venv
+cd backend_pharmacie && ./start_lan.ps1
 ```
 
-PowerShell:
-
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\venv\Scripts\Activate.ps1
-```
-
-If you prefer not to change the policy in PowerShell, use Command Prompt instead:
-
-```cmd
-.\venv\Scripts\activate.bat
-```
-
-Then install the backend dependencies:
+### First Aid Chatbot
 
 ```bash
-pip install -r requirements.txt
-cp .env.example .env
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+cd firstaid-ai && ./api/start_lan.ps1
 ```
 
-For physical mobile-device testing, the backend must listen on all network
-interfaces. On Windows you can also start it with:
-
-```powershell
-.\start_lan.ps1
-```
-
-### Admin Web
+### Mobile
 
 ```bash
-cd admin_pharmacie
-npm install
-npm.cmd run dev
+cd mobile && npx expo start
 ```
 
-If you want to use PowerShell's npm wrapper, run this first in the same session:
-
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-npm run dev
-```
-
-### Mobile App
+### Admin
 
 ```bash
-cd ouerkema-pharmacieconnect-4c94773cce7d
-npm install
-npm start
+cd admin_pharmacie && npm run dev
 ```
 
-## Notes
+## Chatbot
 
-- The backend defaults to SQLite for local development when `DATABASE_URL` is not set.
-- Production configuration should always set a strong `SECRET_KEY` and an explicit `DATABASE_URL`.
+- 7,542 chunks · 4 languages (EN/FR/AR/Tunisian)
+- 145/145 tests · p95 137ms · $0 cost · 0 external APIs
+- Import: `from rag_pipeline import FirstAidRAG`
+
+## Documentation
+
+Detailed documentation lives under [`docs/`](./docs/):
+
+- [Getting started](./docs/deployment/getting-started.md)
+- [Architecture overview](./docs/architecture/overview.md)
+- [Backend API guide](./docs/api/backend-api.md)
+- [Admin web guide](./docs/deployment/admin-web.md)
+- [Mobile app guide](./docs/deployment/mobile-app.md)
+- [Troubleshooting](./docs/deployment/troubleshooting.md)

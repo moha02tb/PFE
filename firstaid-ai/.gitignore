@@ -1,0 +1,8 @@
+chroma_db/
+__pycache__/
+*.pyc
+*.pyo
+data/firstaid_raw.backup.jsonl
+data/feedback.jsonl
+*.egg-info/
+.env

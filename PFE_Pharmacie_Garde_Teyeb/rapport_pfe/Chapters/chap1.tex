@@ -13,11 +13,12 @@ manière dont le projet a été organisé.
 
 \section{Présentation du domaine pharmaceutique}
 
-Le domaine pharmaceutique ne se limite pas à la vente de médicaments : il participe aussi à la continuité
-des soins, notamment lorsque les pharmacies de garde assurent une disponibilité en dehors des horaires
-ordinaires \cite{cnopt_tableau_garde,cnopt_cropt_gardes}. Dans le cadre de PharmacieConnect, cette réalité métier se traduit par des
-données précises à gérer : pharmacie, adresse, téléphone, gouvernorat, position GPS, date de garde, horaire
-et type de garde.
+Dans ce projet, le domaine pharmaceutique a surtout été abordé à travers une question très pratique :
+comment retrouver une officine disponible lorsque les horaires habituels ne suffisent plus. Les pharmacies
+de garde participent à cette continuité de service \cite{cnopt_tableau_garde,cnopt_cropt_gardes}, mais leur
+utilité dépend fortement de la précision des informations publiées. Pour PharmacieConnect, cela ramène le
+travail à des données concrètes à maîtriser : nom de la pharmacie, adresse, téléphone, gouvernorat, position
+GPS, date, horaire et type de garde.
 
 La valeur de ces données dépend directement de leur actualité. Une pharmacie mal localisée, une date de
 garde incorrecte ou un numéro de téléphone obsolète peut empêcher l'utilisateur de trouver rapidement une
@@ -110,14 +111,16 @@ consultation citoyenne et la gestion opérationnelle des données.
 
 \section{Analyse du marché et solutions existantes}
 
-Pour situer PharmacieConnect, plusieurs familles de solutions ont été comparées. Le Conseil National de
-l'Ordre des Pharmaciens de Tunisie constitue une source institutionnelle liée à l'organisation de la
-profession \cite{cnopt}. Des annuaires médicaux comme Med.tn publient des informations pratiques sur les
-pharmacies de garde \cite{medtn}. Les solutions cartographiques, telles que Google Maps et OpenStreetMap,
-facilitent la localisation d'une pharmacie, mais elles ne constituent pas un outil métier de planification
-des gardes ni de validation des imports \cite{googlemaps,openstreetmap}. Enfin, l'application Apothicare,
-associée au Conseil national de l'ordre des pharmaciens de Tunisie, illustre l'intérêt d'un accès mobile aux
-pharmacies ouvertes ou de garde \cite{apothicare}.
+Pour situer PharmacieConnect, la comparaison n'a pas porté uniquement sur l'existence d'une carte ou d'une
+liste de pharmacies. Nous avons surtout regardé ce que chaque solution permet réellement de faire lorsqu'une
+donnée doit être cherchée, corrigée ou contrôlée. Les sources institutionnelles, comme le Conseil National
+de l'Ordre des Pharmaciens de Tunisie, donnent un cadre fiable pour l'organisation de la profession
+\cite{cnopt}. Les annuaires médicaux, dont Med.tn, rendent certaines informations plus accessibles au public
+\cite{medtn}. Les services cartographiques, tels que Google Maps et OpenStreetMap, aident à localiser une
+adresse, mais ne traitent pas la planification des gardes ni la validation des fichiers importés
+\cite{googlemaps,openstreetmap}. L'application Apothicare montre enfin l'intérêt d'un accès mobile aux
+pharmacies ouvertes ou de garde \cite{apothicare}, même si l'enjeu de gestion interne reste à analyser selon
+les informations disponibles.
 
 La comparaison suivante reste fonctionnelle : elle évalue les capacités observables ou annoncées par les
 solutions citées. Lorsque l'information n'est pas confirmée par une source publique, la mention doit être
@@ -157,9 +160,9 @@ peut devenir incohérente sans que l'origine de l'erreur soit identifiable.
 
 \section{Solution proposée : PharmacieConnect}
 
-\textbf{PharmacieConnect} est proposée comme une réponse intégrée aux limites observées. La solution est
-structurée autour de trois composants principaux, auxquels s'ajoute un assistant conversationnel de premiers
-secours intégré au parcours mobile :
+\textbf{PharmacieConnect} a donc été pensée comme une réponse progressive aux limites observées. Plutôt que
+de séparer la consultation et la gestion, le projet regroupe les deux dans une même chaîne technique, avec un
+assistant de premiers secours ajouté au parcours mobile :
 
 \begin{itemize}
     \item une API backend FastAPI qui centralise les données, gère l'authentification, applique les règles
@@ -172,12 +175,12 @@ secours intégré au parcours mobile :
     l'assistant de premiers secours.
 \end{itemize}
 
-Cette organisation répond aux limites relevées dans l'existant : dispersion des informations, difficulté de
-mise à jour, absence de traçabilité et manque de séparation entre consultation publique et gestion
-administrative. Les données sont centralisées dans le backend, les accès sont contrôlés selon les rôles et
-les interfaces sont adaptées aux deux usages principaux : la consultation mobile et l'administration. L'assistant
-ajoute un usage complémentaire en orientant l'utilisateur vers des réponses prudentes de premiers secours,
-sans remplacer un professionnel de santé ni les services d'urgence.
+Cette organisation répond surtout à deux difficultés rencontrées dans l'existant : l'information est parfois
+accessible, mais sa mise à jour et son contrôle restent peu visibles. Dans notre solution, le backend garde
+la maîtrise des données et des droits, tandis que les interfaces se concentrent chacune sur son usage :
+consultation rapide côté citoyen, correction et suivi côté administration. L'assistant ajoute une aide
+complémentaire, volontairement prudente, sans prétendre remplacer un professionnel de santé ni les services
+d'urgence.
 
 \section{Objectifs}
 

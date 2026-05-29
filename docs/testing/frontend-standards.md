@@ -36,7 +36,7 @@ admin_pharmacie/
 
 ### Mobile Structure
 ```
-ouerkema-pharmacieconnect-4c94773cce7d/
+mobile/
 ├── components/          # Reusable components
 ├── screens/             # Screen components (pages)
 ├── hooks/               # Custom hooks
@@ -64,7 +64,7 @@ All code must be formatted with **Prettier** (print width: 100):
 cd admin_pharmacie && prettier --write src/
 
 # Mobile
-cd ouerkema-pharmacieconnect-4c94773cce7d && prettier --write .
+cd mobile && prettier --write .
 ```
 
 **Key rules**:

@@ -15,7 +15,6 @@ import L from 'leaflet';
 import api from '../lib/api';
 import { Badge, Button, EmptyState, Input } from '../components/ui';
 import { useLanguage } from '../context/LanguageContext';
-import { getPharmacyOpenStatus } from '../lib/pharmacySchedule';
 
 const TUNISIA_CENTER = [34.2, 9.5];
 const TUNISIA_BOUNDS = [
@@ -94,30 +93,34 @@ const PREVIEW_PHARMACIES = [
 const STATUS_STYLES = {
   all: {
     label: 'All',
-    color: '#2563EB',
+    color: '#F59E0B', // amber, used for the "selected" marker so it stands out from base colors
     badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
   },
   open: {
-    color: '#059669',
+    color: '#10B981',
     badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+    label: 'Ouverte',
   },
   garde: {
-    color: '#F97316',
-    badge: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+    color: '#2563EB',
+    badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+    label: 'Garde',
   },
   night: {
     color: '#7C3AED',
     badge: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+    label: 'Nuit',
   },
   closed: {
     color: '#DC2626',
     badge: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+    label: 'Fermée',
   },
 };
 
 const FALLBACK_STATUS = {
   isOpen: false,
-  label: 'Unknown',
+  label: 'Fermée',
   statusType: 'closed',
   color: '#DC2626',
 };
@@ -179,15 +182,22 @@ const normalizePharmacy = (pharmacy) => {
   };
 };
 
+// Derive the effective status from the backend fields `is_open` and `pharmacy_type`.
+// Effective statusType is what drives marker color and the row badge:
+//   closed → red, open garde → blue, open nuit → purple, open regular → green.
 const getSafePharmacyStatus = (pharmacy) => {
-  try {
-    const status = getPharmacyOpenStatus(pharmacy);
-    if (!status || !STATUS_STYLES[status.statusType]) return FALLBACK_STATUS;
-    return status;
-  } catch (err) {
-    console.error('getPharmacyOpenStatus failed for map pharmacy:', pharmacy, err);
-    return FALLBACK_STATUS;
+  if (!pharmacy) return FALLBACK_STATUS;
+  const isOpen = pharmacy.is_open === true;
+  if (!isOpen) {
+    return { isOpen: false, label: STATUS_STYLES.closed.label, statusType: 'closed', color: STATUS_STYLES.closed.color };
   }
+  if (pharmacy.pharmacy_type === 'garde') {
+    return { isOpen: true, label: STATUS_STYLES.garde.label, statusType: 'garde', color: STATUS_STYLES.garde.color };
+  }
+  if (pharmacy.pharmacy_type === 'nuit') {
+    return { isOpen: true, label: STATUS_STYLES.night.label, statusType: 'night', color: STATUS_STYLES.night.color };
+  }
+  return { isOpen: true, label: STATUS_STYLES.open.label, statusType: 'open', color: STATUS_STYLES.open.color };
 };
 
 const MapBridge = ({ mapRef, pharmacies, selectedPharmacy }) => {
@@ -386,30 +396,51 @@ const MapPage = () => {
     [pharmacies]
   );
 
-  const statusCounts = useMemo(
-    () =>
-      enrichedPharmacies.reduce(
-        (counts, pharmacy) => ({
-          ...counts,
-          [pharmacy.status.statusType]: (counts[pharmacy.status.statusType] || 0) + 1,
-        }),
-        { all: enrichedPharmacies.length, open: 0, garde: 0, night: 0, closed: 0 }
-      ),
-    [enrichedPharmacies]
-  );
+  // Counts use the explicit backend fields. NOTE garde/night counts are
+  // currently-open-only (matches the user-visible "X are on call right now"
+  // semantic). The filter buttons below use a broader "all of this type" rule
+  // — clicking NIGHT or GARDE may surface more rows than the chip number
+  // when no pharmacy of that type is currently open.
+  const statusCounts = useMemo(() => {
+    const total = enrichedPharmacies.length;
+    const open = enrichedPharmacies.filter((p) => p.is_open === true).length;
+    const garde = enrichedPharmacies.filter(
+      (p) => p.pharmacy_type === 'garde' && p.is_open === true
+    ).length;
+    const night = enrichedPharmacies.filter(
+      (p) => p.pharmacy_type === 'nuit' && p.is_open === true
+    ).length;
+    const closed = enrichedPharmacies.filter((p) => p.is_open === false).length;
+    return { all: total, open, garde, night, closed };
+  }, [enrichedPharmacies]);
 
   const filteredPharmacies = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
+    const matchesStatusFilter = (pharmacy) => {
+      switch (statusFilter) {
+        case 'open':
+          return pharmacy.is_open === true;
+        case 'garde':
+          return pharmacy.pharmacy_type === 'garde';
+        case 'night':
+          return pharmacy.pharmacy_type === 'nuit';
+        case 'closed':
+          return pharmacy.is_open === false;
+        case 'all':
+        default:
+          return true;
+      }
+    };
+
     return enrichedPharmacies.filter((pharmacy) => {
-      const matchesStatus = statusFilter === 'all' || pharmacy.status.statusType === statusFilter;
       const matchesQuery =
         !normalizedQuery ||
         [pharmacy.name, pharmacy.address, pharmacy.governorate, pharmacy.phone]
           .filter(Boolean)
           .some((value) => value.toLowerCase().includes(normalizedQuery));
 
-      return matchesStatus && matchesQuery;
+      return matchesStatusFilter(pharmacy) && matchesQuery;
     });
   }, [enrichedPharmacies, query, statusFilter]);
 
@@ -495,7 +526,7 @@ const MapPage = () => {
             </div>
             <div className="rounded-lg border border-border bg-surface-muted p-3">
               <p className="text-[0.625rem] font-bold uppercase text-muted-foreground">{t('map.onCallGarde')}</p>
-              <p className="mt-1 font-display text-xl font-bold text-orange-600">{statusCounts.garde + statusCounts.night}</p>
+              <p className="mt-1 font-display text-xl font-bold text-blue-600">{statusCounts.garde}</p>
             </div>
           </div>
         </div>

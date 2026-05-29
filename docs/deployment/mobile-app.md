@@ -10,7 +10,7 @@
 ## Commands
 
 ```bash
-cd ouerkema-pharmacieconnect-4c94773cce7d
+cd mobile
 npm install
 npm start
 npm run android

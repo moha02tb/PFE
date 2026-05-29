@@ -34,11 +34,11 @@ lecture ou écriture persistante.
 
 \section{Backend FastAPI}
 
-Le backend s'appuie sur FastAPI pour exposer les endpoints REST et organiser le traitement des requêtes
-\cite{fastapi}. Sa structure sépare les routes HTTP, les services métier, les modèles de données et les
-schémas de validation. Cette séparation correspond aux besoins réels du projet : les imports CSV, les
-gardes, les médicaments, les restrictions régionales et l'audit peuvent évoluer côté serveur sans imposer
-une réécriture directe des écrans web ou mobiles.
+Le choix de FastAPI vient principalement du rôle confié au backend dans PharmacieConnect : exposer des
+endpoints REST, valider les échanges et garder les règles sensibles côté serveur \cite{fastapi}. Nous avons
+séparé les routes HTTP, les services métier, les modèles de données et les schémas de validation afin que les
+imports CSV, les gardes, les médicaments, les restrictions régionales et l'audit puissent évoluer sans
+entraîner une réécriture directe des écrans web ou mobiles.
 
 \begin{table}[H]
     \centering
@@ -64,11 +64,10 @@ nécessaires avant l'accès à la base via SQLAlchemy.
 
 \section{Tableau de bord React/Vite}
 
-Côté administration, React et Vite ont été utilisés pour construire une interface web modulaire
-\cite{react,vite}. Les pages, les composants réutilisables, les contextes applicatifs et le client API
-centralisé y sont séparés afin de garder une organisation cohérente côté frontend. Cette organisation
-répond aux opérations fréquentes du tableau de bord : consulter les registres, importer des fichiers,
-corriger les données et suivre les actions sensibles.
+Côté administration, React et Vite ont été retenus pour construire une interface que l'on peut faire évoluer
+page par page \cite{react,vite}. Dans notre cas, cette modularité est utile parce que le tableau de bord ne
+sert pas seulement à afficher des informations : il doit aussi permettre de corriger les registres,
+d'importer des fichiers, de vérifier des indicateurs et de suivre les actions sensibles.
 
 \begin{table}[H]
     \centering
@@ -92,10 +91,10 @@ expire.
 
 \section{Application mobile Expo/React Native}
 
-Pour la partie mobile, Expo et React Native offrent une base adaptée aux écrans destinés au citoyen
-\cite{expo,reactnative}. L'organisation de l'application suit les parcours attendus par l'utilisateur final :
-recherche d'une pharmacie, carte, calendrier de garde, catalogue de médicaments, authentification,
-paramètres et assistant de premiers secours.
+Pour la partie mobile, Expo et React Native ont été choisis afin de développer rapidement des écrans centrés
+sur le parcours citoyen \cite{expo,reactnative}. L'organisation retenue suit les actions que l'utilisateur
+réalise réellement dans l'application : chercher une pharmacie, ouvrir la carte, choisir une date de garde,
+consulter un médicament, gérer son compte ou accéder à l'assistant de premiers secours.
 
 \begin{table}[H]
     \centering
@@ -119,9 +118,10 @@ logique dans plusieurs parties de l'application.
 
 \section{Modèle de données}
 
-Le modèle de données est défini avec SQLAlchemy \cite{sqlalchemy}. Les entités principales utilisées par le
-backend sont résumées dans le tableau suivant. Elles traduisent les objets manipulés par PharmacieConnect :
-comptes, pharmacies, gardes, médicaments, sessions, tentatives de connexion, recherches et audit.
+Le modèle de données a été construit avec SQLAlchemy \cite{sqlalchemy} à partir des objets réellement
+manipulés par l'application. Le tableau suivant ne cherche donc pas à donner une définition générale de ces
+entités ; il précise plutôt comment PharmacieConnect organise les comptes, les pharmacies, les gardes, les
+médicaments, les sessions, les tentatives de connexion, les recherches et l'audit.
 
 \begin{longtable}{L{4cm}L{10cm}}
     \caption{Entités principales du modèle de données\\ \small Source : Auteur}\\
@@ -234,11 +234,11 @@ backend, la base de données et la configuration.
 \section{Sécurité}
 \label{sec:securite}
 
-La sécurité est traitée au niveau du backend, car les règles d'accès ne doivent pas dépendre uniquement des
-interfaces clientes. Les mécanismes retenus s'appuient sur les recommandations OWASP pour la protection des
-API~\cite{owasp} et couvrent l'ensemble du cycle de vie d'une requête : authentification, autorisation,
-validation des données, journalisation et configuration du déploiement. Dans PharmacieConnect, cette
-centralisation protège particulièrement les routes d'administration, les imports CSV, les restrictions
+Dans PharmacieConnect, la sécurité a été placée au niveau du backend, car une règle appliquée uniquement
+dans l'interface pourrait être contournée par un appel direct à l'API. Les mécanismes retenus s'inspirent des
+recommandations OWASP pour la protection des API~\cite{owasp} et couvrent les étapes sensibles d'une
+requête : authentification, autorisation, validation des données, journalisation et configuration du
+déploiement. Ce choix protège particulièrement les routes d'administration, les imports CSV, les restrictions
 régionales et les journaux d'audit.
 
 \subsection{Authentification JWT et gestion des sessions}
@@ -327,13 +327,13 @@ Pour un déploiement en production, les mesures complémentaires recommandées s
     \textbf{Choix} & \textbf{Justification} \\
     \midrule
     \endhead
-    FastAPI & Utilisé pour exposer les endpoints publics et protégés, valider les requêtes et produire une documentation API exploitable pendant les tests \cite{fastapi}. \\
-    React et Vite & Utilisés pour structurer le tableau de bord administrateur, avec des pages séparées pour les pharmacies, les gardes, les médicaments, l'audit et les paramètres \cite{react,vite}. \\
-    Expo et React Native & Utilisés pour construire l'application mobile avec les écrans de recherche, carte, calendrier, médicaments, profil et assistant \cite{expo,reactnative}. \\
-    SQLAlchemy & Utilisé pour représenter les entités métier et isoler l'accès aux tables dans les services backend \cite{sqlalchemy}. \\
+    FastAPI & Retenu pour concentrer les endpoints publics et protégés dans un backend testable, avec validation des requêtes et documentation API utile pendant les essais \cite{fastapi}. \\
+    React et Vite & Retenus pour structurer le tableau de bord par pages fonctionnelles : pharmacies, gardes, médicaments, audit et paramètres \cite{react,vite}. \\
+    Expo et React Native & Retenus pour réaliser les écrans mobiles liés au parcours citoyen : recherche, carte, calendrier, médicaments, profil et assistant \cite{expo,reactnative}. \\
+    SQLAlchemy & Retenu pour représenter les entités métier du projet et garder l'accès aux tables dans les services backend \cite{sqlalchemy}. \\
     SQLite et PostgreSQL & SQLite facilite la validation locale, tandis que PostgreSQL reste plus adapté à un déploiement avec connexions concurrentes \cite{postgresql}. \\
-    JWT & Utilisé pour séparer un jeton d'accès court et un jeton de rafraîchissement, afin de protéger les routes administratives et les comptes utilisateurs \cite{jwt}. \\
-    CSV & Utilisé comme format d'import pour les pharmacies, les gardes et les médicaments, avec validation des colonnes et retour des erreurs. \\
+    JWT & Retenu pour séparer un jeton d'accès court et un jeton de rafraîchissement, afin de protéger les routes administratives et les comptes utilisateurs \cite{jwt}. \\
+    CSV & Retenu comme format d'import pragmatique pour les pharmacies, les gardes et les médicaments, avec validation des colonnes et retour des erreurs. \\
     \bottomrule
 \end{longtable}
 

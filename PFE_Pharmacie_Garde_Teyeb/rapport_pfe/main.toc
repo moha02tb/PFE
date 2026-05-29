@@ -46,7 +46,7 @@
 \contentsline {section}{\numberline {3.2}Architecture globale}{18}{section.3.2}%
 \contentsline {section}{\numberline {3.3}Backend FastAPI}{18}{section.3.3}%
 \contentsline {section}{\numberline {3.4}Tableau de bord React/Vite}{19}{section.3.4}%
-\contentsline {section}{\numberline {3.5}Application mobile Expo/React Native}{20}{section.3.5}%
+\contentsline {section}{\numberline {3.5}Application mobile Expo/React Native}{19}{section.3.5}%
 \contentsline {section}{\numberline {3.6}Modèle de données}{20}{section.3.6}%
 \contentsline {section}{\numberline {3.7}Diagramme de classes}{21}{section.3.7}%
 \contentsline {section}{\numberline {3.8}Diagrammes de séquence}{21}{section.3.8}%
@@ -89,26 +89,26 @@
 \contentsline {subsection}{\numberline {4.8.4}API et intégration avec l'application mobile}{37}{subsection.4.8.4}%
 \contentsline {subsection}{\numberline {4.8.5}Tests et validation}{37}{subsection.4.8.5}%
 \contentsline {section}{\numberline {4.9}Captures d'écran}{37}{section.4.9}%
-\contentsline {section}{\numberline {4.10}Intégration API}{43}{section.4.10}%
-\contentsline {section}{\numberline {4.11}Déploiement et configuration}{43}{section.4.11}%
-\contentsline {section}{\numberline {4.12}Tests unitaires, API et manuels}{44}{section.4.12}%
-\contentsline {subsection}{\numberline {4.12.1}Stratégie de test}{44}{subsection.4.12.1}%
-\contentsline {subsection}{\numberline {4.12.2}Résultats de validation automatisée}{45}{subsection.4.12.2}%
-\contentsline {subsection}{\numberline {4.12.3}Tests automatisés du backend}{45}{subsection.4.12.3}%
-\contentsline {subsection}{\numberline {4.12.4}Tests API}{45}{subsection.4.12.4}%
-\contentsline {subsection}{\numberline {4.12.5}Validation du déploiement local}{46}{subsection.4.12.5}%
-\contentsline {subsection}{\numberline {4.12.6}Validation fonctionnelle}{46}{subsection.4.12.6}%
-\contentsline {section}{\numberline {4.13}Difficultés rencontrées et solutions adoptées}{46}{section.4.13}%
-\contentsline {section}{\numberline {4.14}Conclusion}{47}{section.4.14}%
-\contentsline {chapter}{Conclusion générale}{48}{chapter*.54}%
-\contentsline {section}{Bilan}{48}{section*.55}%
-\contentsline {section}{Résultats obtenus}{48}{section*.56}%
-\contentsline {section}{Limites}{48}{section*.57}%
-\contentsline {section}{Apport personnel}{49}{section*.58}%
-\contentsline {section}{Perspectives}{49}{section*.59}%
-\contentsline {chapter}{\numberline {A}Annexes}{50}{appendix.A}%
-\contentsline {section}{\numberline {A.1}Descriptions complémentaires des cas d'utilisation}{50}{section.A.1}%
-\contentsline {section}{\numberline {A.2}Commandes de lancement}{50}{section.A.2}%
-\contentsline {section}{\numberline {A.3}Commandes de test}{51}{section.A.3}%
-\contentsline {section}{\numberline {A.4}Exemples CSV}{51}{section.A.4}%
-\contentsline {chapter}{Bibliographie}{53}{section*.70}%
+\contentsline {section}{\numberline {4.10}Intégration API}{44}{section.4.10}%
+\contentsline {section}{\numberline {4.11}Déploiement et configuration}{44}{section.4.11}%
+\contentsline {section}{\numberline {4.12}Tests unitaires, API et manuels}{45}{section.4.12}%
+\contentsline {subsection}{\numberline {4.12.1}Stratégie de test}{45}{subsection.4.12.1}%
+\contentsline {subsection}{\numberline {4.12.2}Résultats de validation automatisée}{46}{subsection.4.12.2}%
+\contentsline {subsection}{\numberline {4.12.3}Tests automatisés du backend}{46}{subsection.4.12.3}%
+\contentsline {subsection}{\numberline {4.12.4}Tests API}{46}{subsection.4.12.4}%
+\contentsline {subsection}{\numberline {4.12.5}Validation du déploiement local}{47}{subsection.4.12.5}%
+\contentsline {subsection}{\numberline {4.12.6}Validation fonctionnelle}{47}{subsection.4.12.6}%
+\contentsline {section}{\numberline {4.13}Difficultés rencontrées et solutions adoptées}{47}{section.4.13}%
+\contentsline {section}{\numberline {4.14}Conclusion}{48}{section.4.14}%
+\contentsline {chapter}{Conclusion générale}{49}{chapter*.55}%
+\contentsline {section}{Bilan}{49}{section*.56}%
+\contentsline {section}{Résultats obtenus}{49}{section*.57}%
+\contentsline {section}{Limites}{49}{section*.58}%
+\contentsline {section}{Apport personnel}{50}{section*.59}%
+\contentsline {section}{Perspectives}{50}{section*.60}%
+\contentsline {chapter}{\numberline {A}Annexes}{51}{appendix.A}%
+\contentsline {section}{\numberline {A.1}Descriptions complémentaires des cas d'utilisation}{51}{section.A.1}%
+\contentsline {section}{\numberline {A.2}Commandes de lancement}{51}{section.A.2}%
+\contentsline {section}{\numberline {A.3}Commandes de test}{52}{section.A.3}%
+\contentsline {section}{\numberline {A.4}Exemples CSV}{52}{section.A.4}%
+\contentsline {chapter}{Bibliographie}{54}{section*.71}%

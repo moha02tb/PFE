@@ -61,14 +61,14 @@ pharmacies = db.query(models.Pharmacie)
 ```
 
 ### 2. ✅ API Timeout Increased
-**File**: `ouerkema-pharmacieconnect-4c94773cce7d/config/api.js`
+**File**: `mobile/config/api.js`
 
 **Change**:
 - Increased timeout from **10 seconds → 30 seconds**
 - This gives the optimized backend query more time to complete
 
 ### 3. ✅ Retry Logic Added
-**File**: `ouerkema-pharmacieconnect-4c94773cce7d/utils/pharmacyDataLoader.js`
+**File**: `mobile/utils/pharmacyDataLoader.js`
 
 **New Feature**: Exponential backoff retry mechanism
 - Automatically retries failed requests up to 3 times

@@ -65,6 +65,6 @@ Response shape:
   the sentence-transformers model is downloaded once on first init.
 - No auth — first-aid info is intentionally public.
 - The mobile app config is in
-  [../../ouerkema-pharmacieconnect-4c94773cce7d/config/api.js](../../ouerkema-pharmacieconnect-4c94773cce7d/config/api.js)
+  [../../mobile/config/api.js](../../mobile/config/api.js)
   (`CHATBOT_API_PORT = '8001'`). Override per-environment with
   `EXPO_PUBLIC_CHATBOT_API_URL`.

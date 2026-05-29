@@ -74,3 +74,15 @@ logs/
 .eas-tmp/
 skills-lock.json
 tmp/
+
+# LaTeX build artifacts (outside rapport_pfe/)
+*.aux
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.xdv
+
+# Large generated data
+firstaid-ai/chroma_db/
+firstaid_dataset_v2/*
+!firstaid_dataset_v2/README.md

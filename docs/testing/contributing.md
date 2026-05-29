@@ -74,7 +74,7 @@ npm run dev
 ### Mobile Setup
 
 ```bash
-cd ouerkema-pharmacieconnect-4c94773cce7d
+cd mobile
 
 # Install dependencies
 npm install
@@ -149,7 +149,7 @@ pre-commit run --all-files
 
 **Mobile**:
 ```bash
-cd ouerkema-pharmacieconnect-4c94773cce7d
+cd mobile
 
 # Format code
 prettier --write .
@@ -215,7 +215,7 @@ cd backend_pharmacie && black . && isort .
 cd admin_pharmacie && prettier --write src/
 
 # Mobile
-cd ouerkema-pharmacieconnect-4c94773cce7d && prettier --write .
+cd mobile && prettier --write .
 ```
 
 ---
@@ -398,7 +398,7 @@ prettier --write src/
 ### Mobile
 
 ```bash
-cd ouerkema-pharmacieconnect-4c94773cce7d
+cd mobile
 
 # Start
 npm start

@@ -1,21 +1,21 @@
 Ce projet de fin d'études présente la conception et la réalisation de \textbf{PharmacieConnect}, une
-plateforme web et mobile dédiée à la recherche de pharmacies, à la consultation des pharmacies de garde
-et à l'administration des données pharmaceutiques. L'idée du projet part d'un besoin concret : les
-informations sur les pharmacies de garde sont souvent éparpillées, difficiles à mettre à jour et pas
-toujours pratiques à consulter depuis un téléphone.
+plateforme web et mobile liée aux pharmacies de garde en Tunisie. L'idée de départ est simple, mais elle
+devient vite délicate dans la pratique : le citoyen doit trouver une information fiable au bon moment, tandis
+que l'administration doit pouvoir corriger les pharmacies, les plannings de garde et les données associées
+sans perdre le contrôle sur leur qualité.
 
-Pour répondre à ce besoin, la solution a été organisée autour de trois parties. Le backend, développé avec
-\textbf{FastAPI}, centralise les données, expose des API REST et applique les règles métier. Il assure aussi
-la sécurité des accès grâce à une authentification par jetons JWT. Le tableau de bord administrateur,
-réalisé avec \textbf{React} et \textbf{Vite}, permet de gérer les pharmacies, les plannings de garde, les
-médicaments, les utilisateurs autorisés, les imports CSV, les indicateurs et les journaux d'audit.
-L'application mobile, développée avec \textbf{Expo} et \textbf{React Native}, permet au citoyen de rechercher
-une pharmacie, de consulter les gardes par date, d'utiliser la géolocalisation et d'accéder au catalogue
-des médicaments.
+Dans notre cas, cette contrainte a orienté la solution vers deux usages complémentaires : la consultation
+mobile et la gestion sécurisée des données. Le backend, développé avec \textbf{FastAPI}, centralise les
+données, les endpoints REST et les règles métier, avec une authentification par jetons JWT. Le tableau de
+bord \textbf{React}/\textbf{Vite} aide les utilisateurs autorisés à suivre et modifier les pharmacies, les
+plannings de garde, les médicaments, les imports CSV, les indicateurs et les journaux d'audit. L'application
+mobile, réalisée avec \textbf{Expo} et \textbf{React Native}, reprend les besoins côté citoyen : recherche par
+texte, consultation par date, géolocalisation et catalogue des médicaments.
 
-Le travail réalisé couvre également plusieurs aspects de génie logiciel : modélisation des données avec
-SQLAlchemy, validation des entrées, contrôle des rôles, journalisation des actions sensibles, tests
-backend et séparation claire entre les interfaces clientes, les services métier et la couche de persistance.
+Le travail réalisé ne s'est pas limité aux interfaces. Il a aussi demandé un effort de modélisation avec
+SQLAlchemy, de validation des entrées, de contrôle des rôles, de journalisation des actions sensibles et de
+tests backend. Cette séparation entre interfaces clientes, services métier et persistance a rendu les
+corrections plus maîtrisables pendant la réalisation.
 
 \textbf{Mots-clés :} pharmacie de garde, FastAPI, React, Vite, Expo, React Native, JWT, API REST,
 SQLAlchemy, tableau de bord, application mobile.

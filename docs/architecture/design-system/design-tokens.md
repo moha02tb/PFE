@@ -464,7 +464,7 @@ const theme = createTheme(isDarkMode);
 - [ ] Refactor all components to use token-based classes
 - [ ] Test light and dark mode with token colors
 
-### Mobile App (ouerkema-pharmacieconnect-4c94773cce7d)
+### Mobile App (mobile)
 
 - [ ] Update `constants/tokens.js` color exports to match unified palette
 - [ ] Update `utils/colors.js`, `utils/typography.js`, `utils/spacing.js`

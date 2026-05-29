@@ -119,7 +119,7 @@ npm install
 npx pre-commit install
 
 # Mobile
-cd ouerkema-pharmacieconnect-4c94773cce7d
+cd mobile
 npm install
 npx pre-commit install
 ```
@@ -144,7 +144,7 @@ npm run lint
 
 **Mobile**:
 ```bash
-cd ouerkema-pharmacieconnect-4c94773cce7d
+cd mobile
 prettier --check .
 eslint .
 npm run lint

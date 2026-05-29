@@ -39,11 +39,11 @@ interface web d'administration et une application mobile.
 
 \section{Technologies utilisées}
 
-Les choix techniques ont été retenus en fonction des responsabilités de chaque partie du système. Le
-backend devait exposer des routes REST structurées, contrôler les accès et centraliser les règles métier.
-L'administration web devait offrir une gestion rapide des pharmacies, gardes, imports et journaux d'audit.
-L'application mobile devait rester utilisable dans un parcours citoyen court : rechercher, filtrer,
-localiser et consulter les informations essentielles.
+Les choix techniques ont été arrêtés à partir des responsabilités observées pendant la réalisation. Le
+backend devait rester le point de contrôle des routes REST, des accès et des règles métier. L'administration
+web devait rendre les opérations répétées assez rapides pour corriger des pharmacies, des gardes, des
+imports ou des journaux d'audit. L'application mobile, de son côté, devait garder un parcours court :
+chercher, filtrer, localiser et consulter l'information utile sans multiplier les écrans.
 
 \begin{longtable}{L{4cm}L{10cm}}
     \caption{Technologies utilisées dans le projet -- Source : Auteur}\\
@@ -131,9 +131,9 @@ clients et le backend.
 
 \section{Réalisation backend}
 
-Le backend constitue la partie centrale de PharmacieConnect. Il reçoit les requêtes des deux interfaces,
-applique les règles métier et interagit avec la base de données. Il regroupe également les mécanismes
-d'authentification, de validation, d'audit et d'import.
+Dans la réalisation, le backend est devenu le point de passage obligatoire entre les interfaces et la base de
+données. Cette position lui permet de recevoir les requêtes web et mobiles, d'appliquer les règles métier et
+de garder au même endroit l'authentification, la validation, l'audit et les imports.
 
 \subsection{Endpoints publics}
 
@@ -229,8 +229,9 @@ vers la page de connexion.
 
 \section{Réalisation application mobile}
 
-L'application mobile correspond à la partie utilisée par le citoyen. Elle regroupe la recherche, la
-consultation des gardes, la carte, le catalogue de médicaments et les paramètres.
+L'application mobile correspond au parcours le plus visible pour le citoyen. Nous l'avons organisée autour
+des usages les plus directs : rechercher une pharmacie, consulter les gardes, ouvrir la carte, parcourir le
+catalogue de médicaments et ajuster quelques paramètres.
 
 \subsection{Recherche et détail des pharmacies}
 
@@ -470,6 +471,13 @@ administrateur et pour l'application mobile.
 
 \begin{figure}[H]
     \centering
+    \includegraphics[width=\textwidth,height=0.72\textheight,keepaspectratio]{admin-monitoring.png}
+    \caption{Centre de monitoring de la plateforme -- Source : Auteur}
+    \label{fig:screenshot-admin-monitoring}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
     \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\textwidth,height=0.62\textheight,keepaspectratio]{mobile-login.jpeg}
@@ -535,8 +543,9 @@ définis.
 
 \section{Déploiement et configuration}
 
-La configuration du backend repose sur des variables d'environnement. Cette approche sépare le code des
-valeurs qui changent selon l'environnement, comme la base de données ou les clés de sécurité.
+La configuration du backend a été externalisée dans des variables d'environnement. Dans notre cas, cela évite
+de mélanger le code applicatif avec des valeurs qui changent selon le contexte d'exécution, comme la base de
+données, les origines autorisées ou les clés de sécurité.
 
 \begin{table}[H]
     \centering

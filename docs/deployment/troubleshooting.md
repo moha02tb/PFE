@@ -14,7 +14,7 @@
 
 ## Mobile App Cannot Reach API
 
-- Check `ouerkema-pharmacieconnect-4c94773cce7d/config/api.js`
+- Check `mobile/config/api.js`
 - If using a physical device, make sure the API host is reachable from the same network
 - Confirm backend CORS and trusted hosts include the development origin when needed
 

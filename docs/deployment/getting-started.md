@@ -33,7 +33,7 @@ Default Vite URL: `http://127.0.0.1:5173`
 ## Mobile App Setup
 
 ```bash
-cd ouerkema-pharmacieconnect-4c94773cce7d
+cd mobile
 npm install
 npm start
 ```
@@ -48,10 +48,10 @@ Useful commands:
 
 1. Start `backend_pharmacie`
 2. Start `admin_pharmacie`
-3. Start `ouerkema-pharmacieconnect-4c94773cce7d`
+3. Start `mobile`
 
 ## Environment Notes
 
 - `backend_pharmacie/.env.example` documents backend environment variables.
 - `FRONTEND_URL` should match the admin dashboard origin during local development.
-- Mobile API configuration is managed from `ouerkema-pharmacieconnect-4c94773cce7d/config/api.js`.
+- Mobile API configuration is managed from `mobile/config/api.js`.
