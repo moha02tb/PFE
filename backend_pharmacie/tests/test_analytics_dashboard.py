@@ -3,8 +3,8 @@ from datetime import datetime, timedelta, timezone
 
 import models
 import schemas
-from main import search_pharmacies
 from routers import analytics
+from routers.pharmacies import search_pharmacies
 
 
 def test_create_search_event_public_endpoint(test_db):
