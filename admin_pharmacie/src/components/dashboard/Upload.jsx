@@ -1,7 +1,7 @@
-import React from 'react';
+import PropTypes from 'prop-types';
 import { mainContentStyles, cardStyles, buttonStyles, fileUploadStyles, summaryStyles } from '../../styles/dashboard.styles';
 
-const Upload = ({ uploadedFiles, setUploadedFiles, dragActive, setDragActive, handleDrag, handleDrop, onStartGeocoding }) => {
+const Upload = ({ uploadedFiles, dragActive, handleDrag, handleDrop, onStartGeocoding }) => {
   return (
     <div style={mainContentStyles.mainContent}>
       {/* Page Header */}
@@ -71,7 +71,7 @@ const Upload = ({ uploadedFiles, setUploadedFiles, dragActive, setDragActive, ha
       {/* Import Summary */}
       {uploadedFiles.length > 0 && (
         <div style={{ ...cardStyles.card, marginTop: '24px', borderTop: '4px solid #10b981' }}>
-          <h2 style={cardStyles.cardTitle}>Résumé de l'Import</h2>
+          <h2 style={cardStyles.cardTitle}>Résumé de l&apos;Import</h2>
           <div style={summaryStyles.summaryGrid}>
             <div style={summaryStyles.summaryItem}>
               <span style={summaryStyles.summaryLabel}>Fichiers Téléchargés</span>
@@ -102,6 +102,14 @@ const Upload = ({ uploadedFiles, setUploadedFiles, dragActive, setDragActive, ha
       )}
     </div>
   );
+};
+
+Upload.propTypes = {
+  uploadedFiles: PropTypes.array,
+  dragActive: PropTypes.bool,
+  handleDrag: PropTypes.func,
+  handleDrop: PropTypes.func,
+  onStartGeocoding: PropTypes.func,
 };
 
 export default Upload;

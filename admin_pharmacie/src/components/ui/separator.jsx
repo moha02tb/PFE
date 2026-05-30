@@ -1,4 +1,5 @@
 import * as React from "react"
+import PropTypes from "prop-types"
 
 const Separator = React.forwardRef(
   ({ className, orientation = "horizontal", decorative = true, ...props }, ref) => (
@@ -11,5 +12,10 @@ const Separator = React.forwardRef(
   )
 )
 Separator.displayName = "Separator"
+Separator.propTypes = {
+  className: PropTypes.string,
+  orientation: PropTypes.string,
+  decorative: PropTypes.bool,
+}
 
 export { Separator }

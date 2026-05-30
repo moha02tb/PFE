@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -19,5 +20,9 @@ const Select = React.forwardRef(({ className, children, ...props }, ref) => (
 ));
 
 Select.displayName = 'Select';
+Select.propTypes = {
+  className: PropTypes.string,
+  children: PropTypes.node,
+};
 
 export default Select;

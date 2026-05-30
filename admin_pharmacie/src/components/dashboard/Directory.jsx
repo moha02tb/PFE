@@ -1,4 +1,4 @@
-import React from 'react';
+import PropTypes from 'prop-types';
 import { mainContentStyles, cardStyles, tableStyles, filterStyles } from '../../styles/dashboard.styles';
 
 const Directory = ({ directoryData }) => {
@@ -83,6 +83,10 @@ const Directory = ({ directoryData }) => {
       </div>
     </div>
   );
+};
+
+Directory.propTypes = {
+  directoryData: PropTypes.array,
 };
 
 export default Directory;

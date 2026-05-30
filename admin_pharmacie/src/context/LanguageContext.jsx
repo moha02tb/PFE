@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import PropTypes from 'prop-types';
 import { translations } from '../lib/translations';
 
 const LANGUAGE_KEY = 'admin-language';
@@ -40,6 +41,10 @@ export const LanguageProvider = ({ children }) => {
   );
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
+};
+
+LanguageProvider.propTypes = {
+  children: PropTypes.node,
 };
 
 export const useLanguage = () => {

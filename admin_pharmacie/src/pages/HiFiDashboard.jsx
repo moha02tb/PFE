@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import PropTypes from 'prop-types';
 import {
   Activity,
   ArrowRight,
   BarChart3,
-  CheckCircle2,
   Database,
-  FileSpreadsheet,
   Gauge,
   Layers,
   Loader2,
@@ -15,29 +14,8 @@ import {
   RefreshCw,
   Settings,
   UploadCloud,
-  User,
-  Users,
   Zap
 } from 'lucide-react';
-
-const SparkLine = ({ points, color }) => {
-  const width = 160;
-  const height = 56;
-  const max = Math.max(...points, 1);
-  const step = points.length > 1 ? width / (points.length - 1) : width;
-  const path = points
-    .map((v, i) => {
-      const x = i * step;
-      const y = height - (v / max) * (height - 8);
-      return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
-    })
-    .join(' ');
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-14">
-      <path d={path} fill="none" stroke={color} strokeWidth="3.2" strokeLinecap="round" />
-    </svg>
-  );
-};
 
 const HiFiDashboard = ({ onBack, onLogout }) => {
   const [modal, setModal] = useState(null); // { mode: 'view' | 'edit', row: object }
@@ -216,7 +194,7 @@ const HiFiDashboard = ({ onBack, onLogout }) => {
                     Import Status
                   </div>
                   <div className="space-y-3">
-                    {timeline.map((step, idx) => (
+                    {timeline.map((step) => (
                       <div key={step.title} className="flex items-start gap-3">
                         <div
                           className={`mt-1 h-3 w-3 rounded-full border ${
@@ -423,6 +401,11 @@ const HiFiDashboard = ({ onBack, onLogout }) => {
       )}
     </div>
   );
+};
+
+HiFiDashboard.propTypes = {
+  onBack: PropTypes.func,
+  onLogout: PropTypes.func,
 };
 
 export default HiFiDashboard;

@@ -1,4 +1,4 @@
-import React from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '../../lib/utils';
 
 const badgeVariants = {
@@ -20,5 +20,10 @@ const Badge = ({ className, variant = 'neutral', ...props }) => (
     {...props}
   />
 );
+
+Badge.propTypes = {
+  className: PropTypes.string,
+  variant: PropTypes.string,
+};
 
 export default Badge;

@@ -1,4 +1,4 @@
-import React from 'react';
+import PropTypes from 'prop-types';
 import { Line } from 'react-chartjs-2';
 import '../../lib/chartjsConfig';
 
@@ -68,6 +68,14 @@ const AdminLineChart = ({ labels = [], datasets = [], height = 220, options = {}
       <Line data={data} options={mergeOptions(defaultOptions, options)} />
     </div>
   );
+};
+
+AdminLineChart.propTypes = {
+  labels: PropTypes.array,
+  datasets: PropTypes.array,
+  height: PropTypes.number,
+  options: PropTypes.object,
+  className: PropTypes.string,
 };
 
 export default AdminLineChart;

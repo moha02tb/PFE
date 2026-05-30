@@ -1,4 +1,4 @@
-import React from 'react';
+import PropTypes from 'prop-types';
 import { Doughnut } from 'react-chartjs-2';
 import '../../lib/chartjsConfig';
 
@@ -56,6 +56,15 @@ const AdminDoughnutChart = ({ labels = [], dataValues = [], backgroundColors = [
       <Doughnut data={data} options={mergeOptions(defaultOptions, options)} />
     </div>
   );
+};
+
+AdminDoughnutChart.propTypes = {
+  labels: PropTypes.array,
+  dataValues: PropTypes.array,
+  backgroundColors: PropTypes.array,
+  height: PropTypes.number,
+  options: PropTypes.object,
+  className: PropTypes.string,
 };
 
 export default AdminDoughnutChart;

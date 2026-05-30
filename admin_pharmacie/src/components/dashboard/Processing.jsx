@@ -1,4 +1,4 @@
-import React from 'react';
+import PropTypes from 'prop-types';
 import { mainContentStyles, cardStyles, buttonStyles, queueStyles, statusStyles } from '../../styles/dashboard.styles';
 
 const Processing = ({ processingQueue, onStartGeocoding, onConfigItem }) => {
@@ -10,7 +10,7 @@ const Processing = ({ processingQueue, onStartGeocoding, onConfigItem }) => {
       <div style={mainContentStyles.topHeader}>
         <div>
           <h1 style={mainContentStyles.pageTitle}>Traitement & Géocodage</h1>
-          <p style={mainContentStyles.pageSubtitle}>Gérez la file d'attente de traitement et les opérations de géocodage</p>
+          <p style={mainContentStyles.pageSubtitle}>Gérez la file d&apos;attente de traitement et les opérations de géocodage</p>
         </div>
         <button
           style={{ ...buttonStyles.buttonPrimary, opacity: hasRaw ? 1 : 0.5, cursor: hasRaw ? 'pointer' : 'not-allowed' }}
@@ -23,7 +23,7 @@ const Processing = ({ processingQueue, onStartGeocoding, onConfigItem }) => {
 
       {/* Queue Table */}
       <div style={cardStyles.card}>
-        <h2 style={cardStyles.cardTitle}>File d'Attente de Traitement</h2>
+        <h2 style={cardStyles.cardTitle}>File d&apos;Attente de Traitement</h2>
         <div style={queueStyles.queueTable}>
           {processingQueue.map((item) => (
             <div key={item.id} style={{ borderRadius: '10px', overflow: 'hidden', marginBottom: '8px' }}>
@@ -116,12 +116,18 @@ const Processing = ({ processingQueue, onStartGeocoding, onConfigItem }) => {
           </div>
           <div style={statusStyles.statusItem}>
             <span style={{ ...statusStyles.statusIndicator, backgroundColor: '#fbbf24' }} />
-            <span>Temps d'Attente Estimé: 12 minutes</span>
+            <span>Temps d&apos;Attente Estimé: 12 minutes</span>
           </div>
         </div>
       </div>
     </div>
   );
+};
+
+Processing.propTypes = {
+  processingQueue: PropTypes.array,
+  onStartGeocoding: PropTypes.func,
+  onConfigItem: PropTypes.func,
 };
 
 export default Processing;

@@ -1,4 +1,4 @@
-import React from 'react';
+import PropTypes from 'prop-types';
 import Sidebar from '../components/layout/Sidebar';
 import Header from '../components/layout/Header';
 import Overview from '../components/dashboard/Overview';
@@ -79,6 +79,10 @@ const Dashboard = ({ onLogout }) => {
       </div>
     </div>
   );
+};
+
+Dashboard.propTypes = {
+  onLogout: PropTypes.func,
 };
 
 export default Dashboard;

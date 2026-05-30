@@ -1,4 +1,3 @@
-import React from 'react';
 import { BellRing, CheckCheck, Mail, MessageSquareWarning, RadioTower, Send } from 'lucide-react';
 import { Badge, Button, SectionHeader } from '../components/ui';
 import { useLanguage } from '../context/LanguageContext';

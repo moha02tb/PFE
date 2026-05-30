@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import PropTypes from 'prop-types';
 import {
   AlertCircle,
   BellRing,
@@ -47,6 +48,11 @@ const StatusBanner = ({ type, message }) => (
     <FieldError className="text-inherit">{message}</FieldError>
   </div>
 );
+
+StatusBanner.propTypes = {
+  type: PropTypes.string,
+  message: PropTypes.node,
+};
 
 const GeneralTab = ({ t, setLanguage, language }) => {
   const { user, updateProfile } = useAuth();
@@ -177,6 +183,12 @@ const GeneralTab = ({ t, setLanguage, language }) => {
   );
 };
 
+GeneralTab.propTypes = {
+  t: PropTypes.func,
+  setLanguage: PropTypes.func,
+  language: PropTypes.string,
+};
+
 const SecurityTab = ({ t }) => {
   const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [status, setStatus] = useState({ type: null, message: '' });
@@ -275,6 +287,10 @@ const SecurityTab = ({ t }) => {
       </div>
     </form>
   );
+};
+
+SecurityTab.propTypes = {
+  t: PropTypes.func,
 };
 
 const SettingsPage = () => {

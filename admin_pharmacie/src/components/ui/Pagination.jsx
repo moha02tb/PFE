@@ -1,4 +1,4 @@
-import React from 'react';
+import PropTypes from 'prop-types';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Button from './Button';
 
@@ -18,5 +18,12 @@ const Pagination = ({ page, totalPages, onPrevious, onNext }) => (
     </Button>
   </div>
 );
+
+Pagination.propTypes = {
+  page: PropTypes.number,
+  totalPages: PropTypes.number,
+  onPrevious: PropTypes.func,
+  onNext: PropTypes.func,
+};
 
 export default Pagination;

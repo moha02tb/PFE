@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import Button from './Button';
@@ -56,6 +57,15 @@ const Drawer = ({ open, onClose, title, children, side = 'right', className }) =
       </div>
     </div>
   );
+};
+
+Drawer.propTypes = {
+  open: PropTypes.bool,
+  onClose: PropTypes.func,
+  title: PropTypes.node,
+  children: PropTypes.node,
+  side: PropTypes.string,
+  className: PropTypes.string,
 };
 
 export default Drawer;

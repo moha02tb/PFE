@@ -1,11 +1,9 @@
-import React from 'react';
-import { Icon } from './IconHelper';
+import PropTypes from 'prop-types';
 
 const DataTable = ({
   headers,
   rows,
   onSelectRow,
-  selectedRows,
   renderRow,
   showCheckbox = false,
   onSelectAll,
@@ -55,6 +53,17 @@ const DataTable = ({
       </div>
     </div>
   );
+};
+
+DataTable.propTypes = {
+  headers: PropTypes.array,
+  rows: PropTypes.array,
+  onSelectRow: PropTypes.func,
+  renderRow: PropTypes.func,
+  showCheckbox: PropTypes.bool,
+  onSelectAll: PropTypes.func,
+  selectAllChecked: PropTypes.bool,
+  className: PropTypes.string,
 };
 
 export default DataTable;

@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '../../lib/utils';
 
 export const Tabs = ({ value, onChange, items, className }) => {
@@ -49,4 +50,11 @@ export const Tabs = ({ value, onChange, items, className }) => {
       ))}
     </div>
   );
+};
+
+Tabs.propTypes = {
+  value: PropTypes.string,
+  onChange: PropTypes.func,
+  items: PropTypes.array,
+  className: PropTypes.string,
 };

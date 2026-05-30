@@ -1,4 +1,4 @@
-import React from 'react';
+import PropTypes from 'prop-types';
 import Button from './Button';
 import { cn } from '../../lib/utils';
 
@@ -18,5 +18,14 @@ const EmptyState = ({ icon: Icon, title, description, actionLabel, onAction, cla
     ) : null}
   </div>
 );
+
+EmptyState.propTypes = {
+  icon: PropTypes.elementType,
+  title: PropTypes.node,
+  description: PropTypes.node,
+  actionLabel: PropTypes.node,
+  onAction: PropTypes.func,
+  className: PropTypes.string,
+};
 
 export default EmptyState;

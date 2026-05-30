@@ -1,4 +1,3 @@
-import React from 'react';
 import { CheckCircle2, Globe2, Languages, MessageSquareText } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { Badge, Button, SectionHeader } from '../components/ui';

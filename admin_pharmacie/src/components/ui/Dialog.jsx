@@ -1,4 +1,5 @@
-import React, { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
+import PropTypes from 'prop-types';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -89,6 +90,18 @@ const Dialog = ({
     </div>,
     document.body
   );
+};
+
+Dialog.propTypes = {
+  open: PropTypes.bool,
+  onClose: PropTypes.func,
+  title: PropTypes.node,
+  description: PropTypes.node,
+  children: PropTypes.node,
+  actions: PropTypes.node,
+  className: PropTypes.string,
+  size: PropTypes.string,
+  closeLabel: PropTypes.string,
 };
 
 export default Dialog;

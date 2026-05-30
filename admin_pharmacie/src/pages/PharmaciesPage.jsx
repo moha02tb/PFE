@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import {
   AlertTriangle,
@@ -53,6 +54,13 @@ const StatBox = ({ icon: Icon, label, value, tone = 'blue' }) => {
   );
 };
 
+StatBox.propTypes = {
+  icon: PropTypes.elementType,
+  label: PropTypes.node,
+  value: PropTypes.node,
+  tone: PropTypes.string,
+};
+
 const StatusPill = ({ status, t }) => {
   const normalized = status || 'Active';
   const className =
@@ -69,6 +77,11 @@ const StatusPill = ({ status, t }) => {
   );
 };
 
+StatusPill.propTypes = {
+  status: PropTypes.string,
+  t: PropTypes.func,
+};
+
 const ReadinessMeter = ({ label, value, icon: Icon }) => (
   <div>
     <div className="mb-3 flex items-center justify-between gap-3">
@@ -83,6 +96,12 @@ const ReadinessMeter = ({ label, value, icon: Icon }) => (
     </div>
   </div>
 );
+
+ReadinessMeter.propTypes = {
+  label: PropTypes.node,
+  value: PropTypes.number,
+  icon: PropTypes.elementType,
+};
 
 const PharmaciesPage = () => {
   const { t } = useLanguage();

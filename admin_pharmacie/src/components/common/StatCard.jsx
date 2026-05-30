@@ -1,8 +1,8 @@
-import React from 'react';
+import PropTypes from 'prop-types';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card";
 
-const StatCard = ({ icon, label, value, change, changeColor }) => {
+const StatCard = ({ icon, label, value, change }) => {
   const trend = (change || '').trim();
   const isPositive = trend.startsWith('+');
   const isNegative = trend.startsWith('-');
@@ -54,6 +54,13 @@ const StatCard = ({ icon, label, value, change, changeColor }) => {
       </CardContent>
     </Card>
   );
+};
+
+StatCard.propTypes = {
+  icon: PropTypes.node,
+  label: PropTypes.node,
+  value: PropTypes.node,
+  change: PropTypes.string,
 };
 
 export default StatCard;

@@ -1,4 +1,5 @@
-import React, { useId, useState } from 'react';
+import { useId, useState } from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '../../lib/utils';
 
 const sideClasses = {
@@ -47,6 +48,15 @@ const Tooltip = ({ content, children, side = 'top', className, contentClassName,
       ) : null}
     </span>
   );
+};
+
+Tooltip.propTypes = {
+  content: PropTypes.node,
+  children: PropTypes.node,
+  side: PropTypes.string,
+  className: PropTypes.string,
+  contentClassName: PropTypes.string,
+  disabled: PropTypes.bool,
 };
 
 export default Tooltip;

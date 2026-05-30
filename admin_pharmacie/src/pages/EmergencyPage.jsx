@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import {
   Activity,
   AlertTriangle,
@@ -400,6 +401,11 @@ const StatusBadge = ({ status, label }) => {
   );
 };
 
+StatusBadge.propTypes = {
+  status: PropTypes.string,
+  label: PropTypes.node,
+};
+
 const SectionCard = ({ title, description, icon: Icon, children, className = '' }) => (
   <section className={`bento-card p-5 ${className}`}>
     <div className="mb-5 flex items-start justify-between gap-4">
@@ -417,6 +423,14 @@ const SectionCard = ({ title, description, icon: Icon, children, className = '' 
   </section>
 );
 
+SectionCard.propTypes = {
+  title: PropTypes.node,
+  description: PropTypes.node,
+  icon: PropTypes.elementType,
+  children: PropTypes.node,
+  className: PropTypes.string,
+};
+
 const ChartCard = ({ title, description, children, className = '' }) => (
   <section className={`bento-card p-5 ${className}`}>
     <div className="mb-5">
@@ -427,11 +441,23 @@ const ChartCard = ({ title, description, children, className = '' }) => (
   </section>
 );
 
+ChartCard.propTypes = {
+  title: PropTypes.node,
+  description: PropTypes.node,
+  children: PropTypes.node,
+  className: PropTypes.string,
+};
+
 const ChartEmptyState = ({ title, description }) => (
   <div className="flex min-h-[220px] items-center justify-center rounded-[10px] border border-dashed border-border bg-surface-muted/40 p-4">
     <EmptyState icon={Info} title={title} description={description} className="w-full max-w-md" />
   </div>
 );
+
+ChartEmptyState.propTypes = {
+  title: PropTypes.node,
+  description: PropTypes.node,
+};
 
 const ProgressMetric = ({ label, value, helper, status = 'healthy' }) => {
   const config = getStatus(status);
@@ -449,6 +475,13 @@ const ProgressMetric = ({ label, value, helper, status = 'healthy' }) => {
       {helper ? <p className="mt-2 text-xs text-muted-foreground">{helper}</p> : null}
     </div>
   );
+};
+
+ProgressMetric.propTypes = {
+  label: PropTypes.node,
+  value: PropTypes.number,
+  helper: PropTypes.node,
+  status: PropTypes.string,
 };
 
 const SystemPulse = ({ status, lastRefresh, score }) => {
@@ -480,6 +513,12 @@ const SystemPulse = ({ status, lastRefresh, score }) => {
       </div>
     </section>
   );
+};
+
+SystemPulse.propTypes = {
+  status: PropTypes.string,
+  lastRefresh: PropTypes.node,
+  score: PropTypes.number,
 };
 
 const TAB_ITEMS = [
@@ -535,6 +574,12 @@ const StatusBanner = ({ variant, message, onDismiss }) => {
   );
 };
 
+StatusBanner.propTypes = {
+  variant: PropTypes.string,
+  message: PropTypes.node,
+  onDismiss: PropTypes.func,
+};
+
 const LiveChip = ({ refreshing, secondsUntilNext, paused, onToggle }) => (
   <div className="inline-flex items-center gap-2 rounded-full border border-border bg-surface-elevated/85 px-3 py-1.5 text-xs shadow-soft">
     <span className="relative flex h-2 w-2">
@@ -554,6 +599,13 @@ const LiveChip = ({ refreshing, secondsUntilNext, paused, onToggle }) => (
     </button>
   </div>
 );
+
+LiveChip.propTypes = {
+  refreshing: PropTypes.bool,
+  secondsUntilNext: PropTypes.number,
+  paused: PropTypes.bool,
+  onToggle: PropTypes.func,
+};
 
 const KpiSkeleton = () => (
   <div className="bento-card p-5">

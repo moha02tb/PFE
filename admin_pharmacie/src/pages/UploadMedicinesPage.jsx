@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AlertCircle, AlertTriangle, FileSpreadsheet, Pill, UploadCloud } from 'lucide-react';
 import api from '../lib/api';
 import {

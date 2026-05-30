@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -72,5 +73,16 @@ export const DropdownItem = ({ className, ...props }) => (
     {...props}
   />
 );
+
+Dropdown.propTypes = {
+  trigger: PropTypes.node,
+  align: PropTypes.string,
+  children: PropTypes.oneOfType([PropTypes.node, PropTypes.func]),
+  className: PropTypes.string,
+};
+
+DropdownItem.propTypes = {
+  className: PropTypes.string,
+};
 
 export default Dropdown;

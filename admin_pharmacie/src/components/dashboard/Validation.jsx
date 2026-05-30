@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import PropTypes from 'prop-types';
 import { mainContentStyles, cardStyles, buttonStyles, tableStyles, mapButtonStyles } from '../../styles/dashboard.styles';
 
 const Validation = ({ validationData, selectedValidation, setSelectedValidation, onPublish, onReject }) => {
@@ -147,6 +148,14 @@ const Validation = ({ validationData, selectedValidation, setSelectedValidation,
       )}
     </div>
   );
+};
+
+Validation.propTypes = {
+  validationData: PropTypes.array,
+  selectedValidation: PropTypes.array,
+  setSelectedValidation: PropTypes.func,
+  onPublish: PropTypes.func,
+  onReject: PropTypes.func,
 };
 
 export default Validation;

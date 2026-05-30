@@ -1,4 +1,4 @@
-import React from 'react';
+import PropTypes from 'prop-types';
 import { Bar } from 'react-chartjs-2';
 import '../../lib/chartjsConfig';
 
@@ -64,6 +64,15 @@ const AdminBarChart = ({ labels = [], datasets = [], height = 220, horizontal = 
       <Bar data={data} options={mergeOptions(defaultOptions, options)} />
     </div>
   );
+};
+
+AdminBarChart.propTypes = {
+  labels: PropTypes.array,
+  datasets: PropTypes.array,
+  height: PropTypes.number,
+  horizontal: PropTypes.bool,
+  options: PropTypes.object,
+  className: PropTypes.string,
 };
 
 export default AdminBarChart;

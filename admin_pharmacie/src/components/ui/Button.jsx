@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '../../lib/utils';
 
 const buttonVariants = {
@@ -42,5 +43,13 @@ const Button = React.forwardRef(
 );
 
 Button.displayName = 'Button';
+Button.propTypes = {
+  className: PropTypes.string,
+  variant: PropTypes.string,
+  size: PropTypes.string,
+  type: PropTypes.string,
+  asChild: PropTypes.bool,
+  children: PropTypes.node,
+};
 
 export default Button;

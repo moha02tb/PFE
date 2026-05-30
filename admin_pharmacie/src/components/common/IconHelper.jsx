@@ -1,4 +1,4 @@
-import React from 'react';
+import PropTypes from 'prop-types';
 import {
   BarChart3,
   Users,
@@ -132,6 +132,13 @@ export const Icon = ({ name, size = 20, className = '', color = 'currentColor', 
       {...props} 
     />
   );
+};
+
+Icon.propTypes = {
+  name: PropTypes.string,
+  size: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  className: PropTypes.string,
+  color: PropTypes.string,
 };
 
 // Convenience hook to get icon component directly

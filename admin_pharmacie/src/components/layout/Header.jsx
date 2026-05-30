@@ -1,4 +1,4 @@
-import React from 'react';
+import PropTypes from 'prop-types';
 import { Bell, UserCircle, ChevronRight, Home } from 'lucide-react';
 
 const Header = ({ activeNav }) => {
@@ -41,6 +41,10 @@ const Header = ({ activeNav }) => {
       </div>
     </header>
   );
+};
+
+Header.propTypes = {
+  activeNav: PropTypes.string,
 };
 
 export default Header;

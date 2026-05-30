@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import PropTypes from 'prop-types';
 import StatCard from '../common/StatCard';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/Card";
 import { Building2, Clock, CheckCircle2, AlertCircle, UploadCloud, ShieldCheck, Activity, Plus, RefreshCw, Wifi, Sparkles, HeartPulse, Globe2 } from 'lucide-react';
@@ -83,7 +84,7 @@ const Overview = ({ recentActivities = [] }) => {
               Tableau de bord
             </span>
             <div className="flex items-center gap-3">
-              <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white">Vue d'ensemble</h1>
+              <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white">Vue d&apos;ensemble</h1>
               <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-200 border border-emerald-500/25">En ligne</span>
             </div>
             <p className="text-slate-400 text-base md:text-lg max-w-2xl">
@@ -279,6 +280,10 @@ const Overview = ({ recentActivities = [] }) => {
       </div>
     </div>
   );
+};
+
+Overview.propTypes = {
+  recentActivities: PropTypes.array,
 };
 
 export default Overview;

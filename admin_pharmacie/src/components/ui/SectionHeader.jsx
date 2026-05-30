@@ -1,4 +1,4 @@
-import React from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '../../lib/utils';
 
 const SectionHeader = ({ eyebrow, title, description, actions, className }) => (
@@ -17,5 +17,13 @@ const SectionHeader = ({ eyebrow, title, description, actions, className }) => (
     {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
   </div>
 );
+
+SectionHeader.propTypes = {
+  eyebrow: PropTypes.node,
+  title: PropTypes.node,
+  description: PropTypes.node,
+  actions: PropTypes.node,
+  className: PropTypes.string,
+};
 
 export default SectionHeader;

@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '../../lib/utils';
 
 export const Input = React.forwardRef(({ className, ...props }, ref) => (
@@ -29,3 +30,9 @@ export const FieldHint = ({ className, ...props }) => (
 export const FieldError = ({ className, ...props }) => (
   <span className={cn('text-xs font-medium text-danger', className)} {...props} />
 );
+
+Input.propTypes = { className: PropTypes.string };
+Field.propTypes = { className: PropTypes.string };
+FieldLabel.propTypes = { className: PropTypes.string };
+FieldHint.propTypes = { className: PropTypes.string };
+FieldError.propTypes = { className: PropTypes.string };

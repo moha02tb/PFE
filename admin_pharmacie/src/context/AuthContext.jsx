@@ -1,4 +1,5 @@
 import React, { createContext, useEffect, useState, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import api, { authTokenStore } from '../lib/api';
 
 export const AuthContext = createContext();
@@ -155,6 +156,10 @@ export const AuthProvider = ({ children }) => {
             {children}
         </AuthContext.Provider>
     );
+};
+
+AuthProvider.propTypes = {
+    children: PropTypes.node,
 };
 
 // Custom hook to use auth context

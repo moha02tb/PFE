@@ -1,4 +1,4 @@
-import React from 'react';
+import PropTypes from 'prop-types';
 import { cn } from '../../lib/utils';
 
 export const Table = ({ className, ...props }) => (
@@ -32,3 +32,10 @@ export const TableRow = ({ className, ...props }) => (
 export const TableCell = ({ className, ...props }) => (
   <td className={cn('px-4 py-3 align-middle text-[0.8125rem] leading-5 text-foreground', className)} {...props} />
 );
+
+Table.propTypes = { className: PropTypes.string };
+TableHead.propTypes = { className: PropTypes.string };
+TableHeaderCell.propTypes = { className: PropTypes.string };
+TableBody.propTypes = { className: PropTypes.string };
+TableRow.propTypes = { className: PropTypes.string };
+TableCell.propTypes = { className: PropTypes.string };

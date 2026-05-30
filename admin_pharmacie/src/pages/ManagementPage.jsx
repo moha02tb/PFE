@@ -1116,7 +1116,6 @@ const ManagementPage = () => {
                       </TableHead>
                       <TableBody>
                         {(() => {
-                          const assistantRegions = Array.from(new Set(assistants.map((item) => item.region_scope).filter(Boolean)));
                           const filteredAssistants = assistants.filter((item) => {
                             const matchesSearch =
                               !assistantSearch ||

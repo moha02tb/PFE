@@ -1,6 +1,6 @@
-import React from 'react';
-import { 
-  LayoutDashboard, 
+import PropTypes from 'prop-types';
+import {
+  LayoutDashboard,
   Upload, 
   Settings, 
   CheckCircle, 
@@ -74,6 +74,12 @@ const Sidebar = ({ activeNav, setActiveNav, onLogout }) => {
       </div>
     </aside>
   );
+};
+
+Sidebar.propTypes = {
+  activeNav: PropTypes.string,
+  setActiveNav: PropTypes.func,
+  onLogout: PropTypes.func,
 };
 
 export default Sidebar;

@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import {
   AlertTriangle,
@@ -11,7 +12,7 @@ import {
   Upload,
 } from 'lucide-react';
 import api from '../lib/api';
-import { Badge, Button, EmptyState } from '../components/ui';
+import { Button, EmptyState } from '../components/ui';
 import { useLanguage } from '../context/LanguageContext';
 
 const WEEK_DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
@@ -74,6 +75,14 @@ const CalendarCell = ({ cell, currentMonth, selectedDate, gardesByDate, onSelect
   );
 };
 
+CalendarCell.propTypes = {
+  cell: PropTypes.instanceOf(Date),
+  currentMonth: PropTypes.instanceOf(Date),
+  selectedDate: PropTypes.string,
+  gardesByDate: PropTypes.instanceOf(Map),
+  onSelect: PropTypes.func,
+};
+
 const AssignmentCard = ({ item }) => {
   const { t } = useLanguage();
   return (
@@ -91,6 +100,10 @@ const AssignmentCard = ({ item }) => {
       </p>
     </div>
   );
+};
+
+AssignmentCard.propTypes = {
+  item: PropTypes.object,
 };
 
 const CalendarPage = () => {
