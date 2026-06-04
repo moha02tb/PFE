@@ -4,9 +4,14 @@ Usage:
     python scripts/generate_garde.py [--days N] [--admin-id ID] [--dry-run]
 
 For each governorate, the script rotates regular pharmacies (Pharmacies de
-Nuit are excluded) as garde duty. Each garde-day produces two shifts:
-JOUR (08:00-20:00) and NUIT (20:00-08:00). The pharmacy on duty is the
-same for both shifts.
+Nuit are excluded) as garde duty. The shifts created on a given date follow
+the Tunisian rules in ``garde_calendar.get_required_garde_shifts``:
+
+* regular weekdays (Mon-Fri): no garde at all,
+* weekend days (Sat/Sun) and public holidays: both JOUR (08:00-20:00)
+  and NUIT (20:00-08:00).
+
+The pharmacy on duty is the same for every shift on that date.
 
 Pharmacies with a phone AND a complete address are prioritized in the
 rotation (they appear first in the cycle).
@@ -36,14 +41,14 @@ from sqlalchemy import func  # noqa: E402
 
 import models  # noqa: E402
 from database import SessionLocal  # noqa: E402
+from garde_calendar import (  # noqa: E402
+    SHIFT_HOURS,
+    get_required_garde_shifts,
+    is_public_holiday,
+)
 
 
 TUNISIA_TZ = timezone(timedelta(hours=1))
-
-JOUR_START = "08:00"
-JOUR_END = "20:00"
-NUIT_START = "20:00"
-NUIT_END = "08:00"
 
 NIGHT_KEYWORDS_LATIN = ("nuit", "night")
 NIGHT_KEYWORD_AR = "الليل"
@@ -52,41 +57,9 @@ AUTO_NOTE = "Auto-généré - rotation système"
 HOLIDAY_NOTE = "Jour Férié - Vérifier auprès du Conseil de l'Ordre"
 RAMADAN_NOTE = "Ramadan - Horaires peuvent varier"
 
-# Fixed Tunisian public holidays + observed Islamic dates spanning 2025-2026.
-# Movable Islamic dates are approximations and should be reviewed yearly.
-PUBLIC_HOLIDAYS: set[date] = {
-    # 2025
-    date(2025, 1, 1),    # Jour de l'An
-    date(2025, 1, 14),   # Fête de la Révolution
-    date(2025, 3, 20),   # Fête de l'Indépendance
-    date(2025, 3, 31),   # Aïd al-Fitr (approx)
-    date(2025, 4, 1),    # Aïd al-Fitr (J2)
-    date(2025, 4, 9),    # Fête des Martyrs
-    date(2025, 5, 1),    # Fête du Travail
-    date(2025, 6, 6),    # Aïd al-Adha (approx)
-    date(2025, 6, 7),    # Aïd al-Adha (J2)
-    date(2025, 6, 26),   # Nouvel An hégirien (approx)
-    date(2025, 7, 25),   # Fête de la République
-    date(2025, 8, 13),   # Fête de la Femme
-    date(2025, 9, 4),    # Mouled (approx)
-    date(2025, 10, 15),  # spec-provided
-    date(2025, 11, 7),   # spec-provided
-    date(2025, 12, 8),   # spec-provided
-    # 2026
-    date(2026, 1, 1),
-    date(2026, 1, 14),
-    date(2026, 3, 20),
-    date(2026, 3, 20),   # Aïd al-Fitr (approx end of Ramadan 2026)
-    date(2026, 3, 21),
-    date(2026, 4, 9),
-    date(2026, 5, 1),
-    date(2026, 5, 27),   # Aïd al-Adha (approx)
-    date(2026, 5, 28),
-    date(2026, 6, 16),   # Nouvel An hégirien (approx)
-    date(2026, 7, 25),
-    date(2026, 8, 13),
-    date(2026, 8, 25),   # Mouled (approx)
-}
+# Public holidays are resolved via ``garde_calendar.is_public_holiday`` which
+# combines the ``holidays`` library (fixed dates) with a manually-maintained
+# dict of observed Islamic dates.
 
 # Ramadan 2026 (approximate Gregorian dates).
 RAMADAN_RANGES: list[tuple[date, date]] = [
@@ -110,7 +83,7 @@ def in_ramadan(target: date) -> bool:
 
 def build_notes(target: date) -> str:
     parts = [AUTO_NOTE]
-    if target in PUBLIC_HOLIDAYS:
+    if is_public_holiday(target):
         parts.append(HOLIDAY_NOTE)
     if in_ramadan(target):
         parts.append(RAMADAN_NOTE)
@@ -178,18 +151,15 @@ def generate(db, *, days: int, admin_id: int, dry_run: bool) -> dict:
     holiday_dates = set()
     pharmacies_used: set[tuple[str, int]] = set()
 
-    SHIFTS = (
-        ("jour", JOUR_START, JOUR_END),
-        ("nuit", NUIT_START, NUIT_END),
-    )
-
     for offset in range(days):
         target_date = today + timedelta(days=offset)
         notes = build_notes(target_date)
-        if target_date in PUBLIC_HOLIDAYS:
+        if is_public_holiday(target_date):
             holiday_dates.add(target_date)
         if in_ramadan(target_date):
             ramadan_dates.add(target_date)
+
+        required_shifts = get_required_garde_shifts(target_date)
 
         for governorate, pharmacies in pharmacies_by_gov.items():
             if not pharmacies:
@@ -197,8 +167,10 @@ def generate(db, *, days: int, admin_id: int, dry_run: bool) -> dict:
             pharmacy = pharmacies[offset % len(pharmacies)]
             pharmacies_used.add((governorate, pharmacy.id))
 
-            for shift_type, start_time, end_time in SHIFTS:
-                key = (target_date, governorate.strip(), shift_type)
+            for shift_type in required_shifts:
+                start_time, end_time = SHIFT_HOURS[shift_type]
+                # existing_slot_keys() lowercases shift_type, so match it.
+                key = (target_date, governorate.strip(), shift_type.lower())
                 if key in existing:
                     skipped += 1
                     continue

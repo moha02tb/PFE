@@ -131,7 +131,16 @@ const App = () => {
             />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/map" element={<MapPage />} />
-            <Route path="/emergency" element={<EmergencyPage />} />
+            <Route
+              path="/emergency"
+              element={
+                <ProtectedRoute
+                  element={<EmergencyPage />}
+                  requiredRoles={ADMIN_ROLES}
+                  fallbackPath="/management"
+                />
+              }
+            />
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/languages" element={<LanguagesPage />} />
             <Route path="/settings" element={<SettingsPage />} />

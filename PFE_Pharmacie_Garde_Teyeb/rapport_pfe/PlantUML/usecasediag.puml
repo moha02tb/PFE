@@ -1,0 +1,63 @@
+@startuml
+left to right direction
+actor "Visiteur" as visiteur
+actor "Utilisateur mobile" as mobile
+actor "Administrateur" as admin
+actor "Assistant régional" as assistant
+
+rectangle "PharmacieConnect" {
+  usecase "Créer un compte" as register
+  usecase "Se connecter" as login
+  usecase "Se déconnecter" as logout
+  usecase "Consulter / gérer le profil" as profile
+  usecase "Rechercher une pharmacie" as search
+  usecase "Consulter pharmacies de garde" as garde_public
+  usecase "Visualiser sur carte" as map
+  usecase "Consulter catalogue médicaments" as meds
+  usecase "Utiliser assistant premiers secours" as firstaid
+  usecase "Accéder tableau de bord" as dashboard
+  usecase "Gérer pharmacies" as manage_pharm
+  usecase "Gérer pharmacies de garde" as manage_garde
+  usecase "Importer fichiers CSV" as import_csv
+  usecase "Gérer catalogue médicaments" as manage_meds
+  usecase "Gérer assistants / utilisateurs" as manage_users
+  usecase "Consulter journaux d'audit" as audit
+  usecase "Vérifier rôles RBAC" as rbac
+}
+
+visiteur --> search
+visiteur --> garde_public
+visiteur --> map
+visiteur --> meds
+mobile --> register
+mobile --> login
+mobile --> logout
+mobile --> profile
+mobile --> firstaid
+admin --> login
+admin --> logout
+admin --> dashboard
+admin --> manage_pharm
+admin --> manage_garde
+admin --> import_csv
+admin --> manage_meds
+admin --> manage_users
+admin --> audit
+assistant --> login
+assistant --> logout
+assistant --> manage_pharm
+assistant --> manage_garde
+assistant --> import_csv
+
+profile ..> login : <<include>>
+dashboard ..> login : <<include>>
+manage_pharm ..> login : <<include>>
+manage_garde ..> login : <<include>>
+import_csv ..> login : <<include>>
+manage_meds ..> login : <<include>>
+manage_users ..> login : <<include>>
+audit ..> login : <<include>>
+manage_pharm ..> rbac : <<include>>
+manage_garde ..> rbac : <<include>>
+import_csv ..> rbac : <<include>>
+@enduml

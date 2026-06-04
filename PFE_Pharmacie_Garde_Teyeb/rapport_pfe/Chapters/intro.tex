@@ -17,8 +17,8 @@ erronée ou un fichier CSV incomplet peuvent rendre l'information inutilisable a
 nécessaire. Le projet doit donc traiter la donnée comme un élément métier sensible, depuis son import
 jusqu'à son affichage dans l'application mobile.
 
-Le projet \textbf{PharmacieConnect} a été conçu pour répondre à ce besoin de bout en bout. Il associe une
-API backend FastAPI, un tableau de bord administrateur React/Vite, une application mobile Expo/React Native
+Le projet \textbf{PharmacieConnect} traite ce besoin de bout en bout. Il associe une
+API backend FastAPI, une interface d'administration React/Vite, une application mobile Expo/React Native
 et un assistant conversationnel de premiers secours. Le backend centralise les règles de validation, de
 sécurité, d'audit et d'accès aux données, tandis que les interfaces couvrent deux parcours principaux :
 l'administration des informations par des utilisateurs autorisés et la consultation rapide par les citoyens.
@@ -61,7 +61,7 @@ médicaments, enrichie par un assistant de premiers secours. Les objectifs reten
 
 Le projet a été conduit en six cycles courts inspirés de Scrum~\cite{scrumguide}, adaptés au contexte d'un
 PFE réalisé par un seul étudiant. Chaque cycle a été associé à un livrable vérifiable : cadrage et analyse
-de l'existant, conception technique, backend, tableau de bord administrateur, application mobile, puis
+de l'existant, conception technique, backend, console d'administration, application mobile, puis
 intégration et validation finale. Cette progression a permis de relier rapidement les choix de conception à
 des éléments concrets du dépôt : endpoints FastAPI, services métier, pages React, écrans mobiles et tests.
 
@@ -78,9 +78,9 @@ backend, des essais manuels et des contrôles de cohérence entre les interfaces
 \section*{Organisation du rapport}
 \addcontentsline{toc}{section}{Organisation du rapport}
 
-Le rapport est organisé en quatre chapitres. Le premier présente le contexte du projet, le domaine
-pharmaceutique, l'étude de l'existant et la solution proposée. Le deuxième précise les acteurs, les besoins
-fonctionnels et non fonctionnels ainsi que les règles de gestion. Le troisième détaille la conception de la
+Le rapport est organisé en quatre chapitres. Le premier situe le contexte du projet, le domaine
+pharmaceutique, l'analyse des solutions actuelles et la réponse retenue. Le deuxième cerne les acteurs, les
+besoins attendus du système ainsi que les règles de gestion. Le troisième détaille la conception de la
 plateforme : architecture globale, modèle de données, diagrammes \gls{uml}, sécurité et choix techniques.
 Le quatrième décrit la réalisation du backend, du tableau de bord, de l'application mobile et de
 l'assistant, puis présente l'intégration, la configuration, les tests et les difficultés rencontrées. Une

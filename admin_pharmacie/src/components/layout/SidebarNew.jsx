@@ -33,7 +33,7 @@ const groups = [
       { label: 'Management', path: '/management', icon: ClipboardList },
       { label: 'Calendar', path: '/calendar', icon: CalendarDays },
       { label: 'Map', path: '/map', icon: MapPinned },
-      { label: 'Monitoring', path: '/emergency', icon: ShieldAlert },
+      { label: 'Monitoring', path: '/emergency', icon: ShieldAlert, adminOnly: true },
     ],
   },
   {

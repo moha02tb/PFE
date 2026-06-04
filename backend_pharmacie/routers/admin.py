@@ -453,6 +453,8 @@ async def get_gardes(
     db: Session = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
+    date_from: date | None = None,
+    date_to: date | None = None,
 ):
     """List garde schedule rows for the admin UI."""
     garde_service = GardeService(db)
@@ -460,6 +462,8 @@ async def get_gardes(
         skip=skip,
         limit=limit,
         region_scope=_region_scope_for(current_admin),
+        date_from=date_from,
+        date_to=date_to,
     )
 
 

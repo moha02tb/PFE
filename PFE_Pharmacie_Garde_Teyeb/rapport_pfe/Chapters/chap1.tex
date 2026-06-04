@@ -5,11 +5,11 @@
 
 \section{Introduction}
 
-Avant d'aborder les choix techniques, il est nécessaire de replacer PharmacieConnect dans le contexte
-opérationnel qui a motivé sa réalisation. Ce chapitre part du fonctionnement des gardes pharmaceutiques,
-présente le cadre du stage externe, puis examine les difficultés rencontrées lorsqu'une information de
-garde doit être cherchée, corrigée ou publiée rapidement. Il introduit enfin la réponse retenue et la
-manière dont le projet a été organisé.
+PharmacieConnect ne prend tout son sens qu'une fois replacé dans le contexte opérationnel qui a justifié
+sa création. La réflexion démarre ici par le fonctionnement concret des gardes pharmaceutiques, se prolonge
+par la présentation du cadre du stage externe, puis s'attarde sur les obstacles rencontrés dès qu'une
+information de garde doit être recherchée, rectifiée ou diffusée sans délai. La réponse retenue et
+l'organisation adoptée pour le projet referment cette mise en contexte.
 
 \section{Présentation du domaine pharmaceutique}
 
@@ -49,11 +49,12 @@ aux informations utiles.
 Le stage s'est déroulé du 07/02/2026 au 07/06/2026, sous l'encadrement professionnel de
 \textbf{Achraf BCHIRI}. Ce cadre externe a orienté le projet vers une solution exploitable, structurée
 autour d'une API REST~\cite{fielding}, d'une base de données, d'une application mobile et d'une interface
-d'administration pour la mise à jour des données.
+d'administration pour la mise à jour des données, tel que synthétisé dans le Tableau~\ref{tab:cadre-institutionnel}.
 
 \begin{table}[H]
     \centering
     \caption{Cadre institutionnel du projet\\ \small Source : Auteur}
+    \label{tab:cadre-institutionnel}
     \begin{tabular}{L{4.5cm}L{8.5cm}}
         \toprule
         \textbf{Élément} & \textbf{Description} \\
@@ -64,7 +65,7 @@ d'administration pour la mise à jour des données.
         Période & Du 07/02/2026 au 07/06/2026. \\
         Nature du projet & Projet de fin d'études externe orienté conception et réalisation logicielle. \\
         Domaine & Santé numérique, accès aux pharmacies, gardes et données pharmaceutiques. \\
-        Périmètre technique & API backend, tableau de bord administrateur, application mobile et base de données. \\
+        Périmètre technique & API backend, interface web d'administration, application mobile et base de données. \\
         Encadrement & Suivi professionnel, suivi académique, revues d'avancement et validation des livrables. \\
         \bottomrule
     \end{tabular}
@@ -93,20 +94,20 @@ Les défis retenus pour le projet sont les suivants :
 
 \section{Étude de l'existant}
 
-L'étude de l'existant a été orientée par les besoins du projet. Il ne s'agit pas seulement de vérifier si
-une solution affiche une pharmacie, mais d'évaluer sa capacité à répondre à plusieurs critères : disponibilité
-des gardes, usage mobile, géolocalisation, fraîcheur des données, workflow de mise à jour, administration,
-authentification, import de données, auditabilité et couverture tunisienne.
+Cet examen des solutions existantes a été guidé par les besoins propres au projet. L'enjeu ne se limite pas
+à savoir si un outil affiche une pharmacie : il s'agit de jauger sa capacité à satisfaire plusieurs critères
+-- disponibilité des gardes, usage mobile, géolocalisation, fraîcheur des données, processus de mise à jour,
+administration, authentification, import de données, auditabilité et couverture du territoire tunisien.
 
 Les listes statiques diffusées sous forme de page web, d'image ou de document restent faciles à partager,
 mais elles deviennent limitées lorsqu'un utilisateur veut filtrer par gouvernorat, choisir une date précise
 ou ouvrir l'adresse sur une carte. Elles ne renseignent pas toujours le processus de mise à jour ni l'origine
 de la correction lorsqu'une donnée change \cite{cnopt_tableau_garde,medtn}.
 
-Les sites spécialisés et les applications mobiles offrent une expérience plus adaptée à la consultation.
-Cependant, leur efficacité dépend de la qualité de la base de données, de la fréquence de mise à jour et de
-la présence d'un espace d'administration capable de contrôler les imports, les droits et les corrections.
-Cette distinction est importante pour PharmacieConnect, car le projet vise à couvrir à la fois la
+Les sites spécialisés et les applications mobiles procurent, eux, une expérience mieux adaptée à la
+consultation. Leur efficacité reste toutefois tributaire de la qualité de la base de données, du rythme des
+mises à jour et de l'existence d'un espace d'administration apte à contrôler les imports, les droits et les
+corrections. Cette nuance compte pour PharmacieConnect, dont l'ambition est de couvrir à la fois la
 consultation citoyenne et la gestion opérationnelle des données.
 
 \section{Analyse du marché et solutions existantes}
@@ -124,7 +125,8 @@ les informations disponibles.
 
 La comparaison suivante reste fonctionnelle : elle évalue les capacités observables ou annoncées par les
 solutions citées. Lorsque l'information n'est pas confirmée par une source publique, la mention doit être
-vérifiée avant la version finale \cite{cnopt,medtn,googlemaps,openstreetmap,apothicare}.
+vérifiée avant la version finale \cite{cnopt,medtn,googlemaps,openstreetmap,apothicare}. Le
+Tableau~\ref{tab:comparaison-solutions} en présente la synthèse.
 
 \begin{table}[H]
     \centering
@@ -147,11 +149,11 @@ vérifiée avant la version finale \cite{cnopt,medtn,googlemaps,openstreetmap,ap
 
 \section{Critique de l'existant}
 
-L'étude de l'existant montre que le principal risque ne concerne pas uniquement l'affichage des pharmacies.
-Il concerne aussi la maîtrise de la donnée. Une solution peut permettre la consultation, mais rester limitée
-si elle ne précise pas comment les plannings sont importés, corrigés, validés et tracés. Pour un utilisateur
-mobile, cette limite se traduit par une recherche moins fiable. Pour l'administrateur, elle se traduit par
-une difficulté à savoir qui a modifié une donnée, quand et à partir de quelle source.
+Ce panorama révèle que le risque principal ne tient pas seulement à l'affichage des pharmacies, mais aussi
+à la maîtrise de la donnée. Une solution peut autoriser la consultation tout en restant limitée si elle
+n'explicite pas la manière dont les plannings sont importés, corrigés, validés et tracés. Côté utilisateur
+mobile, cette lacune se traduit par une recherche moins fiable ; côté administrateur, par la difficulté de
+savoir qui a modifié une donnée, quand et depuis quelle source.
 
 Cette difficulté augmente avec le volume de données et le nombre d'intervenants. Une saisie manuelle devient
 insuffisante lorsque plusieurs assistants régionaux doivent gérer des pharmacies, des gardes et des fichiers
@@ -167,9 +169,9 @@ assistant de premiers secours ajouté au parcours mobile :
 \begin{itemize}
     \item une API backend FastAPI qui centralise les données, gère l'authentification, applique les règles
     métier et expose les endpoints \gls{rest} ;
-    \item un tableau de bord administrateur React/Vite qui offre aux administrateurs un espace de gestion
-    pour les pharmacies, les gardes, les médicaments, les imports \gls{csv}, les assistants régionaux, les
-    indicateurs et les journaux d'audit ;
+    \item un espace d'administration React/Vite qui met à la disposition des administrateurs un environnement
+    de gestion pour les pharmacies, les gardes, les médicaments, les imports \gls{csv}, les assistants
+    régionaux, les indicateurs et les journaux d'audit ;
     \item une application mobile Expo/React Native centrée sur le citoyen, avec la recherche de
     pharmacies, la consultation des gardes, la géolocalisation, l'accès au catalogue de médicaments et
     l'assistant de premiers secours.
@@ -201,7 +203,8 @@ Les objectifs fonctionnels et techniques du projet sont :
 Le projet a adopté une organisation par sprints inspirée de Scrum \cite{scrumguide}, adaptée au contexte
 d'un PFE. Chaque sprint a été associé à un objectif concret et à des livrables vérifiables. Les arbitrages
 ont porté sur les modules réellement développés : contrats d'API, imports CSV, authentification, gestion des
-rôles, pages d'administration, écrans mobiles et tests de validation.
+rôles, pages d'administration, écrans mobiles et tests de validation. Le Tableau~\ref{tab:sprints-scrum}
+présente cette organisation en six sprints.
 
 \begin{table}[H]
     \centering
@@ -267,7 +270,8 @@ Chaque branche de fonctionnalité correspondait à un ticket Jira, en respectant
 \emph{pull request} faisant l'objet d'une revue de code. Les messages de \emph{commit} référençaient
 systématiquement le numéro de ticket Jira (par exemple \texttt{PC-42: ajout import CSV gardes}), ce qui
 a garanti une traçabilité de bout en bout. Le dépôt monorepo regroupait quatre dossiers principaux :
-\texttt{backend/}, \texttt{admin/}, \texttt{mobile/} et \texttt{chatbot/}.
+\texttt{backend/}, \texttt{admin/}, \texttt{mobile/} et \texttt{chatbot/}. Le Tableau~\ref{tab:outils-gestion}
+récapitule ces deux outils et leurs usages.
 
 \begin{table}[H]
     \centering
@@ -292,7 +296,7 @@ modifications de code correspondantes.
 
 \section{Conclusion}
 
-Ce premier chapitre a permis de préciser le contexte du projet, le domaine pharmaceutique et les limites
-des solutions existantes. Il montre également pourquoi PharmacieConnect repose sur une séparation entre
-backend, administration web et application mobile. Le chapitre suivant détaille les besoins qui découlent
-de ce cadrage.
+Ce premier volet a posé le contexte du projet, cerné le domaine pharmaceutique et mis en évidence les
+limites des solutions actuelles. Il éclaire aussi le choix d'articuler PharmacieConnect autour d'une
+séparation entre backend, administration web et application mobile. La suite du document précise les
+besoins qui découlent de ce cadrage.

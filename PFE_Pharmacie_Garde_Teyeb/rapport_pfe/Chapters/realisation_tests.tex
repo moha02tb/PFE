@@ -5,22 +5,24 @@
 
 \section{Introduction}
 
-Après la phase de conception, ce chapitre présente le passage de PharmacieConnect vers une version
-exécutable et testable. Il décrit l'environnement de développement, les choix techniques réellement
-mobilisés, l'organisation du dépôt et les principales fonctionnalités implémentées dans le backend,
-le tableau de bord administrateur, l'application mobile et l'assistant de premiers secours. L'objectif
-n'est pas seulement d'énumérer les outils utilisés, mais de montrer comment chaque composant contribue
-aux besoins identifiés : consultation des gardes, gestion administrative, import CSV, traçabilité,
-géolocalisation et validation des accès.
+Une fois la conception arrêtée, place à la mise en œuvre : PharmacieConnect devient ici une version
+exécutable et vérifiable. Sont décrits l'environnement de développement, les choix techniques effectivement
+mobilisés, l'organisation du dépôt et les principales fonctionnalités codées dans le backend, l'interface
+d'administration, l'application mobile et l'assistant de premiers secours. L'enjeu dépasse la simple
+énumération d'outils : il s'agit de montrer comment chaque composant répond aux besoins identifiés --
+consultation des gardes, gestion administrative, import CSV, traçabilité, géolocalisation et validation
+des accès.
 
 \section{Environnement matériel et logiciel}
 
 Le développement de PharmacieConnect a mobilisé plusieurs outils, car le projet combine un backend, une
-interface web d'administration et une application mobile.
+interface web d'administration et une application mobile. Le Tableau~\ref{tab:env-dev} récapitule cet
+environnement.
 
 \begin{table}[H]
     \centering
     \caption{Environnement de développement -- Source : Auteur}
+    \label{tab:env-dev}
     \begin{tabular}{L{5cm}L{8cm}}
         \toprule
         \textbf{Élément} & \textbf{Description} \\
@@ -43,10 +45,11 @@ Les choix techniques ont été arrêtés à partir des responsabilités observé
 backend devait rester le point de contrôle des routes REST, des accès et des règles métier. L'administration
 web devait rendre les opérations répétées assez rapides pour corriger des pharmacies, des gardes, des
 imports ou des journaux d'audit. L'application mobile, de son côté, devait garder un parcours court :
-chercher, filtrer, localiser et consulter l'information utile sans multiplier les écrans.
+chercher, filtrer, localiser et consulter l'information utile sans multiplier les écrans
+(voir Tableau~\ref{tab:technologies}).
 
 \begin{longtable}{L{4cm}L{10cm}}
-    \caption{Technologies utilisées dans le projet -- Source : Auteur}\\
+    \caption{Technologies utilisées dans le projet -- Source : Auteur}\label{tab:technologies}\\
     \toprule
     \textbf{Technologie} & \textbf{Utilisation} \\
     \midrule
@@ -58,7 +61,7 @@ chercher, filtrer, localiser et consulter l'information utile sans multiplier le
     FastAPI & Exposition des routes REST publiques et protégées du backend \cite{fastapi}. \\
     SQLAlchemy & Modélisation des entités persistantes et accès aux données \cite{sqlalchemy}. \\
     Pydantic & Validation des entrées et structuration des réponses de l'API \cite{pydantic}. \\
-    JWT & Gestion des jetons d'accès et de rafraîchissement \cite{jwt}. \\
+    JWT & Émission et renouvellement des jetons de session protégeant les routes \cite{jwt}. \\
     React & Construction de l'interface d'administration \cite{react}. \\
     Vite & Développement local et génération du build du tableau de bord \cite{vite}. \\
     Axios & Centralisation des appels HTTP entre le tableau de bord et l'API \cite{axios_docs}. \\
@@ -75,6 +78,8 @@ chercher, filtrer, localiser et consulter l'information utile sans multiplier le
     Jest & Tests automatisés côté application mobile \cite{jest}. \\
     \bottomrule
 \end{longtable}
+
+La Figure~\ref{fig:tech-stack} récapitule cette pile technologique organisée par couche.
 
 \begin{figure}[H]
 \centering
@@ -111,11 +116,12 @@ chercher, filtrer, localiser et consulter l'information utile sans multiplier le
 
 Le projet est regroupé dans un même espace de travail. Cette structure a facilité l'intégration entre
 l'API, le tableau de bord et l'application mobile, notamment lors des tests de communication entre les
-clients et le backend.
+clients et le backend, comme le montre le Tableau~\ref{tab:depot-organisation}.
 
 \begin{table}[H]
     \centering
     \caption{Organisation générale du dépôt -- Source : Auteur}
+    \label{tab:depot-organisation}
     \begin{tabular}{L{4.4cm}L{8.6cm}}
         \toprule
         \textbf{Dossier} & \textbf{Contenu} \\
@@ -201,9 +207,9 @@ Les actions sensibles sont enregistrées dans les journaux d'audit. Cela concern
 connexions, les échecs de connexion, les inscriptions, les créations administratives et les imports. Les
 données statistiques alimentent le tableau de bord et donnent une vision synthétique de l'activité.
 
-\section{Réalisation du tableau de bord administrateur}
+\section{Réalisation de l'interface d'administration}
 
-Le tableau de bord administrateur rassemble les fonctions de gestion dans une interface web destinée aux
+La console d'administration regroupe les fonctions de gestion au sein d'une application web destinée aux
 administrateurs et aux utilisateurs autorisés.
 
 \subsection{Pages principales}
@@ -300,11 +306,12 @@ L'architecture de l'assistant suit un pipeline en plusieurs étapes :
 Le jeu de données de départ s'appuie sur FirstAidQA, un corpus synthétique orienté premiers secours et
 situations d'urgence \cite{firstaidqa}. Dans PharmacieConnect, ce corpus a été nettoyé, segmenté et
 complété par des exemples ciblés afin d'obtenir un index mieux adapté aux questions courtes posées depuis
-l'application mobile.
+l'application mobile. Le Tableau~\ref{tab:dataset-assistant} en résume les statistiques.
 
 \begin{table}[H]
     \centering
     \caption{Statistiques du jeu de données de l'assistant -- Source : Auteur}
+    \label{tab:dataset-assistant}
     \begin{tabular}{L{6.5cm}L{6.5cm}}
         \toprule
         \textbf{Métrique} & \textbf{Valeur} \\
@@ -325,11 +332,12 @@ Le nettoyage des données a utilisé un audit automatisé (\texttt{data\_quality
 \subsection{Entraînement et métriques de performance}
 
 L'entraînement est piloté par le script \texttt{train\_firstaid\_chatbot.py}, qui construit le pipeline complet
-et évalue les performances selon plusieurs métriques.
+et évalue les performances selon plusieurs métriques, reportées dans le Tableau~\ref{tab:perf-assistant}.
 
 \begin{table}[H]
     \centering
     \caption{Performances de l'assistant après entraînement -- Source : Auteur}
+    \label{tab:perf-assistant}
     \begin{tabular}{L{3.5cm}L{2.2cm}L{2.0cm}L{4.3cm}}
         \toprule
         \textbf{Métrique} & \textbf{Valeur} & \textbf{Cible} & \textbf{Interprétation} \\
@@ -403,20 +411,25 @@ ce qui justifie la présence d'un score de confiance et de messages de sécurit�
 
 \section{Captures d'écran}
 
-Les captures suivantes présentent les principales interfaces réalisées pour le tableau de bord
-administrateur et pour l'application mobile.
+Les captures suivantes présentent les principales interfaces réalisées. Côté administration, les
+figures~\ref{fig:screenshot-admin-login} à~\ref{fig:screenshot-admin-monitoring} montrent successivement la
+connexion, la vue d'ensemble, le registre des pharmacies, la gestion, le calendrier des gardes, la carte,
+les imports de pharmacies et de gardes, les journaux d'audit et le centre de monitoring. Côté mobile, les
+figures~\ref{fig:screenshot-mobile-login} à~\ref{fig:screenshot-mobile-chatbot} illustrent la connexion,
+l'accueil et la recherche, la carte, le calendrier des gardes, le catalogue de médicaments et l'assistant
+de premiers secours.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth,height=0.72\textheight,keepaspectratio]{admin-login.png}
-    \caption{Écran de connexion du tableau de bord administrateur -- Source : Auteur}
+    \caption{Écran de connexion de la console d'administration -- Source : Auteur}
     \label{fig:screenshot-admin-login}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth,height=0.72\textheight,keepaspectratio]{admin-dashboard.png}
-    \caption{Vue du tableau de bord administrateur -- Source : Auteur}
+    \caption{Vue d'ensemble de l'espace d'administration -- Source : Auteur}
     \label{fig:screenshot-admin-dashboard}
 \end{figure}
 
@@ -514,7 +527,7 @@ administrateur et pour l'application mobile.
     \end{minipage}\hfill
     \begin{minipage}{0.32\textwidth}
         \centering
-        \includegraphics[width=\textwidth,height=0.62\textheight,keepaspectratio]{mobile-firstaid-assistant.jpeg}
+        \includegraphics[width=\textwidth,height=0.62\textheight,keepaspectratio]{chatbotscreen.png}
         \captionof{figure}{Assistant mobile de premiers secours -- Source : Auteur}
         \label{fig:screenshot-mobile-chatbot}
     \end{minipage}
@@ -522,14 +535,15 @@ administrateur et pour l'application mobile.
 
 \section{Intégration API}
 
-L'intégration API relie les trois interfaces (tableau de bord, application mobile et assistant) au backend.
-Le tableau de bord administrateur utilise Axios, tandis que l'application mobile et l'assistant possèdent
+L'intégration API relie les trois clients (panneau de contrôle, application mobile et assistant) au backend.
+Le panneau de contrôle utilise Axios, tandis que l'application mobile et l'assistant possèdent
 leurs propres configurations d'appel API. Les trois clients consomment les endpoints selon leurs besoins
-définis.
+définis, comme le résume le Tableau~\ref{tab:integrations-api}.
 
 \begin{table}[H]
     \centering
     \caption{Principales intégrations API -- Source : Auteur}
+    \label{tab:integrations-api}
     \begin{tabular}{L{3.8cm}L{5.2cm}L{4cm}}
         \toprule
         \textbf{Client} & \textbf{Endpoints utilisés} & \textbf{Objectif} \\
@@ -545,11 +559,13 @@ définis.
 
 La configuration du backend a été externalisée dans des variables d'environnement. Dans notre cas, cela évite
 de mélanger le code applicatif avec des valeurs qui changent selon le contexte d'exécution, comme la base de
-données, les origines autorisées ou les clés de sécurité.
+données, les origines autorisées ou les clés de sécurité. Le Tableau~\ref{tab:variables-env} liste les
+principales variables.
 
 \begin{table}[H]
     \centering
     \caption{Variables d'environnement principales -- Source : Auteur}
+    \label{tab:variables-env}
     \begin{tabular}{L{6.2cm}L{6.8cm}}
         \toprule
         \textbf{Variable} & \textbf{Rôle} \\
@@ -583,13 +599,17 @@ de ne pas alourdir le corps du rapport.
 
 \subsection{Stratégie de test}
 
-La validation combine des tests automatisés côté backend et des vérifications manuelles sur les
-interfaces. Les tests backend portent surtout sur les règles sensibles : authentification, audit,
-restrictions régionales, indicateurs et imports.
+La validation de PharmacieConnect a porté sur les parcours qui peuvent avoir un impact direct sur l'usage de
+la plateforme. Les tests ont concerné l'authentification, l'accès aux routes protégées, la recherche de
+pharmacies, la consultation des gardes, l'import de fichiers CSV, la cohérence des réponses API et
+l'intégration mobile. Une attention particulière a été portée aux erreurs d'import, aux droits insuffisants
+et aux réponses de l'assistant de premiers secours, car ces cas nécessitent des messages clairs et un
+comportement prudent. Le Tableau~\ref{tab:strategie-validation} présente cette stratégie.
 
 \begin{table}[H]
     \centering
     \caption{Stratégie de validation -- Source : Auteur}
+    \label{tab:strategie-validation}
     \begin{tabular}{L{4cm}L{9cm}}
         \toprule
         \textbf{Type de test} & \textbf{Objectif} \\
@@ -608,10 +628,11 @@ restrictions régionales, indicateurs et imports.
 
 Une campagne de vérification a été exécutée sur les trois parties du projet le 13 mai 2026. Elle ne
 remplace pas une recette complète en production, mais elle confirme que les modules principaux compilent
-ou passent leurs tests automatisés dans l'environnement local.
+ou passent leurs tests automatisés dans l'environnement local. Ces résultats sont rassemblés dans le
+Tableau~\ref{tab:resultats-validation}.
 
 \begin{longtable}{L{3.6cm}L{4.7cm}L{5.7cm}}
-    \caption{Résultats de validation exécutés -- Source : Auteur}\\
+    \caption{Résultats de validation exécutés -- Source : Auteur}\label{tab:resultats-validation}\\
     \toprule
     \textbf{Partie vérifiée} & \textbf{Commande} & \textbf{Résultat observé} \\
     \midrule
@@ -660,11 +681,13 @@ limites de pagination, les erreurs de validation, les accès interdits et la coh
 
 La version validée du projet est exécutable localement avec trois services séparés : backend FastAPI,
 administration React/Vite et application mobile Expo. Cette structure reflète l'architecture cible et
-donne un cadre clair pour vérifier les échanges API avant un déploiement final.
+donne un cadre clair pour vérifier les échanges API avant un déploiement final. Le
+Tableau~\ref{tab:preuves-build} en fournit les preuves.
 
 \begin{table}[H]
     \centering
     \caption{Preuves de lancement et de build -- Source : Auteur}
+    \label{tab:preuves-build}
     \begin{tabular}{L{4cm}L{4.8cm}L{4.2cm}}
         \toprule
         \textbf{Composant} & \textbf{Commande de vérification} & \textbf{État} \\
@@ -679,10 +702,10 @@ donne un cadre clair pour vérifier les échanges API avant un déploiement fina
 
 \subsection{Validation fonctionnelle}
 
-Les principaux scénarios fonctionnels vérifiés sont présentés dans le tableau suivant.
+Les principaux scénarios fonctionnels vérifiés sont présentés dans le Tableau~\ref{tab:scenarios-tests}.
 
 \begin{longtable}{L{4cm}L{5cm}L{5cm}}
-    \caption{Scénarios fonctionnels testés -- Source : Auteur}\\
+    \caption{Scénarios fonctionnels testés -- Source : Auteur}\label{tab:scenarios-tests}\\
     \toprule
     \textbf{Scénario} & \textbf{Étapes} & \textbf{Résultat attendu} \\
     \midrule
@@ -705,11 +728,17 @@ Les principaux scénarios fonctionnels vérifiés sont présentés dans le table
 
 \section{Difficultés rencontrées et solutions adoptées}
 
-Plusieurs difficultés sont apparues pendant la réalisation. Elles ont principalement concerné la cohérence
-des données, les droits d'accès et l'intégration entre les trois parties du projet.
+Plusieurs difficultés ont été rencontrées pendant la réalisation. La première concerne la qualité des données
+importées par CSV : certains fichiers peuvent contenir des colonnes manquantes, des doublons ou des valeurs
+difficiles à exploiter. Pour limiter ce problème, le backend vérifie les champs obligatoires et retourne des
+erreurs compréhensibles ligne par ligne. La deuxième difficulté concerne la séparation des droits entre
+administrateur et assistant régional. Cette contrainte a nécessité un contrôle côté serveur afin qu'un compte
+autorisé ne puisse pas modifier des données hors de son périmètre. Enfin, l'intégration mobile a demandé de
+stabiliser les appels API, notamment pour la recherche, la carte, le calendrier des gardes et l'assistant de
+premiers secours. Le Tableau~\ref{tab:difficultes} synthétise ces difficultés et les solutions adoptées.
 
 \begin{longtable}{L{5cm}L{9cm}}
-    \caption{Difficultés rencontrées et solutions adoptées -- Source : Auteur}\\
+    \caption{Difficultés rencontrées et solutions adoptées -- Source : Auteur}\label{tab:difficultes}\\
     \toprule
     \textbf{Difficulté} & \textbf{Solution adoptée} \\
     \midrule
@@ -729,8 +758,8 @@ des données, les droits d'accès et l'intégration entre les trois parties du p
 
 \section{Conclusion}
 
-La réalisation a abouti à une plateforme fonctionnelle composée d'une API sécurisée, d'un tableau de bord
-administrateur et d'une application mobile. Les tests réalisés ont couvert les parcours essentiels :
+Cette mise en œuvre débouche sur une plateforme opérationnelle réunissant une API sécurisée, une interface
+d'administration et une application mobile. Les essais conduits ont couvert les parcours essentiels :
 authentification, recherche de pharmacies, consultation des gardes, imports CSV, gestion des rôles, audit
-et recherche de médicaments. Des améliorations restent possibles, notamment les tests bout en bout, les
-tests de charge et la validation sur un volume de données plus important.
+et recherche de médicaments. Plusieurs pistes d'amélioration subsistent, en particulier les tests bout en
+bout, les tests de charge et la validation sur un volume de données plus conséquent.

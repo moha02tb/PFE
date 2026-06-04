@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>PharmacieConnect — Dossier technique de soutenance</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", "Calibri", Arial, sans-serif;
+    font-size: 11px; line-height: 1.55; color: #1a1a1a; margin: 0;
+  }
+  h1, h2, h3, h4 { color: #0b4f6c; line-height: 1.25; }
+  h1 { font-size: 26px; }
+  h2 {
+    font-size: 18px; border-bottom: 3px solid #0b4f6c; padding-bottom: 4px;
+    margin-top: 28px; page-break-after: avoid;
+  }
+  h3 { font-size: 14px; color: #11698e; margin-top: 18px; page-break-after: avoid; }
+  h4 { font-size: 12px; color: #19647e; margin-top: 12px; margin-bottom: 4px; }
+  p { margin: 6px 0; }
+  code {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10px;
+    background: #eef3f6; padding: 1px 4px; border-radius: 3px; color: #b5179e;
+  }
+  pre {
+    font-family: "Consolas", "Courier New", monospace; font-size: 9.5px;
+    background: #1e2933; color: #e8eef2; padding: 10px 12px; border-radius: 6px;
+    overflow-x: auto; line-height: 1.45; white-space: pre-wrap; word-wrap: break-word;
+    page-break-inside: avoid;
+  }
+  pre code { background: none; color: inherit; padding: 0; }
+  .flow {
+    font-family: "Consolas", monospace; font-size: 9.5px; background: #f4f8fa;
+    border: 1px solid #cfe0e8; border-left: 4px solid #0b4f6c; padding: 8px 12px;
+    border-radius: 4px; white-space: pre-wrap; page-break-inside: avoid; line-height: 1.5;
+  }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 10px; page-break-inside: avoid; }
+  th, td { border: 1px solid #c2d4dd; padding: 5px 7px; text-align: left; vertical-align: top; }
+  th { background: #0b4f6c; color: #fff; }
+  tr:nth-child(even) td { background: #f1f6f9; }
+  .tag {
+    display: inline-block; background: #11698e; color: #fff; font-size: 9px;
+    padding: 1px 7px; border-radius: 10px; margin-right: 4px;
+  }
+  .note {
+    background: #fff8e1; border-left: 4px solid #f4a300; padding: 8px 12px;
+    border-radius: 4px; margin: 10px 0; page-break-inside: avoid;
+  }
+  .key {
+    background: #e7f5ec; border-left: 4px solid #2e933c; padding: 8px 12px;
+    border-radius: 4px; margin: 10px 0; page-break-inside: avoid;
+  }
+  .key::before { content: "🎯 À DIRE AU JURY — "; font-weight: bold; color: #2e933c; }
+  .danger {
+    background: #fdecea; border-left: 4px solid #d62828; padding: 8px 12px;
+    border-radius: 4px; margin: 10px 0; page-break-inside: avoid;
+  }
+  .cover {
+    text-align: center; padding-top: 120px; page-break-after: always;
+  }
+  .cover h1 { font-size: 38px; margin-bottom: 0; }
+  .cover .sub { font-size: 16px; color: #11698e; margin-top: 8px; }
+  .cover .meta { margin-top: 60px; font-size: 12px; color: #555; }
+  .cover .badges { margin-top: 40px; }
+  .cover .badges span {
+    display: inline-block; margin: 4px; padding: 6px 14px; border-radius: 20px;
+    background: #0b4f6c; color: #fff; font-size: 12px;
+  }
+  .toc { page-break-after: always; }
+  .toc ol { line-height: 1.9; font-size: 12px; }
+  .section { page-break-before: always; }
+  .small { font-size: 9.5px; color: #666; }
+  ul { margin: 6px 0; padding-left: 20px; }
+  li { margin: 3px 0; }
+  .twocol { display: flex; gap: 14px; }
+  .twocol > div { flex: 1; }
+  .filepath { font-family: Consolas, monospace; font-size: 9px; color: #11698e; }
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<div class="cover">
+  <h1>PharmacieConnect</h1>
+  <div class="sub">Dossier technique approfondi — Soutenance de PFE</div>
+  <div class="sub" style="font-size:13px; color:#555;">Pharmacie de Garde &amp; Assistance d'urgence</div>
+  <div class="badges">
+    <span>FastAPI &middot; Backend</span>
+    <span>React + Vite &middot; Admin</span>
+    <span>Expo React Native &middot; Mobile</span>
+    <span>RAG local &middot; Chatbot IA</span>
+  </div>
+  <div class="meta">
+    Auteur : Mohamed Teyeb<br>
+    Approfondissement : Authentification JWT &middot; Import CSV &middot; Chatbot RAG &middot; RBAC régional<br>
+    Document généré pour la préparation de la soutenance technique
+  </div>
+</div>
+
+<!-- ============ TOC ============ -->
+<div class="toc">
+  <h2>Sommaire</h2>
+  <ol>
+    <li>Rappel de l'architecture (le contexte des approfondissements)</li>
+    <li><b>Approfondissement 1 — Authentification &amp; Sécurité JWT</b></li>
+    <li><b>Approfondissement 2 — Autorisation par rôle &amp; portée régionale (RBAC)</b></li>
+    <li><b>Approfondissement 3 — Import CSV (Pharmacies &amp; Gardes)</b></li>
+    <li><b>Approfondissement 4 — Le Chatbot Premiers Secours (RAG local)</b></li>
+    <li>Approfondissement 5 — Recherche géospatiale &amp; Cache</li>
+    <li>Approfondissement 6 — Frontend Admin &amp; rafraîchissement de token</li>
+    <li>Synthèse : questions probables du jury</li>
+  </ol>
+</div>
+
+<!-- ============ 1. ARCHI ============ -->
+<div class="section">
+<h2>1. Rappel de l'architecture</h2>
+<p>Le système est composé de <b>4 applications indépendantes</b> qui communiquent en HTTP/JSON. Le backend est la <b>source unique de vérité</b>.</p>
+
+<div class="flow">   App Admin (React/Vite)            App Mobile (Expo RN)
+          |  HTTP/JSON                       |  HTTP/JSON
+          v                                  v
+   +-------------------------------------------------+
+   |        Backend FastAPI   (port 8000)            |
+   |  auth . pharmacies . gardes . medicines .       |
+   |  analytics . audit . permissions                |
+   +-------------------------------------------------+
+                      |  SQLAlchemy ORM
+                      v
+        PostgreSQL (prod)  /  SQLite (local & tests)
+
+   App Mobile --(ecran chatbot)--> Service First-Aid (port 8001)
+                                        |
+                                        v
+                      FirstAidRAG + ChromaDB + sentence-transformers</div>
+
+<table>
+<tr><th>Composant</th><th>Rôle</th><th>Stack</th><th>Port</th></tr>
+<tr><td><code>backend_pharmacie</code></td><td>API REST centrale, BD, sécurité</td><td>FastAPI + SQLAlchemy</td><td>8000</td></tr>
+<tr><td><code>admin_pharmacie</code></td><td>Tableau de bord administrateur</td><td>React + Vite</td><td>5173</td></tr>
+<tr><td><code>mobile</code></td><td>App citoyenne</td><td>Expo React Native</td><td>—</td></tr>
+<tr><td><code>firstaid-ai</code></td><td>Chatbot premiers secours (IA)</td><td>FastAPI + ChromaDB</td><td>8001</td></tr>
+</table>
+
+<h3>1.1 Diagramme de cas d'utilisation (Use Case)</h3>
+<p>Quatre acteurs interagissent avec le système. Le <b>citoyen</b> utilise l'app mobile publique ; les <b>comptes du back-office</b> (assistant régional, administrateur, super admin) gèrent les données opérationnelles avec des permissions croissantes.</p>
+
+<div style="text-align:center; page-break-inside:avoid;">
+<svg viewBox="0 0 790 560" style="width:100%; max-width:790px; font-family:'Segoe UI',Arial,sans-serif;">
+  <defs>
+    <marker id="uc-line" markerWidth="2" markerHeight="2"></marker>
+  </defs>
+  <!-- system boundaries -->
+  <rect x="190" y="40" width="200" height="470" rx="8" fill="#f4f8fa" stroke="#0b4f6c" stroke-width="1.5"/>
+  <text x="290" y="60" text-anchor="middle" font-size="12" font-weight="bold" fill="#0b4f6c">Application Mobile (public)</text>
+  <rect x="430" y="40" width="220" height="470" rx="8" fill="#f1f6f9" stroke="#11698e" stroke-width="1.5"/>
+  <text x="540" y="60" text-anchor="middle" font-size="12" font-weight="bold" fill="#11698e">Back-office Admin</text>
+
+  <!-- ===== mobile use cases (cx=290) ===== -->
+  <g font-size="9.5" fill="#0b4f6c" text-anchor="middle">
+    <ellipse cx="290" cy="95"  rx="88" ry="19" fill="#fff" stroke="#0b4f6c"/><text x="290" y="99">S'inscrire / Se connecter</text>
+    <ellipse cx="290" cy="160" rx="88" ry="19" fill="#fff" stroke="#0b4f6c"/><text x="290" y="164">Rechercher une pharmacie</text>
+    <ellipse cx="290" cy="225" rx="88" ry="19" fill="#fff" stroke="#0b4f6c"/><text x="290" y="222">Pharmacies de garde</text><text x="290" y="233" font-size="8">(par date)</text>
+    <ellipse cx="290" cy="290" rx="88" ry="19" fill="#fff" stroke="#0b4f6c"/><text x="290" y="287">Recherche par proximité</text><text x="290" y="298" font-size="8">(carte / GPS)</text>
+    <ellipse cx="290" cy="355" rx="88" ry="19" fill="#fff" stroke="#0b4f6c"/><text x="290" y="359">Consulter les médicaments</text>
+    <ellipse cx="290" cy="430" rx="88" ry="22" fill="#e7f5ec" stroke="#2e933c"/><text x="290" y="427" fill="#2e933c">Chatbot premiers</text><text x="290" y="438" fill="#2e933c">secours (RAG)</text>
+  </g>
+
+  <!-- ===== admin use cases (cx=540) ===== -->
+  <g font-size="9.5" fill="#11698e" text-anchor="middle">
+    <ellipse cx="540" cy="100" rx="95" ry="19" fill="#fff" stroke="#11698e"/><text x="540" y="104">Gérer pharmacies (CRUD)</text>
+    <ellipse cx="540" cy="160" rx="95" ry="19" fill="#fff" stroke="#11698e"/><text x="540" y="164">Gérer plannings de garde</text>
+    <ellipse cx="540" cy="220" rx="95" ry="19" fill="#fff" stroke="#11698e"/><text x="540" y="224">Importer CSV (bulk)</text>
+    <ellipse cx="540" cy="280" rx="95" ry="19" fill="#fff" stroke="#11698e"/><text x="540" y="284">Tableau de bord / analytics</text>
+    <ellipse cx="540" cy="340" rx="95" ry="19" fill="#fff" stroke="#11698e"/><text x="540" y="344">Consulter les audit logs</text>
+    <ellipse cx="540" cy="430" rx="95" ry="22" fill="#fdecea" stroke="#d62828"/><text x="540" y="427" fill="#d62828">Gérer assistants</text><text x="540" y="438" fill="#d62828">&amp; comptes</text>
+  </g>
+
+  <!-- ===== actors ===== -->
+  <!-- Citoyen (left) -->
+  <g stroke="#0b4f6c" stroke-width="2" fill="none">
+    <circle cx="70" cy="230" r="12" fill="#0b4f6c"/>
+    <line x1="70" y1="242" x2="70" y2="280"/>
+    <line x1="52" y1="258" x2="88" y2="258"/>
+    <line x1="70" y1="280" x2="54" y2="305"/>
+    <line x1="70" y1="280" x2="86" y2="305"/>
+  </g>
+  <text x="70" y="325" text-anchor="middle" font-size="11" font-weight="bold" fill="#0b4f6c">Citoyen</text>
+
+  <!-- staff actors (right) -->
+  <g stroke="#11698e" stroke-width="2" fill="none">
+    <circle cx="725" cy="120" r="11" fill="#11698e"/><line x1="725" y1="131" x2="725" y2="163"/><line x1="709" y1="145" x2="741" y2="145"/><line x1="725" y1="163" x2="711" y2="184"/><line x1="725" y1="163" x2="739" y2="184"/>
+  </g>
+  <text x="725" y="200" text-anchor="middle" font-size="10" font-weight="bold" fill="#11698e">Assistant</text><text x="725" y="212" text-anchor="middle" font-size="9" fill="#11698e">régional</text>
+
+  <g stroke="#11698e" stroke-width="2" fill="none">
+    <circle cx="725" cy="270" r="11" fill="#11698e"/><line x1="725" y1="281" x2="725" y2="313"/><line x1="709" y1="295" x2="741" y2="295"/><line x1="725" y1="313" x2="711" y2="334"/><line x1="725" y1="313" x2="739" y2="334"/>
+  </g>
+  <text x="725" y="350" text-anchor="middle" font-size="10" font-weight="bold" fill="#11698e">Administrateur</text>
+
+  <g stroke="#d62828" stroke-width="2" fill="none">
+    <circle cx="725" cy="420" r="11" fill="#d62828"/><line x1="725" y1="431" x2="725" y2="463"/><line x1="709" y1="445" x2="741" y2="445"/><line x1="725" y1="463" x2="711" y2="484"/><line x1="725" y1="463" x2="739" y2="484"/>
+  </g>
+  <text x="725" y="500" text-anchor="middle" font-size="10" font-weight="bold" fill="#d62828">Super Admin</text>
+
+  <!-- ===== associations citoyen -> mobile use cases ===== -->
+  <g stroke="#9bb7c4" stroke-width="1">
+    <line x1="86" y1="240" x2="202" y2="95"/>
+    <line x1="90" y1="245" x2="202" y2="160"/>
+    <line x1="92" y1="255" x2="202" y2="225"/>
+    <line x1="92" y1="270" x2="202" y2="290"/>
+    <line x1="90" y1="285" x2="202" y2="355"/>
+    <line x1="84" y1="295" x2="205" y2="425"/>
+  </g>
+
+  <!-- assistant -> regional cases -->
+  <g stroke="#bcd0da" stroke-width="1">
+    <line x1="714" y1="150" x2="635" y2="105"/>
+    <line x1="714" y1="152" x2="635" y2="160"/>
+    <line x1="714" y1="158" x2="635" y2="218"/>
+  </g>
+  <!-- admin -> most cases -->
+  <g stroke="#bcd0da" stroke-width="1">
+    <line x1="714" y1="285" x2="635" y2="102"/>
+    <line x1="714" y1="282" x2="635" y2="162"/>
+    <line x1="714" y1="280" x2="635" y2="222"/>
+    <line x1="714" y1="278" x2="635" y2="282"/>
+    <line x1="714" y1="285" x2="635" y2="340"/>
+  </g>
+  <!-- super admin -> account mgmt + analytics + audit -->
+  <g stroke="#e7a9a3" stroke-width="1">
+    <line x1="714" y1="428" x2="636" y2="430"/>
+    <line x1="714" y1="418" x2="635" y2="285"/>
+    <line x1="714" y1="415" x2="635" y2="343"/>
+  </g>
+</svg>
+<div class="small" style="text-align:center;">Fig. 1 — Diagramme de cas d'utilisation. Le super admin hérite des droits de l'admin (<code>*</code>) ; l'assistant est limité aux opérations régionales.</div>
+</div>
+
+<h3>Architecture en couches du backend</h3>
+<div class="flow">Requête HTTP
+   -> Router (routers/)            traduit HTTP <-> appel de service
+   -> Dependency (dependencies.py) valide le token JWT + le rôle
+   -> Service (services/)          la VRAIE logique métier
+   -> SQLAlchemy Session           accès base de données
+   -> Base de données</div>
+<div class="key">« Les routers sont <b>minces</b> : ils ne font que traduire une requête HTTP en appel de service. Toute la logique métier — validation, parsing CSV, règles, audit — est isolée dans les <i>services</i>. Ça rend le code testable et maintenable. »</div>
+
+<h3>1.2 Architecture du code (vue par couches &amp; fichiers réels)</h3>
+<p>Chaque requête traverse les couches de haut en bas. Les noms ci-dessous sont les <b>fichiers réels</b> du dépôt.</p>
+
+<div style="text-align:center; page-break-inside:avoid;">
+<svg viewBox="0 0 840 560" style="width:100%; max-width:840px; font-family:'Segoe UI',Arial,sans-serif;">
+  <defs>
+    <marker id="car" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#0b4f6c"/></marker>
+    <marker id="card" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#8a6d3b"/></marker>
+  </defs>
+
+  <!-- clients -->
+  <g text-anchor="middle">
+    <g fill="#0b4f6c"><rect x="90"  y="16" width="170" height="44" rx="6"/><text x="175" y="34" fill="#fff" font-size="11" font-weight="bold">App Admin</text><text x="175" y="50" fill="#fff" font-size="9">React + Vite (5173)</text></g>
+    <g fill="#0b4f6c"><rect x="380" y="16" width="170" height="44" rx="6"/><text x="465" y="34" fill="#fff" font-size="11" font-weight="bold">App Mobile</text><text x="465" y="50" fill="#fff" font-size="9">Expo React Native</text></g>
+  </g>
+  <g stroke="#0b4f6c" stroke-width="1.4">
+    <line x1="175" y1="60" x2="175" y2="102" marker-end="url(#car)"/>
+    <line x1="430" y1="60" x2="370" y2="102" marker-end="url(#car)"/>
+    <line x1="500" y1="60" x2="715" y2="102" marker-end="url(#car)"/>
+  </g>
+  <text x="120" y="84" font-size="8" fill="#5b7280">HTTP/JSON</text>
+  <text x="560" y="80" font-size="8" fill="#5b7280">HTTP /answer</text>
+
+  <!-- backend box -->
+  <rect x="40" y="104" width="520" height="330" rx="8" fill="#fbfdfe" stroke="#0b4f6c" stroke-width="1.5"/>
+  <text x="300" y="124" text-anchor="middle" font-size="12" font-weight="bold" fill="#0b4f6c">Backend FastAPI — port 8000</text>
+
+  <!-- bands -->
+  <g text-anchor="middle" font-size="9.5">
+    <g fill="#0b4f6c"><rect x="60" y="134" width="480" height="38" rx="4"/><text x="300" y="157" fill="#fff">main.py — middleware (CORS · TrustedHost · SlowAPI rate-limit) + migrations au démarrage</text></g>
+    <g fill="#11698e"><rect x="60" y="180" width="480" height="38" rx="4"/><text x="300" y="203" fill="#fff">Routers (HTTP) : auth · admin · analytics · pharmacies · system_health</text></g>
+    <g fill="#19647e"><rect x="60" y="226" width="480" height="38" rx="4"/><text x="300" y="249" fill="#fff">Sécurité &amp; Dépendances : dependencies.py · permissions.py · security.py · region_scope.py</text></g>
+    <g fill="#2e7d6b"><rect x="60" y="272" width="350" height="52" rx="4"/><text x="235" y="292" fill="#fff" font-weight="bold">Services (logique métier)</text><text x="235" y="307" fill="#fff" font-size="8.5">Auth · Admin · Pharmacy · Garde</text><text x="235" y="318" fill="#fff" font-size="8.5">Medicine · Audit · Cache · Email</text></g>
+    <g fill="#7b4fa3"><rect x="60" y="332" width="350" height="52" rx="4"/><text x="235" y="352" fill="#fff" font-weight="bold">Couche données</text><text x="235" y="367" fill="#fff" font-size="8.5">models.py (SQLAlchemy ORM) · schemas.py</text><text x="235" y="378" fill="#fff" font-size="8.5">(Pydantic) · schema_migrations.py</text></g>
+    <!-- events side panel -->
+    <g fill="#8a6d3b"><rect x="424" y="272" width="116" height="112" rx="4"/><text x="482" y="318" fill="#fff" font-size="9">Bus d'événements</text><text x="482" y="332" fill="#fff" font-size="9">(events/)</text><text x="482" y="350" fill="#fff" font-size="7.5">publish / subscribe</text></g>
+  </g>
+  <!-- internal flow arrows -->
+  <g stroke="#0b4f6c" stroke-width="1.3">
+    <line x1="300" y1="172" x2="300" y2="180" marker-end="url(#car)"/>
+    <line x1="300" y1="218" x2="300" y2="226" marker-end="url(#car)"/>
+    <line x1="300" y1="264" x2="235" y2="272" marker-end="url(#car)"/>
+    <line x1="235" y1="324" x2="235" y2="332" marker-end="url(#car)"/>
+  </g>
+  <!-- services -> events dashed -->
+  <line x1="410" y1="298" x2="422" y2="320" stroke="#8a6d3b" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#card)"/>
+
+  <!-- DB cylinder -->
+  <g>
+    <path d="M150,460 a90,12 0 0 1 180,0 v40 a90,12 0 0 1 -180,0 z" fill="#7b4fa3" stroke="#5d3b80"/>
+    <ellipse cx="240" cy="460" rx="90" ry="12" fill="#9466b8" stroke="#5d3b80"/>
+    <text x="240" y="486" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">PostgreSQL (prod)</text>
+    <text x="240" y="500" text-anchor="middle" font-size="8.5" fill="#fff">/ SQLite (local &amp; tests)</text>
+  </g>
+  <line x1="235" y1="384" x2="240" y2="446" stroke="#7b4fa3" stroke-width="1.5" marker-end="url(#car)"/>
+
+  <!-- Redis -->
+  <g><rect x="400" y="452" width="150" height="40" rx="5" fill="#c25450"/><text x="475" y="470" text-anchor="middle" font-size="9.5" fill="#fff" font-weight="bold">Redis (cache)</text><text x="475" y="483" text-anchor="middle" font-size="8" fill="#fff">optionnel — fallback no-op</text></g>
+  <line x1="410" y1="305" x2="470" y2="450" stroke="#c25450" stroke-width="1.1" stroke-dasharray="4 3"/>
+
+  <!-- First-Aid service -->
+  <rect x="620" y="104" width="200" height="300" rx="8" fill="#eef7f1" stroke="#2e933c" stroke-width="1.5"/>
+  <text x="720" y="124" text-anchor="middle" font-size="11" font-weight="bold" fill="#2e933c">Service First-Aid — 8001</text>
+  <g text-anchor="middle" font-size="9">
+    <g fill="#2e933c"><rect x="640" y="138" width="160" height="42" rx="4"/><text x="720" y="156" fill="#fff">api/main.py</text><text x="720" y="170" fill="#fff" font-size="8">/answer · /health · /ready</text></g>
+    <g fill="#3a7d44"><rect x="640" y="200" width="160" height="42" rx="4"/><text x="720" y="218" fill="#fff">rag_pipeline.py</text><text x="720" y="232" fill="#fff" font-size="8">FirstAidRAG (retrieve)</text></g>
+    <g fill="#7b4fa3"><rect x="640" y="262" width="160" height="38" rx="4"/><text x="720" y="285" fill="#fff" font-size="8.5">sentence-transformers</text></g>
+    <g fill="#19647e"><rect x="640" y="320" width="160" height="38" rx="4"/><text x="720" y="343" fill="#fff" font-size="8.5">ChromaDB (vecteurs)</text></g>
+  </g>
+  <g stroke="#2e933c" stroke-width="1.3">
+    <line x1="720" y1="180" x2="720" y2="200" marker-end="url(#car)"/>
+    <line x1="720" y1="242" x2="720" y2="262" marker-end="url(#car)"/>
+    <line x1="720" y1="300" x2="720" y2="320" marker-end="url(#car)"/>
+  </g>
+  <text x="715" y="392" text-anchor="middle" font-size="8" fill="#2e933c">100% local · aucun LLM externe</text>
+</svg>
+<div class="small" style="text-align:center;">Fig. 2 — Architecture du code. Flux d'une requête de haut en bas. Le service First-Aid est isolé du backend principal.</div>
+</div>
+
+<h3>1.3 Diagramme de classes (modèle de données)</h3>
+<p>9 tables SQLAlchemy. <code>Administrateur</code> est le <b>hub</b> : il « possède » (<code>created_by</code>) les pharmacies, gardes et médicaments. <code>RefreshToken</code>, <code>LoginAttempt</code> et <code>AuditLog</code> sont <b>polymorphes</b> (champ <code>entity_type</code> qui pointe vers admin OU utilisateur, sans clé étrangère stricte).</p>
+
+<div style="text-align:center; page-break-inside:avoid;">
+<svg viewBox="0 0 800 760" style="width:100%; max-width:800px; font-family:'Segoe UI',Arial,sans-serif;">
+  <defs>
+    <marker id="fk" markerWidth="11" markerHeight="11" refX="9" refY="4" orient="auto"><path d="M0,0 L9,4 L0,8 Z" fill="#0b4f6c"/></marker>
+    <marker id="poly" markerWidth="11" markerHeight="11" refX="9" refY="4" orient="auto"><path d="M0,0 L9,4 L0,8 Z" fill="#8a6d3b"/></marker>
+  </defs>
+
+  <!-- ===== Administrateur (hub) col2 ===== -->
+  <g font-size="8.5">
+    <rect x="290" y="60" width="220" height="156" rx="4" fill="#fff" stroke="#0b4f6c" stroke-width="1.6"/>
+    <rect x="290" y="60" width="220" height="22" fill="#0b4f6c"/><text x="400" y="75" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Administrateur</text>
+    <text x="298" y="96">+ id : PK</text>
+    <text x="298" y="110">nomUtilisateur, email (unique)</text>
+    <text x="298" y="124">motDePasse (bcrypt)</text>
+    <text x="298" y="138">role : admin|super_admin|assistant</text>
+    <text x="298" y="152">region_scope : north|middle|south?</text>
+    <text x="298" y="166">is_active, last_login</text>
+    <text x="298" y="180">created_by : FK → Administrateur</text>
+    <text x="298" y="200" font-style="italic" fill="#777">CheckConstraint: assistant ⇒ région</text>
+  </g>
+
+  <!-- ===== Utilisateur col2 ===== -->
+  <g font-size="8.5">
+    <rect x="290" y="380" width="220" height="120" rx="4" fill="#fff" stroke="#11698e" stroke-width="1.6"/>
+    <rect x="290" y="380" width="220" height="22" fill="#11698e"/><text x="400" y="395" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Utilisateur</text>
+    <text x="298" y="416">+ id : PK</text>
+    <text x="298" y="430">nomUtilisateur, email (unique)</text>
+    <text x="298" y="444">motDePasse (bcrypt)</text>
+    <text x="298" y="458">email_verified, ..._code (HMAC)</text>
+    <text x="298" y="472">source : self|admin|oauth</text>
+    <text x="298" y="486">is_active, last_login</text>
+  </g>
+
+  <!-- ===== SearchEvent col2 bottom ===== -->
+  <g font-size="8.5">
+    <rect x="290" y="630" width="220" height="106" rx="4" fill="#fff" stroke="#6b7a8f" stroke-width="1.4"/>
+    <rect x="290" y="630" width="220" height="22" fill="#6b7a8f"/><text x="400" y="645" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">SearchEvent</text>
+    <text x="298" y="666">+ id : PK</text>
+    <text x="298" y="680">event_type, query_text</text>
+    <text x="298" y="694">governorate, latitude, longitude</text>
+    <text x="298" y="708">result_count</text>
+    <text x="298" y="722">created_at</text>
+  </g>
+
+  <!-- ===== Pharmacie col1 ===== -->
+  <g font-size="8.5">
+    <rect x="28" y="60" width="220" height="120" rx="4" fill="#fff" stroke="#19647e" stroke-width="1.4"/>
+    <rect x="28" y="60" width="220" height="22" fill="#19647e"/><text x="138" y="75" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Pharmacie</text>
+    <text x="36" y="96">+ id : PK</text>
+    <text x="36" y="110">osm_id (unique), osm_type</text>
+    <text x="36" y="124">name, address, phone</text>
+    <text x="36" y="138">governorate, latitude, longitude</text>
+    <text x="36" y="152">created_by : FK → Administrateur</text>
+    <text x="36" y="166">created_at, updated_at</text>
+  </g>
+
+  <!-- ===== GardeSchedule col1 ===== -->
+  <g font-size="8.5">
+    <rect x="28" y="320" width="220" height="124" rx="4" fill="#fff" stroke="#19647e" stroke-width="1.4"/>
+    <rect x="28" y="320" width="220" height="22" fill="#19647e"/><text x="138" y="335" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">GardeSchedule</text>
+    <text x="36" y="356">+ id : PK</text>
+    <text x="36" y="370">date, pharmacy_name</text>
+    <text x="36" y="384">start_time, end_time</text>
+    <text x="36" y="398">city, governorate, shift_type</text>
+    <text x="36" y="412">created_by : FK → Administrateur</text>
+    <text x="36" y="430" font-style="italic" fill="#777">UniqueConstraint(date,nom,h_début,h_fin)</text>
+  </g>
+
+  <!-- ===== Medicine col1 ===== -->
+  <g font-size="8.5">
+    <rect x="28" y="560" width="220" height="120" rx="4" fill="#fff" stroke="#19647e" stroke-width="1.4"/>
+    <rect x="28" y="560" width="220" height="22" fill="#19647e"/><text x="138" y="575" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Medicine</text>
+    <text x="36" y="596">+ id : PK</text>
+    <text x="36" y="610">code_pct (unique)</text>
+    <text x="36" y="624">nom_commercial, dci</text>
+    <text x="36" y="638">prix_public_dt, tarif_reference_dt</text>
+    <text x="36" y="652">categorie_remboursement, ap</text>
+    <text x="36" y="666">created_by : FK → Administrateur</text>
+  </g>
+
+  <!-- ===== RefreshToken col3 ===== -->
+  <g font-size="8.5">
+    <rect x="558" y="60" width="216" height="100" rx="4" fill="#fff" stroke="#6b7a8f" stroke-width="1.4"/>
+    <rect x="558" y="60" width="216" height="22" fill="#6b7a8f"/><text x="666" y="75" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">RefreshToken</text>
+    <text x="566" y="96">+ id : PK</text>
+    <text x="566" y="110">entity_type, entity_id (polymorphe)</text>
+    <text x="566" y="124">token_jti (unique) ← révocation</text>
+    <text x="566" y="138">expires_at, created_at</text>
+  </g>
+
+  <!-- ===== LoginAttempt col3 ===== -->
+  <g font-size="8.5">
+    <rect x="558" y="300" width="216" height="100" rx="4" fill="#fff" stroke="#6b7a8f" stroke-width="1.4"/>
+    <rect x="558" y="300" width="216" height="22" fill="#6b7a8f"/><text x="666" y="315" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">LoginAttempt</text>
+    <text x="566" y="336">+ id : PK</text>
+    <text x="566" y="350">email, entity_type?</text>
+    <text x="566" y="364">ip_address, success</text>
+    <text x="566" y="378">attempted_at</text>
+  </g>
+
+  <!-- ===== AuditLog col3 ===== -->
+  <g font-size="8.5">
+    <rect x="558" y="500" width="216" height="118" rx="4" fill="#fff" stroke="#6b7a8f" stroke-width="1.4"/>
+    <rect x="558" y="500" width="216" height="22" fill="#6b7a8f"/><text x="666" y="515" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">AuditLog</text>
+    <text x="566" y="536">+ id : PK</text>
+    <text x="566" y="550">action (enum), status</text>
+    <text x="566" y="564">entity_type, entity_id</text>
+    <text x="566" y="578">actor_id, actor_type (polymorphe)</text>
+    <text x="566" y="592">ip_address, user_agent, details</text>
+    <text x="566" y="606">created_at</text>
+  </g>
+
+  <!-- ===== relations (FK solid) ===== -->
+  <g stroke="#0b4f6c" stroke-width="1.3" fill="none">
+    <line x1="248" y1="150" x2="288" y2="140" marker-end="url(#fk)"/>            <!-- Pharmacie -> Admin -->
+    <path d="M248,400 C275,360 275,250 288,180" marker-end="url(#fk)"/>          <!-- Garde -> Admin -->
+    <path d="M248,620 C272,520 272,260 288,168" marker-end="url(#fk)"/>          <!-- Medicine -> Admin -->
+    <path d="M500,70 C540,40 470,40 470,58" marker-end="url(#fk)"/>              <!-- Admin self created_by -->
+  </g>
+  <text x="262" y="135" font-size="7.5" fill="#0b4f6c">created_by</text>
+  <text x="500" y="40" font-size="7.5" fill="#0b4f6c">created_by (self)</text>
+
+  <!-- polymorphic dashed -->
+  <g stroke="#8a6d3b" stroke-width="1.2" fill="none" stroke-dasharray="5 4">
+    <line x1="558" y1="100" x2="512" y2="120" marker-end="url(#poly)"/>          <!-- RefreshToken -> Admin -->
+    <path d="M600,160 C560,260 540,340 512,400" marker-end="url(#poly)"/>        <!-- RefreshToken -> Utilisateur -->
+    <line x1="558" y1="350" x2="512" y2="430" marker-end="url(#poly)"/>          <!-- LoginAttempt -> Utilisateur -->
+    <path d="M620,500 C560,470 540,460 512,455" marker-end="url(#poly)"/>        <!-- AuditLog -> Utilisateur -->
+  </g>
+
+  <!-- logical join Garde.pharmacy_name ~ Pharmacie.name -->
+  <line x1="138" y1="320" x2="138" y2="182" stroke="#c25450" stroke-width="1.1" stroke-dasharray="3 3" fill="none" marker-end="url(#poly)"/>
+  <text x="142" y="255" font-size="7.5" fill="#c25450" transform="rotate(0)">pharmacy_name</text>
+  <text x="142" y="266" font-size="7.5" fill="#c25450">~ name (jointure)</text>
+
+  <!-- legend -->
+  <g font-size="8.5">
+    <rect x="300" y="250" width="210" height="86" rx="4" fill="#f7fafc" stroke="#ccd8df"/>
+    <text x="310" y="266" font-weight="bold" fill="#333">Légende</text>
+    <line x1="310" y1="282" x2="340" y2="282" stroke="#0b4f6c" stroke-width="1.3" marker-end="url(#fk)"/><text x="346" y="285" fill="#333">clé étrangère (FK)</text>
+    <line x1="310" y1="302" x2="340" y2="302" stroke="#8a6d3b" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#poly)"/><text x="346" y="305" fill="#333">relation polymorphe (entity_type)</text>
+    <line x1="310" y1="322" x2="340" y2="322" stroke="#c25450" stroke-width="1.1" stroke-dasharray="3 3"/><text x="346" y="325" fill="#333">jointure logique (par nom)</text>
+  </g>
+</svg>
+<div class="small" style="text-align:center;">Fig. 3 — Diagramme de classes. Admins et utilisateurs sont volontairement dans deux tables distinctes ; les tables d'audit/sécurité les référencent par <code>entity_type</code> + <code>entity_id</code>.</div>
+</div>
+</div>
+
+<!-- ============ 2. JWT ============ -->
+<div class="section">
+<h2>2. Approfondissement 1 — Authentification &amp; Sécurité JWT</h2>
+<p class="filepath">Fichiers : security.py · services/auth_service.py · dependencies.py · routers/auth.py</p>
+
+<h3>2.1 Le hachage des mots de passe (bcrypt)</h3>
+<p>Les mots de passe ne sont <b>jamais stockés en clair</b>. On utilise <b>bcrypt</b> avec un coût de 12 tours (<code>BCRYPT_ROUNDS = 12</code>). Bcrypt génère un <i>sel aléatoire</i> intégré au hash, donc deux utilisateurs avec le même mot de passe ont des hash différents.</p>
+<pre><code>def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode("utf-8"),
+                         bcrypt.gensalt(rounds=BCRYPT_ROUNDS)).decode("utf-8")
+
+def verify_password(plain, hashed) -> bool:
+    return bcrypt.checkpw(plain.encode(), hashed.encode())   # comparaison constante</code></pre>
+
+<h3>2.2 Le système à deux tokens (Access + Refresh)</h3>
+<table>
+<tr><th>Token</th><th>Durée de vie</th><th>Contenu (claims)</th><th>Stockage backend</th></tr>
+<tr><td><b>Access token</b></td><td>15 min (<code>ACCESS_TOKEN_EXPIRE_MINUTES</code>)</td><td><code>sub</code>, <code>role</code>, <code>entity_type</code>, <code>type=access</code>, <code>iss</code>, <code>aud</code>, <code>iat</code>, <code>exp</code></td><td>Aucun (stateless)</td></tr>
+<tr><td><b>Refresh token</b></td><td>7 jours (<code>REFRESH_TOKEN_EXPIRE_DAYS</code>)</td><td><code>sub</code>, <code>entity_type</code>, <code>type=refresh</code>, <code>jti</code> (id unique), …</td><td>Son <code>jti</code> stocké en table <code>refresh_tokens</code></td></tr>
+</table>
+<p>Algorithme : <b>HS256</b>, signé avec <code>SECRET_KEY</code>. Le backend <b>refuse de démarrer</b> si la clé fait moins de 32 caractères ou contient une valeur par défaut — sécurité dès la configuration :</p>
+<pre><code>if not SECRET_KEY or len(SECRET_KEY) < 32 or "change-this" in SECRET_KEY.lower():
+    raise RuntimeError("SECRET_KEY must be set to a strong secret of at least 32 characters")</code></pre>
+
+<div class="note"><b>Pourquoi 2 tokens ?</b> L'access token est court → s'il est volé, la fenêtre d'attaque est minime. Le refresh token, lui, est long mais <b>révocable</b> côté serveur (voir 2.4). On combine le confort (pas de reconnexion toutes les 15 min) et la sécurité (révocation possible).</p></div>
+
+<h3>2.3 Le flux de connexion (<code>AuthService.login</code>)</h3>
+<div class="flow">1. POST /api/auth/login  { email, password }
+2. Cherche d'abord dans la table  administrateurs
+3. Sinon cherche dans la table    utilisateurs
+4. verify_password(password, hash)  -- bcrypt
+5. (utilisateur) : vérifie que l'email est confirmé (email_verified)
+6. create_access_token()  +  create_refresh_token()
+7. Enregistre le jti du refresh dans refresh_tokens
+8. Enregistre un LoginAttempt + un AuditLog (succès/échec)
+9. Retourne { access_token, refresh_token, token_type, expires_in }</div>
+
+<div style="text-align:center; page-break-inside:avoid; margin-top:12px;">
+<svg viewBox="0 0 790 520" style="width:100%; max-width:790px; font-family:'Segoe UI',Arial,sans-serif;">
+  <defs>
+    <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#0b4f6c"/></marker>
+    <marker id="ahr" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#7a99a8"/></marker>
+  </defs>
+  <!-- lifelines -->
+  <g font-size="10" text-anchor="middle">
+    <g fill="#0b4f6c"><rect x="12"  y="18" width="116" height="42" rx="5"/><text x="70"  y="35" fill="#fff">Client</text><text x="70"  y="50" fill="#fff" font-size="8.5">(Admin/Mobile)</text></g>
+    <g fill="#11698e"><rect x="166" y="18" width="118" height="42" rx="5"/><text x="225" y="35" fill="#fff">Router</text><text x="225" y="50" fill="#fff" font-size="8.5">/api/auth/login</text></g>
+    <g fill="#11698e"><rect x="336" y="18" width="118" height="42" rx="5"/><text x="395" y="42" fill="#fff">AuthService</text></g>
+    <g fill="#19647e"><rect x="506" y="18" width="118" height="42" rx="5"/><text x="565" y="35" fill="#fff">security.py</text><text x="565" y="50" fill="#fff" font-size="8.5">JWT + bcrypt</text></g>
+    <g fill="#2e933c"><rect x="650" y="18" width="120" height="42" rx="5"/><text x="710" y="35" fill="#fff">Base de</text><text x="710" y="50" fill="#fff">données</text></g>
+  </g>
+  <!-- dashed vertical lifelines -->
+  <g stroke="#b9c9d2" stroke-width="1" stroke-dasharray="4 4">
+    <line x1="70" y1="60" x2="70" y2="505"/>
+    <line x1="225" y1="60" x2="225" y2="505"/>
+    <line x1="395" y1="60" x2="395" y2="505"/>
+    <line x1="565" y1="60" x2="565" y2="505"/>
+    <line x1="710" y1="60" x2="710" y2="505"/>
+  </g>
+  <!-- messages -->
+  <g font-size="9" fill="#1a1a1a">
+    <!-- 1 -->
+    <line x1="70" y1="98" x2="222" y2="98" stroke="#0b4f6c" stroke-width="1.4" marker-end="url(#ah)"/>
+    <text x="146" y="92" text-anchor="middle">POST /api/auth/login {email, pwd}</text>
+    <!-- 2 -->
+    <line x1="225" y1="134" x2="392" y2="134" stroke="#0b4f6c" stroke-width="1.4" marker-end="url(#ah)"/>
+    <text x="310" y="128" text-anchor="middle">login(credentials, ip)</text>
+    <!-- 3 -->
+    <line x1="395" y1="170" x2="707" y2="170" stroke="#0b4f6c" stroke-width="1.4" marker-end="url(#ah)"/>
+    <text x="550" y="164" text-anchor="middle">SELECT administrateurs / utilisateurs WHERE email</text>
+    <!-- 4 return -->
+    <line x1="710" y1="204" x2="398" y2="204" stroke="#7a99a8" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#ahr)"/>
+    <text x="554" y="198" text-anchor="middle" fill="#5b7280">compte + motDePasse (hash)</text>
+    <!-- 5 -->
+    <line x1="395" y1="240" x2="562" y2="240" stroke="#0b4f6c" stroke-width="1.4" marker-end="url(#ah)"/>
+    <text x="480" y="234" text-anchor="middle">verify_password (bcrypt)</text>
+    <!-- 6 return -->
+    <line x1="565" y1="274" x2="398" y2="274" stroke="#7a99a8" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#ahr)"/>
+    <text x="482" y="268" text-anchor="middle" fill="#5b7280">valide</text>
+    <!-- 7 -->
+    <line x1="395" y1="310" x2="562" y2="310" stroke="#0b4f6c" stroke-width="1.4" marker-end="url(#ah)"/>
+    <text x="480" y="304" text-anchor="middle">create_access + refresh_token</text>
+    <!-- 8 return -->
+    <line x1="565" y1="344" x2="398" y2="344" stroke="#7a99a8" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#ahr)"/>
+    <text x="482" y="338" text-anchor="middle" fill="#5b7280">access, refresh, jti</text>
+    <!-- 9 -->
+    <line x1="395" y1="380" x2="707" y2="380" stroke="#0b4f6c" stroke-width="1.4" marker-end="url(#ah)"/>
+    <text x="552" y="374" text-anchor="middle">INSERT refresh_tokens(jti) + login_attempts + audit</text>
+    <!-- 10 return -->
+    <line x1="392" y1="416" x2="228" y2="416" stroke="#7a99a8" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#ahr)"/>
+    <text x="310" y="410" text-anchor="middle" fill="#5b7280">{access, refresh, expires_in}</text>
+    <!-- 11 return -->
+    <line x1="222" y1="452" x2="73" y2="452" stroke="#7a99a8" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#ahr)"/>
+    <text x="146" y="446" text-anchor="middle" fill="#5b7280">200 OK + tokens</text>
+  </g>
+</svg>
+<div class="small" style="text-align:center;">Fig. 4 — Séquence de connexion. Flèches pleines = appels ; flèches pointillées = retours. Le <code>jti</code> du refresh est persisté (révocabilité).</div>
+</div>
+
+<p>Détail important : le champ <code>entity_type</code> (<code>administrateur</code> ou <code>utilisateur</code>) est inscrit <b>dans le token</b>. Il détermine dans quelle table chercher le compte → c'est la clé de la séparation admin/utilisateur.</p>
+
+<h3>2.4 Refresh &amp; Logout — la révocation</h3>
+<p>Quand l'access token expire, le client appelle <code>/api/auth/refresh</code> avec le refresh token. Le backend vérifie que le <code>jti</code> <b>existe encore</b> en base :</p>
+<pre><code>payload = verify_token(refresh_token, token_type="refresh")
+revoked = db.query(RefreshToken).filter(RefreshToken.token_jti == jti).first()
+if not revoked:                       # le jti n'est plus en base
+    return None, "Refresh token was revoked"
+new_access_token = create_access_token(user.id, role, entity_type)</code></pre>
+<p>Au <b>logout</b>, on <b>supprime la ligne</b> du <code>jti</code> en base. Le refresh token devient alors inutilisable, même s'il n'a pas expiré :</p>
+<pre><code>db.query(RefreshToken).filter(RefreshToken.token_jti == jti).delete()</code></pre>
+<div class="key">« Un JWT classique est <i>stateless</i> donc impossible à révoquer. Ici, en stockant uniquement le <code>jti</code> du refresh token en base, je rends la déconnexion réellement effective : c'est le meilleur des deux mondes entre stateless et révocabilité. »</div>
+
+<h3>2.5 La validation à chaque requête (dependencies.py)</h3>
+<p>FastAPI injecte des <b>dépendances</b> qui s'exécutent avant le code de la route. <code>verify_token()</code> vérifie la signature, l'expiration, l'émetteur (<code>iss</code>), l'audience (<code>aud</code>) et le type de token :</p>
+<pre><code>async def get_current_admin(authorization=Header(None), access_token=Cookie(None), db=...):
+    token = _extract_bearer_or_cookie_token(authorization, access_token)  # header OU cookie
+    payload = verify_token(token, token_type="access")
+    admin_id = _validate_subject(payload, "administrateur")   # 403 si mauvais entity_type
+    admin = db.query(Administrateur).filter_by(id=admin_id).first()
+    if not admin or not admin.is_active: raise HTTPException(401)
+    return admin</code></pre>
+<p>Le token est accepté depuis l'en-tête <code>Authorization: Bearer …</code> (mobile/admin) <b>ou</b> un cookie (web) → souplesse multi-client.</p>
+
+<h3>2.6 Récapitulatif des protections de sécurité</h3>
+<ul>
+  <li>Mots de passe hachés bcrypt (sel + 12 tours)</li>
+  <li>Access token court (15 min), refresh token révocable (jti en base)</li>
+  <li>Claims <code>iss</code>/<code>aud</code>/<code>type</code> vérifiés → un refresh token ne peut pas servir d'access token</li>
+  <li><code>SECRET_KEY</code> obligatoire et forte au démarrage</li>
+  <li>Codes de vérification email hachés (HMAC-SHA256), expiration 15 min, max 5 tentatives</li>
+  <li>Comparaison constante (<code>secrets.compare_digest</code>) → anti timing-attack</li>
+  <li>Table <code>login_attempts</code> + <code>audit_logs</code> → traçabilité et détection d'intrusion</li>
+  <li>Rate limiting (SlowAPI), CORS strict, TrustedHost (anti Host-header injection)</li>
+</ul>
+</div>
+
+<!-- ============ 3. RBAC ============ -->
+<div class="section">
+<h2>3. Approfondissement 2 — Autorisation par rôle &amp; portée régionale</h2>
+<p class="filepath">Fichiers : permissions.py · dependencies.py · region_scope.py · models.py</p>
+
+<h3>3.1 Les rôles (RBAC)</h3>
+<table>
+<tr><th>Rôle</th><th>Permissions</th><th>Dépendance FastAPI</th></tr>
+<tr><td><code>super_admin</code></td><td><code>*</code> (tout)</td><td><code>super_admin_required</code></td></tr>
+<tr><td><code>admin</code></td><td><code>*</code> (tout)</td><td><code>admin_required</code></td></tr>
+<tr><td><code>assistant</code></td><td>lecture + écriture <b>régionale</b> seulement</td><td><code>staff_required</code></td></tr>
+<tr><td><code>user</code></td><td>app mobile (consultation publique)</td><td><code>get_current_user</code></td></tr>
+</table>
+<pre><code>ADMIN_ROLES = {"admin", "super_admin"}
+STAFF_ROLES = ADMIN_ROLES | {"assistant"}
+ROLE_PERMISSIONS = {
+  "assistant": {"pharmacies:read", "pharmacies:write:regional",
+                "gardes:read", "gardes:write:regional", "regions:read", ...},
+  "admin": {"*"}, "super_admin": {"*"},
+}</code></pre>
+<div class="key">« La protection n'est PAS dans le frontend — le frontend ne fait que cacher des boutons. La vraie protection est dans le backend : chaque route admin dépend de <code>admin_required</code>, <code>staff_required</code> ou <code>super_admin_required</code> qui vérifient le JWT et le rôle. »</div>
+
+<h3>3.2 La portée régionale des assistants</h3>
+<p>Un assistant a un champ <code>region_scope</code> ∈ {<code>north</code>, <code>middle</code>, <code>south</code>}. Les 24 gouvernorats tunisiens sont regroupés en 3 zones (region_scope.py). Toute requête est <b>filtrée automatiquement</b> au niveau SQL :</p>
+<pre><code>def apply_region_scope(query, model, region):
+    values = region_filter_values(region)   # ex: {"tunis","ariana","ben arous",...}
+    if not values: return query              # admin -> aucun filtre
+    return query.filter(func.lower(model.governorate).in_(values))</code></pre>
+<p>Et lors d'une écriture (création/import), <code>region_access_error()</code> rejette toute donnée hors zone :</p>
+<pre><code>def region_access_error(governorate, region):
+    if not governorate: return "Governorate is required for assistant accounts ..."
+    if not governorate_in_region(governorate, region):
+        return f"Governorate '{governorate}' is outside the assistant region ..."
+    return None</code></pre>
+
+<h3>3.3 Intégrité garantie au niveau base de données</h3>
+<p>Une règle métier critique est protégée par une <b>contrainte SQL</b> (pas seulement par le code Python) : un assistant DOIT avoir une région, un non-assistant NE doit PAS en avoir.</p>
+<pre><code>CheckConstraint(
+  "((role = 'assistant' AND region_scope IN ('north','middle','south')) "
+  " OR (role &lt;&gt; 'assistant' AND region_scope IS NULL))",
+  name="ck_administrateurs_assistant_region_scope")</code></pre>
+<div class="note">Normalisation robuste : <code>normalize_text()</code> retire les accents (<code>Béja</code> → <code>beja</code>, <code>Gabès</code> → <code>gabes</code>) pour que le filtrage marche quel que soit l'encodage du CSV.</div>
+</div>
+
+<!-- ============ 4. CSV ============ -->
+<div class="section">
+<h2>4. Approfondissement 3 — Import CSV (Pharmacies &amp; Gardes)</h2>
+<p class="filepath">Fichiers : services/pharmacy_service.py · services/garde_service.py (pandas)</p>
+
+<h3>4.1 Le pipeline de validation (10 étapes)</h3>
+<p>L'import utilise <b>pandas</b> pour lire le CSV puis applique une validation défensive, étape par étape :</p>
+<div class="flow">1. Extension .csv ?                      -> sinon rejet
+2. Taille <= 5 Mo (MAX_FILE_SIZE) ?      -> sinon rejet
+3. pd.read_csv()                         -> sinon "Failed to parse"
+4. Fichier non vide ?
+5. Nb lignes <= 5000 (MAX_ROWS) ?
+6. Colonnes requises présentes ?         (résolution par ALIAS)
+7. Pour chaque ligne : parse + valide + vérifie doublons + région
+8. Au moins 1 ligne valide ?
+9. Insertion en base (commit) -- rollback si erreur
+10. AuditLog + événement publié</div>
+
+<h3>4.2 Tolérance aux formats réels (alias de colonnes)</h3>
+<p>Les fichiers réels n'ont jamais des noms de colonnes parfaits. Le service mappe des <b>alias</b> vers les champs canoniques :</p>
+<pre><code>COLUMN_ALIASES = {
+  "latitude":    {"latitude", "lat"},
+  "longitude":   {"longitude", "lon"},
+  "governorate": {"governorate", "region", "province", "state"},
+  "phone":       {"phone", "tel", "telephone"}, ...
+}
+REQUIRED_COLUMNS = {"name", "latitude", "longitude"}</code></pre>
+<p>Chaque ligne en erreur n'arrête PAS l'import : elle est collectée avec son <b>numéro de ligne</b> et renvoyée au frontend. L'utilisateur voit exactement quelles lignes corriger.</p>
+<pre><code>return {"total_rows": N, "successful": ok, "failed": len(errors), "errors": errors}</code></pre>
+
+<h3>4.3 Gardes : double format + dates françaises</h3>
+<p><code>GardeService</code> détecte automatiquement <b>2 formats</b> :</p>
+<ul>
+  <li><b>Format standard</b> : colonnes <code>date, pharmacy_name, start_time, end_time, ...</code></li>
+  <li><b>Format "planner"</b> (tableau de garde réel) : <code>category, month, date, pharmacist_1, pharmacist_2</code> — où la date est en français (« 12 janvier »)</li>
+</ul>
+<pre><code>FRENCH_MONTHS = {"janvier":1, "fevrier":2, "février":2, "mars":3, ... "décembre":12}
+
+def _parse_planner_date(value):
+    match = re.search(r"(\d{1,2})(?:\s*-\s*(\d{1,2}))?\s+([A-Za-zÀ-ÿ]+)", normalized)
+    month = FRENCH_MONTHS.get(match.group(3).lower())
+    return date(datetime.now().year, month, int(match.group(1)))</code></pre>
+
+<h3>4.4 Anti-doublons : la stratégie "upsert"</h3>
+<p>Avant d'insérer, on cherche une garde identique (même date + pharmacie + horaires). Si elle existe → <b>mise à jour</b> ; sinon → insertion. Doublons aussi bloqués par un <code>UniqueConstraint</code> en base.</p>
+<pre><code>existing = db.query(GardeSchedule).filter(date==…, pharmacy_name==…,
+                                          start_time==…, end_time==…).first()
+if existing:  existing.city = …          # update
+else:         db.add(GardeSchedule(...))  # insert</code></pre>
+
+<h3>4.5 Sécurité de l'import</h3>
+<ul>
+  <li>Réservé aux comptes <code>staff_required</code> (admin/assistant)</li>
+  <li>Un assistant ne peut importer que pour <b>sa région</b> (<code>region_access_error</code> par ligne)</li>
+  <li>Transaction atomique : <code>commit()</code> global, <code>rollback()</code> en cas d'échec → pas d'état partiel</li>
+  <li>Chaque import génère un <code>AuditLog</code> (qui, quand, combien de lignes)</li>
+</ul>
+<div class="note"><b>Limite assumée :</b> l'import est <b>synchrone</b>. Pour de très gros volumes, on le déplacerait vers une tâche d'arrière-plan (Celery / background task FastAPI). C'est une évolution prévue.</div>
+</div>
+
+<!-- ============ 5. RAG ============ -->
+<div class="section">
+<h2>5. Approfondissement 4 — Chatbot Premiers Secours (RAG local)</h2>
+<p class="filepath">Fichiers : firstaid-ai/rag_pipeline.py · firstaid-ai/api/main.py (port 8001)</p>
+
+<h3>5.1 Qu'est-ce que le RAG ici ?</h3>
+<p>RAG = <b>Retrieval-Augmented Generation</b>. Mais ici c'est un <b>RAG « pur » : recherche sémantique sans génération par LLM</b>. On ne renvoie que des passages <b>validés</b> du dataset → <b>pas d'hallucination</b>, et aucune dépendance à une API externe payante.</p>
+<div class="danger"><b>Contrainte projet respectée :</b> aucune dépendance à un LLM externe (pas de Claude / Ollama / Groq / HuggingFace Inference au runtime). 100% local : <code>sentence-transformers</code> pour l'embedding + <code>ChromaDB</code> pour le stockage vectoriel.</div>
+
+<h3>5.2 Les briques techniques</h3>
+<table>
+<tr><th>Brique</th><th>Rôle</th></tr>
+<tr><td><b>sentence-transformers</b><br><code>paraphrase-multilingual-MiniLM-L12-v2</code></td><td>Transforme un texte en vecteur (embedding) de sens. Modèle <b>multilingue</b> : français, anglais, <b>arabe</b>.</td></tr>
+<tr><td><b>ChromaDB</b></td><td>Base de données <b>vectorielle</b> persistante. Stocke tous les passages de premiers secours + leurs métadonnées.</td></tr>
+<tr><td><b>Distance cosinus</b></td><td>Mesure de proximité de sens entre la question et les passages.</td></tr>
+</table>
+
+<h3>5.3 Le flux d'une question (<code>POST /answer</code>)</h3>
+<div class="flow">1. Mobile -> POST http://host:8001/answer  { query, top_k }
+2. _expand_query()   : injecte 1 synonyme-pont si besoin (multilingue)
+3. embedder.encode(query) -> vecteur normalisé
+4. ChromaDB.query()  : récupère top_k*4 candidats (pool)
+5. retrieve()        : re-classement hybride (final_score)
+6. seuils de confiance + détection d'urgence
+7. Réponse adaptée : { answer, confidence, answer_mode,
+                       topic_prediction, retrieved_evidence }</div>
+
+<div style="text-align:center; page-break-inside:avoid; margin-top:12px;">
+<svg viewBox="0 0 800 540" style="width:100%; max-width:800px; font-family:'Segoe UI',Arial,sans-serif;">
+  <defs>
+    <marker id="rah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#0b4f6c"/></marker>
+    <marker id="rahr" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#7a99a8"/></marker>
+  </defs>
+  <!-- lifelines -->
+  <g font-size="10" text-anchor="middle">
+    <g fill="#0b4f6c"><rect x="10"  y="18" width="116" height="42" rx="5"/><text x="68"  y="35" fill="#fff">Mobile</text><text x="68"  y="50" fill="#fff" font-size="8.5">(chatbot)</text></g>
+    <g fill="#11698e"><rect x="158" y="18" width="120" height="42" rx="5"/><text x="218" y="35" fill="#fff">First-Aid API</text><text x="218" y="50" fill="#fff" font-size="8.5">POST /answer</text></g>
+    <g fill="#19647e"><rect x="330" y="18" width="120" height="42" rx="5"/><text x="390" y="42" fill="#fff">FirstAidRAG</text></g>
+    <g fill="#7b4fa3"><rect x="500" y="18" width="126" height="42" rx="5"/><text x="563" y="35" fill="#fff">Embedder</text><text x="563" y="50" fill="#fff" font-size="8">sentence-transf.</text></g>
+    <g fill="#2e933c"><rect x="668" y="18" width="120" height="42" rx="5"/><text x="728" y="42" fill="#fff">ChromaDB</text></g>
+  </g>
+  <g stroke="#b9c9d2" stroke-width="1" stroke-dasharray="4 4">
+    <line x1="68"  y1="60" x2="68"  y2="525"/>
+    <line x1="218" y1="60" x2="218" y2="525"/>
+    <line x1="390" y1="60" x2="390" y2="525"/>
+    <line x1="563" y1="60" x2="563" y2="525"/>
+    <line x1="728" y1="60" x2="728" y2="525"/>
+  </g>
+  <g font-size="9" fill="#1a1a1a">
+    <!-- 1 -->
+    <line x1="68" y1="98" x2="215" y2="98" stroke="#0b4f6c" stroke-width="1.4" marker-end="url(#rah)"/>
+    <text x="142" y="92" text-anchor="middle">POST /answer {query, top_k}</text>
+    <!-- 2 -->
+    <line x1="218" y1="134" x2="387" y2="134" stroke="#0b4f6c" stroke-width="1.4" marker-end="url(#rah)"/>
+    <text x="303" y="128" text-anchor="middle">chat(query)</text>
+    <!-- 3 self-loop expand -->
+    <path d="M390,162 h54 v22 h-51" fill="none" stroke="#0b4f6c" stroke-width="1.3" marker-end="url(#rah)"/>
+    <text x="448" y="160" text-anchor="start" font-size="8.5">_expand_query() — synonyme multilingue</text>
+    <!-- 4 -->
+    <line x1="390" y1="212" x2="560" y2="212" stroke="#0b4f6c" stroke-width="1.4" marker-end="url(#rah)"/>
+    <text x="476" y="206" text-anchor="middle">encode(query)</text>
+    <!-- 5 return -->
+    <line x1="563" y1="246" x2="393" y2="246" stroke="#7a99a8" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#rahr)"/>
+    <text x="478" y="240" text-anchor="middle" fill="#5b7280">vecteur normalisé</text>
+    <!-- 6 -->
+    <line x1="390" y1="282" x2="725" y2="282" stroke="#0b4f6c" stroke-width="1.4" marker-end="url(#rah)"/>
+    <text x="556" y="276" text-anchor="middle">query(vec, n = top_k × 4)</text>
+    <!-- 7 return -->
+    <line x1="728" y1="316" x2="393" y2="316" stroke="#7a99a8" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#rahr)"/>
+    <text x="560" y="310" text-anchor="middle" fill="#5b7280">candidats + distances + métadonnées</text>
+    <!-- 8 self-loop rerank -->
+    <path d="M390,346 h70 v22 h-67" fill="none" stroke="#0b4f6c" stroke-width="1.3" marker-end="url(#rah)"/>
+    <text x="464" y="344" text-anchor="start" font-size="8.5">retrieve(): score hybride + seuils + détection urgence</text>
+    <!-- 9 return -->
+    <line x1="387" y1="404" x2="221" y2="404" stroke="#7a99a8" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#rahr)"/>
+    <text x="304" y="398" text-anchor="middle" fill="#5b7280">reply, confidence, escalate, sources</text>
+    <!-- 10 return -->
+    <line x1="215" y1="440" x2="71" y2="440" stroke="#7a99a8" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#rahr)"/>
+    <text x="142" y="434" text-anchor="middle" fill="#5b7280">{answer, confidence,</text>
+    <text x="142" y="456" text-anchor="middle" fill="#5b7280">answer_mode, evidence}</text>
+  </g>
+</svg>
+<div class="small" style="text-align:center;">Fig. 5 — Séquence du chatbot RAG. Aucun appel à un LLM externe : encodage local + recherche vectorielle ChromaDB + re-classement hybride.</div>
+</div>
+
+<h3>5.4 Le re-classement hybride (le cœur intelligent)</h3>
+<p>On ne se fie pas qu'à la distance cosinus. Chaque candidat reçoit un <b>score composite</b> combinant 4 signaux :</p>
+<pre><code>final_score = 0.60 * cos_sim          # proximité sémantique
+            + 0.20 * quality_boost    # qualité de la source (1/2/3)
+            + 0.10 * has_steps_boost  # le passage contient des étapes d'action ?
+            + 0.10 * age_match_boost  # adapté à l'âge demandé (bébé/enfant/adulte) ?</code></pre>
+<p>Puis on applique 3 règles métier :</p>
+<ul>
+  <li><b>Plancher de qualité</b> : un passage de source faible (quality=1) ne peut pas être en position 1.</li>
+  <li><b>Diversité</b> : si le top-3 vient de la même source, on remplace le 3<sup>e</sup> par un autre.</li>
+  <li><b>Filtre par catégorie</b> : si le top-1 est très sûr (<code>cos_sim ≥ 0.80</code>), on privilégie sa catégorie.</li>
+</ul>
+
+<h3>5.5 Sécurité médicale : seuils &amp; détection d'urgence</h3>
+<table>
+<tr><th>Distance cosinus</th><th>Interprétation</th></tr>
+<tr><td>&lt; 0.45</td><td>Haute confiance</td></tr>
+<tr><td>&lt; 0.65</td><td>Confiance moyenne</td></tr>
+<tr><td>&gt; 0.72</td><td><b>Hors-domaine → refus de répondre</b> (REFUSAL_REPLY)</td></tr>
+</table>
+<p>Détection d'urgence trilingue (<code>URGENCY_TRIGGERS</code>) : « ne respire pas », « inconscient », « heavy bleeding », nécessité d'<b>escalade</b> immédiate vers les secours (SAMU 190 en Tunisie). Une couche de règles symptomatiques (<code>SYMPTOM_RULES</code>) couvre les cas critiques (arrêt cardiaque, AVC, anaphylaxie, étouffement…) avec des étapes d'action vérifiées.</p>
+<div class="note">Support multilingue concret : la question peut être posée en français, anglais ou arabe (ex. <span dir="rtl">«&nbsp;طفل يحترق، ماذا أفعل؟&nbsp;»</span>). Le module détecte le script (<code>_detect_script</code>) et adapte synonymes et expansion.</div>
+
+<h3>5.6 Chiffres d'évaluation à citer</h3>
+<table>
+<tr><th>Métrique</th><th>Valeur</th></tr>
+<tr><td>Exemples de validation / test</td><td>310 / 310</td></tr>
+<tr><td>Précision top-1 du topic</td><td><b>≈ 95,48 %</b></td></tr>
+<tr><td>Taux de réussite top-5</td><td><b>≈ 97,74 %</b></td></tr>
+<tr><td>Taux de violation de sécurité</td><td><b>0,0</b></td></tr>
+</table>
+<div class="key">« L'assistant fonctionne 100% en local au runtime, sans API externe payante. C'est de la recherche sémantique pure donc <b>pas d'hallucination</b> : il ne renvoie que des passages validés. Et c'est une <i>aide</i> aux premiers secours qui ne remplace jamais les services d'urgence — chaque réponse porte un disclaimer et escalade en cas d'urgence détectée. »</div>
+
+<h3>5.7 Sources des données (le corpus du chatbot)</h3>
+<p>Le corpus brut compte <b>≈ 7 000 paires question/réponse</b> de premiers secours (<code>firstaid-ai/data/firstaid_raw.jsonl</code>). Il est construit par <code>fetch_dataset.py</code> à partir de <b>jeux de données médicaux publics (Hugging Face)</b> filtrés par mots-clés premiers secours, complétés par des <b>entrées rédigées à la main</b> (« seeds » curées) en anglais, français et arabe.</p>
+
+<table>
+<tr><th>Source</th><th>Type</th><th>Entrées</th><th>Description</th></tr>
+<tr><td><code>medalpaca/medical_meadow_medical_flashcards</code></td><td>HF public</td><td>3 414</td><td>Fiches médicales Q/R</td></tr>
+<tr><td><code>qiaojin/PubMedQA</code></td><td>HF public</td><td>1 438</td><td>Q/R biomédicales issues de PubMed</td></tr>
+<tr><td><code>openlifescienceai/medmcqa</code></td><td>HF public</td><td>1 303</td><td>QCM médicaux (avec explications)</td></tr>
+<tr><td><code>GBaker/MedQA-USMLE-4-options</code></td><td>HF public</td><td>384</td><td>Questions d'examen médical USMLE</td></tr>
+<tr><td><code>lavita/ChatDoctor-HealthCareMagic-100k</code></td><td>HF public</td><td>211</td><td>Dialogues patient–médecin</td></tr>
+<tr><td><code>BI55/MedText</code></td><td>HF public</td><td>41</td><td>Textes médicaux</td></tr>
+<tr><td><code>curated/seed</code></td><td><b>Rédigé main</b></td><td>20</td><td>Gestes de premiers secours validés (EN/FR)</td></tr>
+<tr><td><code>curated/arabic/*</code></td><td><b>Rédigé main</b></td><td>≈ 198</td><td>20 catégories d'urgence en arabe (brûlure, étouffement, AVC…)</td></tr>
+</table>
+
+<h4>Pipeline de construction</h4>
+<div class="flow">1. fetch_dataset.py  -> télécharge les datasets HF (load_dataset)
+2. Filtre mots-clés   -> garde uniquement les lignes "premiers secours"
+                         (burn, bleeding, CPR, choking, stroke, seizure...)
+3. Filtre urgence     -> 2e filtre strict pour les corpus d'urgence
+4. Seeds curées       -> ajoute les entrées rédigées à la main (EN/FR/AR)
+5. Déduplication      -> difflib SequenceMatcher, seuil 0.90 -> retire les quasi-doublons
+6. firstaid_raw.jsonl -> ~7000 entrées uniques
+7. split              -> train / validation (310) / test (310)
+8. embed_and_store.py -> vectorise (sentence-transformers) -> ChromaDB</div>
+
+<p>Chaque entrée est enrichie de <b>métadonnées</b> : <code>category</code> (burn, cardiac, neuro, airway…), <code>severity_hint</code> (high / standard) et <code>source</code> — ces métadonnées alimentent le score hybride (§5.4) et la détection d'urgence.</p>
+
+<div class="note"><b>Licences &amp; éthique :</b> toutes les sources externes sont des jeux de données <b>publics et ouverts</b> (Hugging Face). Le téléchargement n'a lieu qu'<b>une seule fois</b>, hors ligne, au moment de la construction du corpus ; <b>au runtime, rien n'est téléchargé</b> — le chatbot interroge uniquement le ChromaDB local. Les gestes critiques (RCP, étouffement, hémorragie…) proviennent des <b>seeds rédigées et vérifiées à la main</b>, alignées sur les protocoles de premiers secours.</div>
+
+<div class="key">« Les données viennent de jeux médicaux publics (Hugging Face : MedAlpaca, PubMedQA, MedMCQA, MedQA-USMLE…) filtrés sur les premiers secours, plus ~220 entrées que j'ai rédigées et vérifiées à la main en français, anglais et arabe pour couvrir les gestes critiques. Tout est dédupliqué, vectorisé une seule fois, puis stocké localement dans ChromaDB — aucune donnée n'est récupérée pendant l'utilisation. »</div>
+</div>
+
+<!-- ============ 6. GEO + CACHE ============ -->
+<div class="section">
+<h2>6. Approfondissement 5 — Recherche géospatiale &amp; Cache</h2>
+
+<h3>6.1 Recherche de pharmacies « à proximité » (formule de Haversine)</h3>
+<p>L'endpoint <code>/api/pharmacies/nearby</code> calcule la distance entre l'utilisateur et chaque pharmacie avec la <b>formule de Haversine</b> (distance sur une sphère), directement en SQL :</p>
+<pre><code>R = 6371  # rayon de la Terre en km
+distance = R * acos( cos(lat1 - lat2) * cos(lon1 - lon2)
+                   + sin(lat1 - lat2) * sin(lon1 - lon2) )
+query.filter(distance <= radius_km).order_by(distance).limit(limit)</code></pre>
+<div class="note"><b>Limite assumée :</b> pour la production à grande échelle, <b>PostGIS</b> (index géospatial GiST) serait plus performant qu'un calcul trigonométrique par ligne. Le choix actuel reste simple et suffisant pour le volume du projet.</div>
+
+<h3>6.2 Cache avec dégradation gracieuse (<code>CacheService</code>)</h3>
+<p>Les endpoints publics lourds (gardes, médicaments) sont mis en cache JSON via Redis. Mais Redis est <b>optionnel</b> : si indisponible, le cache devient un <i>no-op</i> et l'app continue de fonctionner.</p>
+<pre><code>cache_key = f"gardes:list:{date.isoformat()}:{skip}:{limit}"
+cached = cache_service.get_json(cache_key)
+if cached is not None: return cached            # HIT
+payload = garde_service.get_public_gardes(...)  # MISS -> calcul
+cache_service.set_json(cache_key, payload, ttl_seconds=900)  # TTL 15 min</code></pre>
+
+<h3>6.3 Autres mécanismes de fiabilité</h3>
+<ul>
+  <li><b>Pagination</b> partout (<code>skip</code>/<code>limit</code>, plafonné à 500)</li>
+  <li><b>Migrations idempotentes</b> au démarrage (<code>run_schema_migrations</code>)</li>
+  <li><b>Bus d'événements</b> interne : chaque action importante publie un événement (découplage, extensibilité)</li>
+  <li><b>Connection pooling</b> PostgreSQL</li>
+</ul>
+</div>
+
+<!-- ============ 7. FRONTEND ============ -->
+<div class="section">
+<h2>7. Approfondissement 6 — Frontend Admin &amp; rafraîchissement de token</h2>
+<p class="filepath">Fichiers : admin_pharmacie/src/lib/api.js · context/AuthContext.jsx · App.jsx</p>
+
+<h3>7.1 L'intercepteur Axios (transparence du refresh)</h3>
+<p>L'instance Axios ajoute automatiquement le <code>Bearer token</code> à chaque requête. Si une réponse renvoie <b>401</b> (token expiré), un intercepteur déclenche le flux de refresh, puis <b>réessaie</b> la requête d'origine — sans que l'utilisateur ne voie rien.</p>
+<div class="flow">Requête -> 401 Unauthorized
+   -> intercepteur : POST /api/auth/refresh (refresh token)
+        -> succès : nouveau access token -> on REJOUE la requête
+        -> échec  : on efface les tokens -> redirection /login</div>
+
+<h3>7.2 Protection des routes côté React</h3>
+<ul>
+  <li><code>/login</code> est publique</li>
+  <li>Les autres routes passent par <code>&lt;ProtectedRoute&gt;</code> (vérifie l'auth via <code>AuthContext</code>)</li>
+  <li>Certaines pages exigent un rôle admin (dashboard, upload médicaments, audit logs)</li>
+  <li>Les assistants accèdent aux pages staff, mais le <b>filtrage régional reste appliqué côté backend</b></li>
+</ul>
+<div class="key">« Le frontend gère l'expérience (cacher les boutons, rediriger). Mais je ne fais jamais confiance au frontend pour la sécurité : toute autorisation est revérifiée côté backend. »</div>
+
+<h3>7.3 Côté mobile (Expo React Native)</h3>
+<ul>
+  <li>Navigation conditionnelle : non-connecté → pile login/register/vérification ; connecté → onglets (Home, Map, Calendar, Medicines, Settings) + Chatbot</li>
+  <li><b>Context providers</b> : auth, theme, language (i18next), favorites, filters, notifications, ratings, history</li>
+  <li><b>Data loaders</b> : <code>pharmacyDataLoader.js</code>, <code>medicineDataLoader.js</code>, <code>chatbotApi.js</code></li>
+  <li>Config : backend port 8000, chatbot port 8001, surchargeables via <code>EXPO_PUBLIC_API_URL</code> / <code>EXPO_PUBLIC_CHATBOT_API_URL</code></li>
+</ul>
+</div>
+
+<!-- ============ 8. QA ============ -->
+<div class="section">
+<h2>8. Synthèse — Questions probables du jury</h2>
+
+<h4>Pourquoi FastAPI ?</h4>
+<p>Documentation auto (Swagger/OpenAPI), validation Pydantic, injection de dépendances, performances élevées (async). Idéal pour une API REST modulaire en Python.</p>
+
+<h4>Pourquoi séparer admins et utilisateurs en 2 tables ?</h4>
+<p>Responsabilités et règles de sécurité différentes. Le champ <code>entity_type</code> dans le JWT route vers la bonne table → contrôles de rôle plus clairs et plus sûrs.</p>
+
+<h4>Comment révoquer un JWT alors qu'il est stateless ?</h4>
+<p>On ne révoque que le <b>refresh token</b> : son <code>jti</code> est stocké en base. Au logout, on supprime la ligne. L'access token, lui, est volontairement très court (15 min).</p>
+
+<h4>Que se passe-t-il si l'access token expire pendant l'utilisation ?</h4>
+<p>L'intercepteur Axios appelle <code>/refresh</code>, obtient un nouveau token et réessaie la requête. Si le refresh échoue → déconnexion + redirection login.</p>
+
+<h4>Comment un assistant est-il limité à sa région ?</h4>
+<p>Champ <code>region_scope</code>. En lecture, <code>apply_region_scope</code> ajoute un filtre SQL ; en écriture, <code>region_access_error</code> rejette les gouvernorats hors zone. Une contrainte SQL garantit l'intégrité.</p>
+
+<h4>Le chatbot utilise-t-il ChatGPT / un LLM externe ?</h4>
+<p>Non. C'est un RAG <b>local pur</b> : sentence-transformers + ChromaDB. Recherche sémantique sur des passages validés, donc pas d'hallucination et pas d'API payante.</p>
+
+<h4>Pourquoi un service chatbot séparé ?</h4>
+<p>Dépendances ML lourdes + comportement runtime différent. L'isoler garde le backend principal léger et rend le service IA déployable indépendamment.</p>
+
+<h4>Comment fonctionne la recherche « à proximité » ?</h4>
+<p>Formule de Haversine en SQL à partir des coordonnées lat/long, tri par distance croissante, filtré par rayon.</p>
+
+<h4>Comment l'import CSV gère les erreurs ?</h4>
+<p>Validation par étapes (extension, taille, lignes, colonnes par alias). Chaque ligne invalide est collectée avec son numéro et renvoyée ; les lignes valides sont insérées en transaction atomique ; un AuditLog est créé.</p>
+
+<h4>Quelles sont les limites du projet ?</h4>
+<ul>
+  <li>Imports CSV synchrones → à passer en tâches d'arrière-plan pour de gros volumes</li>
+  <li>Géospatial par calcul trigonométrique → PostGIS en production</li>
+  <li>Chatbot = aide aux premiers secours, jamais un substitut médical</li>
+  <li>Redis optionnel (cache no-op si absent)</li>
+</ul>
+
+<h2>Script de défense (30 secondes)</h2>
+<div class="key" style="font-style:italic;">« PharmacieConnect est un système d'accès aux pharmacies et d'assistance d'urgence : un backend FastAPI (source de vérité), un dashboard admin React, une app mobile Expo et un chatbot premiers secours RAG local. L'architecture est en couches — routers, dépendances d'auth/rôle, services métier, SQLAlchemy → PostgreSQL. La sécurité repose sur bcrypt, des JWT à access court et refresh révocable, l'autorisation par rôle avec portée régionale, le rate limiting et l'audit. Le chatbot fait de la recherche vectorielle locale avec ChromaDB et sentence-transformers, donc sans API externe. »</div>
+</div>
+
+</body>
+</html>

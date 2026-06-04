@@ -1,14 +1,14 @@
 \babel@toc {french}{}\relax 
 \contentsline {chapter}{Dédicaces}{i}{chapter*.1}%
-\contentsline {chapter}{Remerciements / Préface}{ii}{chapter*.2}%
+\contentsline {chapter}{Remerciements}{ii}{chapter*.2}%
 \contentsline {chapter}{Résumé}{iii}{chapter*.3}%
 \contentsline {chapter}{Liste des figures}{iv}{section*.4}%
 \contentsline {chapter}{Liste des tableaux}{v}{section*.6}%
-\contentsline {chapter}{Liste des acronymes}{viii}{section*.10}%
+\contentsline {chapter}{Liste des acronymes}{vii}{section*.10}%
 \contentsline {chapter}{Introduction générale}{1}{chapter*.13}%
 \contentsline {section}{Contexte général}{1}{section*.14}%
 \contentsline {section}{Problématique}{1}{section*.15}%
-\contentsline {section}{Objectifs du projet}{2}{section*.16}%
+\contentsline {section}{Objectifs du projet}{1}{section*.16}%
 \contentsline {section}{Méthodologie adoptée}{2}{section*.17}%
 \contentsline {section}{Organisation du rapport}{2}{section*.18}%
 \contentsline {chapter}{\numberline {1}Cadre conceptuel et étude de l'existant}{3}{chapter.1}%
@@ -33,82 +33,77 @@
 \contentsline {section}{\numberline {2.2}Acteurs}{11}{section.2.2}%
 \contentsline {section}{\numberline {2.3}Besoins fonctionnels détaillés}{11}{section.2.3}%
 \contentsline {section}{\numberline {2.4}Besoins non fonctionnels}{12}{section.2.4}%
-\contentsline {section}{\numberline {2.5}Règles de gestion}{12}{section.2.5}%
-\contentsline {section}{\numberline {2.6}Descriptions textuelles des cas d'utilisation}{13}{section.2.6}%
-\contentsline {subsection}{\numberline {2.6.1}Cas d'utilisation : authentification}{13}{subsection.2.6.1}%
-\contentsline {subsection}{\numberline {2.6.2}Cas d'utilisation : recherche d'une pharmacie}{13}{subsection.2.6.2}%
-\contentsline {subsection}{\numberline {2.6.3}Cas d'utilisation : consultation des pharmacies de garde}{14}{subsection.2.6.3}%
-\contentsline {subsection}{\numberline {2.6.4}Cas d'utilisation : gestion des pharmacies}{14}{subsection.2.6.4}%
-\contentsline {section}{\numberline {2.7}Diagramme de cas d'utilisation}{14}{section.2.7}%
-\contentsline {section}{\numberline {2.8}Conclusion}{16}{section.2.8}%
-\contentsline {chapter}{\numberline {3}Conception}{17}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Introduction}{18}{section.3.1}%
-\contentsline {section}{\numberline {3.2}Architecture globale}{18}{section.3.2}%
-\contentsline {section}{\numberline {3.3}Backend FastAPI}{18}{section.3.3}%
-\contentsline {section}{\numberline {3.4}Tableau de bord React/Vite}{19}{section.3.4}%
-\contentsline {section}{\numberline {3.5}Application mobile Expo/React Native}{19}{section.3.5}%
-\contentsline {section}{\numberline {3.6}Modèle de données}{20}{section.3.6}%
-\contentsline {section}{\numberline {3.7}Diagramme de classes}{21}{section.3.7}%
-\contentsline {section}{\numberline {3.8}Diagrammes de séquence}{21}{section.3.8}%
-\contentsline {section}{\numberline {3.9}Diagramme d'activité}{23}{section.3.9}%
-\contentsline {section}{\numberline {3.10}Diagramme de composants et de déploiement}{24}{section.3.10}%
-\contentsline {section}{\numberline {3.11}Sécurité}{26}{section.3.11}%
-\contentsline {subsection}{\numberline {3.11.1}Authentification JWT et gestion des sessions}{26}{subsection.3.11.1}%
-\contentsline {subsection}{\numberline {3.11.2}Contrôle d'accès basé sur les rôles (\gls {rbac})}{26}{subsection.3.11.2}%
-\contentsline {subsection}{\numberline {3.11.3}Hachage des mots de passe}{26}{subsection.3.11.3}%
-\contentsline {subsection}{\numberline {3.11.4}Validation des entrées avec Pydantic}{26}{subsection.3.11.4}%
-\contentsline {subsection}{\numberline {3.11.5}Politique \gls {cors} et hôtes autorisés}{27}{subsection.3.11.5}%
-\contentsline {subsection}{\numberline {3.11.6}Traçabilité et journalisation des actions}{27}{subsection.3.11.6}%
-\contentsline {subsection}{\numberline {3.11.7}Sécurité du déploiement}{27}{subsection.3.11.7}%
-\contentsline {section}{\numberline {3.12}Justification des choix techniques}{27}{section.3.12}%
-\contentsline {section}{\numberline {3.13}Conclusion}{28}{section.3.13}%
-\contentsline {chapter}{\numberline {4}Réalisation et tests}{29}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Introduction}{31}{section.4.1}%
-\contentsline {section}{\numberline {4.2}Environnement matériel et logiciel}{31}{section.4.2}%
-\contentsline {section}{\numberline {4.3}Technologies utilisées}{31}{section.4.3}%
-\contentsline {section}{\numberline {4.4}Organisation du dépôt}{32}{section.4.4}%
-\contentsline {section}{\numberline {4.5}Réalisation backend}{32}{section.4.5}%
-\contentsline {subsection}{\numberline {4.5.1}Endpoints publics}{33}{subsection.4.5.1}%
-\contentsline {subsection}{\numberline {4.5.2}Authentification et sessions}{33}{subsection.4.5.2}%
-\contentsline {subsection}{\numberline {4.5.3}Services métier}{33}{subsection.4.5.3}%
-\contentsline {subsection}{\numberline {4.5.4}Imports CSV}{34}{subsection.4.5.4}%
-\contentsline {subsection}{\numberline {4.5.5}Audit et indicateurs}{34}{subsection.4.5.5}%
-\contentsline {section}{\numberline {4.6}Réalisation du tableau de bord administrateur}{34}{section.4.6}%
-\contentsline {subsection}{\numberline {4.6.1}Pages principales}{34}{subsection.4.6.1}%
-\contentsline {subsection}{\numberline {4.6.2}Gestion des sessions côté administration}{34}{subsection.4.6.2}%
-\contentsline {section}{\numberline {4.7}Réalisation application mobile}{34}{section.4.7}%
-\contentsline {subsection}{\numberline {4.7.1}Recherche et détail des pharmacies}{34}{subsection.4.7.1}%
-\contentsline {subsection}{\numberline {4.7.2}Carte et géolocalisation}{35}{subsection.4.7.2}%
-\contentsline {subsection}{\numberline {4.7.3}Calendrier des gardes}{35}{subsection.4.7.3}%
-\contentsline {subsection}{\numberline {4.7.4}Catalogue de médicaments}{35}{subsection.4.7.4}%
-\contentsline {subsection}{\numberline {4.7.5}Paramètres, langues et thème}{35}{subsection.4.7.5}%
-\contentsline {section}{\numberline {4.8}Réalisation de l'assistant conversationnel de premiers secours}{35}{section.4.8}%
-\contentsline {subsection}{\numberline {4.8.1}Architecture générale}{35}{subsection.4.8.1}%
-\contentsline {subsection}{\numberline {4.8.2}Données d'apprentissage et nettoyage}{36}{subsection.4.8.2}%
-\contentsline {subsection}{\numberline {4.8.3}Entraînement et métriques de performance}{36}{subsection.4.8.3}%
-\contentsline {subsection}{\numberline {4.8.4}API et intégration avec l'application mobile}{37}{subsection.4.8.4}%
-\contentsline {subsection}{\numberline {4.8.5}Tests et validation}{37}{subsection.4.8.5}%
-\contentsline {section}{\numberline {4.9}Captures d'écran}{37}{section.4.9}%
-\contentsline {section}{\numberline {4.10}Intégration API}{44}{section.4.10}%
-\contentsline {section}{\numberline {4.11}Déploiement et configuration}{44}{section.4.11}%
-\contentsline {section}{\numberline {4.12}Tests unitaires, API et manuels}{45}{section.4.12}%
-\contentsline {subsection}{\numberline {4.12.1}Stratégie de test}{45}{subsection.4.12.1}%
-\contentsline {subsection}{\numberline {4.12.2}Résultats de validation automatisée}{46}{subsection.4.12.2}%
-\contentsline {subsection}{\numberline {4.12.3}Tests automatisés du backend}{46}{subsection.4.12.3}%
-\contentsline {subsection}{\numberline {4.12.4}Tests API}{46}{subsection.4.12.4}%
-\contentsline {subsection}{\numberline {4.12.5}Validation du déploiement local}{47}{subsection.4.12.5}%
-\contentsline {subsection}{\numberline {4.12.6}Validation fonctionnelle}{47}{subsection.4.12.6}%
-\contentsline {section}{\numberline {4.13}Difficultés rencontrées et solutions adoptées}{47}{section.4.13}%
-\contentsline {section}{\numberline {4.14}Conclusion}{48}{section.4.14}%
-\contentsline {chapter}{Conclusion générale}{49}{chapter*.55}%
-\contentsline {section}{Bilan}{49}{section*.56}%
-\contentsline {section}{Résultats obtenus}{49}{section*.57}%
-\contentsline {section}{Limites}{49}{section*.58}%
-\contentsline {section}{Apport personnel}{50}{section*.59}%
-\contentsline {section}{Perspectives}{50}{section*.60}%
-\contentsline {chapter}{\numberline {A}Annexes}{51}{appendix.A}%
-\contentsline {section}{\numberline {A.1}Descriptions complémentaires des cas d'utilisation}{51}{section.A.1}%
-\contentsline {section}{\numberline {A.2}Commandes de lancement}{51}{section.A.2}%
-\contentsline {section}{\numberline {A.3}Commandes de test}{52}{section.A.3}%
-\contentsline {section}{\numberline {A.4}Exemples CSV}{52}{section.A.4}%
-\contentsline {chapter}{Bibliographie}{54}{section*.71}%
+\contentsline {section}{\numberline {2.5}Règles de gestion}{13}{section.2.5}%
+\contentsline {section}{\numberline {2.6}Spécification détaillée des cas d'utilisation}{13}{section.2.6}%
+\contentsline {subsection}{\numberline {2.6.1}Authentification}{13}{subsection.2.6.1}%
+\contentsline {subsection}{\numberline {2.6.2}Recherche d'une pharmacie}{14}{subsection.2.6.2}%
+\contentsline {subsection}{\numberline {2.6.3}Consultation des pharmacies de garde}{14}{subsection.2.6.3}%
+\contentsline {subsection}{\numberline {2.6.4}Gestion des pharmacies}{14}{subsection.2.6.4}%
+\contentsline {section}{\numberline {2.7}Diagramme de cas d'utilisation}{15}{section.2.7}%
+\contentsline {section}{\numberline {2.8}Conclusion}{17}{section.2.8}%
+\contentsline {chapter}{\numberline {3}Conception}{18}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Introduction}{19}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Architecture globale}{19}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Backend FastAPI}{19}{section.3.3}%
+\contentsline {section}{\numberline {3.4}Tableau de bord React/Vite}{20}{section.3.4}%
+\contentsline {section}{\numberline {3.5}Application mobile Expo/React Native}{21}{section.3.5}%
+\contentsline {section}{\numberline {3.6}Modèle de données}{21}{section.3.6}%
+\contentsline {section}{\numberline {3.7}Diagramme de classes}{22}{section.3.7}%
+\contentsline {section}{\numberline {3.8}Diagrammes de séquence}{23}{section.3.8}%
+\contentsline {section}{\numberline {3.9}Diagramme d'activité}{24}{section.3.9}%
+\contentsline {section}{\numberline {3.10}Diagramme de composants et de déploiement}{25}{section.3.10}%
+\contentsline {section}{\numberline {3.11}Sécurité}{27}{section.3.11}%
+\contentsline {subsection}{\numberline {3.11.1}Gestion des sessions par jetons JWT}{27}{subsection.3.11.1}%
+\contentsline {subsection}{\numberline {3.11.2}Contrôle d'accès basé sur les rôles (\gls {rbac})}{27}{subsection.3.11.2}%
+\contentsline {subsection}{\numberline {3.11.3}Hachage des mots de passe}{27}{subsection.3.11.3}%
+\contentsline {subsection}{\numberline {3.11.4}Validation des entrées avec Pydantic}{27}{subsection.3.11.4}%
+\contentsline {subsection}{\numberline {3.11.5}Politique \gls {cors} et hôtes autorisés}{28}{subsection.3.11.5}%
+\contentsline {subsection}{\numberline {3.11.6}Traçabilité et journalisation des actions}{28}{subsection.3.11.6}%
+\contentsline {subsection}{\numberline {3.11.7}Sécurité du déploiement}{28}{subsection.3.11.7}%
+\contentsline {section}{\numberline {3.12}Justification des choix techniques}{28}{section.3.12}%
+\contentsline {section}{\numberline {3.13}Conclusion}{29}{section.3.13}%
+\contentsline {chapter}{\numberline {4}Réalisation et tests}{30}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Introduction}{32}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Environnement matériel et logiciel}{32}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Technologies utilisées}{32}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Organisation du dépôt}{33}{section.4.4}%
+\contentsline {section}{\numberline {4.5}Réalisation backend}{34}{section.4.5}%
+\contentsline {subsection}{\numberline {4.5.1}Endpoints publics}{34}{subsection.4.5.1}%
+\contentsline {subsection}{\numberline {4.5.2}Authentification et sessions}{34}{subsection.4.5.2}%
+\contentsline {subsection}{\numberline {4.5.3}Services métier}{34}{subsection.4.5.3}%
+\contentsline {subsection}{\numberline {4.5.4}Imports CSV}{35}{subsection.4.5.4}%
+\contentsline {subsection}{\numberline {4.5.5}Audit et indicateurs}{35}{subsection.4.5.5}%
+\contentsline {section}{\numberline {4.6}Réalisation de l'interface d'administration}{35}{section.4.6}%
+\contentsline {subsection}{\numberline {4.6.1}Pages principales}{35}{subsection.4.6.1}%
+\contentsline {subsection}{\numberline {4.6.2}Gestion des sessions côté administration}{35}{subsection.4.6.2}%
+\contentsline {section}{\numberline {4.7}Réalisation application mobile}{35}{section.4.7}%
+\contentsline {subsection}{\numberline {4.7.1}Recherche et détail des pharmacies}{35}{subsection.4.7.1}%
+\contentsline {subsection}{\numberline {4.7.2}Carte et géolocalisation}{36}{subsection.4.7.2}%
+\contentsline {subsection}{\numberline {4.7.3}Calendrier des gardes}{36}{subsection.4.7.3}%
+\contentsline {subsection}{\numberline {4.7.4}Catalogue de médicaments}{36}{subsection.4.7.4}%
+\contentsline {subsection}{\numberline {4.7.5}Paramètres, langues et thème}{36}{subsection.4.7.5}%
+\contentsline {section}{\numberline {4.8}Réalisation de l'assistant conversationnel de premiers secours}{36}{section.4.8}%
+\contentsline {subsection}{\numberline {4.8.1}Architecture générale}{36}{subsection.4.8.1}%
+\contentsline {subsection}{\numberline {4.8.2}Données d'apprentissage et nettoyage}{37}{subsection.4.8.2}%
+\contentsline {subsection}{\numberline {4.8.3}Entraînement et métriques de performance}{37}{subsection.4.8.3}%
+\contentsline {subsection}{\numberline {4.8.4}API et intégration avec l'application mobile}{38}{subsection.4.8.4}%
+\contentsline {subsection}{\numberline {4.8.5}Tests et validation}{38}{subsection.4.8.5}%
+\contentsline {section}{\numberline {4.9}Captures d'écran}{38}{section.4.9}%
+\contentsline {section}{\numberline {4.10}Intégration API}{45}{section.4.10}%
+\contentsline {section}{\numberline {4.11}Déploiement et configuration}{45}{section.4.11}%
+\contentsline {section}{\numberline {4.12}Tests unitaires, API et manuels}{46}{section.4.12}%
+\contentsline {subsection}{\numberline {4.12.1}Stratégie de test}{46}{subsection.4.12.1}%
+\contentsline {subsection}{\numberline {4.12.2}Résultats de validation automatisée}{47}{subsection.4.12.2}%
+\contentsline {subsection}{\numberline {4.12.3}Tests automatisés du backend}{47}{subsection.4.12.3}%
+\contentsline {subsection}{\numberline {4.12.4}Tests API}{48}{subsection.4.12.4}%
+\contentsline {subsection}{\numberline {4.12.5}Validation du déploiement local}{48}{subsection.4.12.5}%
+\contentsline {subsection}{\numberline {4.12.6}Validation fonctionnelle}{48}{subsection.4.12.6}%
+\contentsline {section}{\numberline {4.13}Difficultés rencontrées et solutions adoptées}{49}{section.4.13}%
+\contentsline {section}{\numberline {4.14}Conclusion}{49}{section.4.14}%
+\contentsline {chapter}{Conclusion générale}{50}{chapter*.55}%
+\contentsline {section}{Bilan}{50}{section*.56}%
+\contentsline {section}{Résultats obtenus}{50}{section*.57}%
+\contentsline {section}{Limites}{50}{section*.58}%
+\contentsline {section}{Apport personnel}{51}{section*.59}%
+\contentsline {section}{Perspectives}{51}{section*.60}%
+\contentsline {chapter}{Bibliographie}{52}{section*.61}%

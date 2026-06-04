@@ -597,7 +597,7 @@ const MapPage = () => {
             }}
           />
           <MapBridge mapRef={mapRef} pharmacies={filteredPharmacies} selectedPharmacy={visibleSelectedPharmacy} />
-          <MapDiagnostics enabled={import.meta.env.DEV} layerKey={activeTileLayer.key} />
+          <MapDiagnostics enabled={false} layerKey={activeTileLayer.key} />
           <MarkerClusterGroup
             chunkedLoading
             chunkInterval={200}

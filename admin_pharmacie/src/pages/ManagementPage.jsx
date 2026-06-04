@@ -92,6 +92,8 @@ const ManagementPage = () => {
     shift_type: '',
     notes: '',
   });
+  // Full pharmacy list used to populate the garde "Pharmacy Name" picker.
+  const [pharmacyOptions, setPharmacyOptions] = useState([]);
 
   // ========== ASSISTANT STATE ==========
   const [assistantLoading, setAssistantLoading] = useState(false);
@@ -340,6 +342,19 @@ const ManagementPage = () => {
     loadGardes();
   }, [loadGardes]);
 
+  // Lazily load the full pharmacy list (region-scoped on the backend) the
+  // first time a garde modal is opened, so the name field can be picked from
+  // existing pharmacies. Falls back silently to free-text entry on failure.
+  const ensurePharmacyOptions = useCallback(async () => {
+    if (pharmacyOptions.length) return;
+    try {
+      const response = await api.get('/api/admin/pharmacies', { params: { skip: 0, limit: 2000 } });
+      setPharmacyOptions(Array.isArray(response.data) ? response.data : []);
+    } catch {
+      // Non-fatal: the field still works as a plain text input.
+    }
+  }, [pharmacyOptions.length]);
+
   const openGardeCreateModal = () => {
     setGardeFormData({
       date: '',
@@ -354,6 +369,7 @@ const ManagementPage = () => {
     setGardeModalMode('create');
     setGardeEditingId(null);
     setShowGardeModal(true);
+    ensurePharmacyOptions();
   };
 
   const openGardeEditModal = (garde) => {
@@ -370,11 +386,26 @@ const ManagementPage = () => {
     setGardeModalMode('edit');
     setGardeEditingId(garde.id);
     setShowGardeModal(true);
+    ensurePharmacyOptions();
   };
 
   const handleGardeFormChange = (e) => {
     const { name, value } = e.target;
-    setGardeFormData((prev) => ({ ...prev, [name]: value }));
+    setGardeFormData((prev) => {
+      const next = { ...prev, [name]: value };
+      // When the chosen name matches an existing pharmacy, auto-fill its
+      // governorate (and city, if available) to save typing.
+      if (name === 'pharmacy_name') {
+        const match = pharmacyOptions.find(
+          (p) => (p.name || '').trim().toLowerCase() === value.trim().toLowerCase()
+        );
+        if (match) {
+          if (match.governorate) next.governorate = match.governorate;
+          if (match.city) next.city = match.city;
+        }
+      }
+      return next;
+    });
   };
 
   const validateGardeForm = () => {
@@ -1373,8 +1404,19 @@ const ManagementPage = () => {
                 value={gardeFormData.pharmacy_name}
                 onChange={handleGardeFormChange}
                 placeholder={t('management.enterPharmacyName')}
+                list="garde-pharmacy-options"
+                autoComplete="off"
                 required
               />
+              <datalist id="garde-pharmacy-options">
+                {pharmacyOptions
+                  .filter((pharmacy) => pharmacy.name)
+                  .map((pharmacy) => (
+                    <option key={pharmacy.id} value={pharmacy.name}>
+                      {[pharmacy.governorate, pharmacy.address].filter(Boolean).join(' • ')}
+                    </option>
+                  ))}
+              </datalist>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

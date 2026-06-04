@@ -18,7 +18,8 @@ import { useLanguage } from '../context/LanguageContext';
 const WEEK_DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const startOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1);
 const endOfMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0);
-const toIsoDate = (date) => date.toISOString().split('T')[0];
+const toIsoDate = (date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 const formatHeaderMonth = (date) => date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 const formatFullDate = (value) =>
   new Date(value).toLocaleDateString(undefined, {
@@ -83,15 +84,45 @@ CalendarCell.propTypes = {
   onSelect: PropTypes.func,
 };
 
+// A garde shift_type is JOUR (daytime, 08:00–20:00) or NUIT (night,
+// 20:00–08:00). In Tunisia weekdays only have a NUIT garde, while Sundays
+// and public holidays have both — so a day renders only the blocks present
+// in the data for that date.
+const normalizeShift = (value) => {
+  const upper = (value || '').toString().trim().toUpperCase();
+  if (upper.includes('JOUR') || upper.includes('DAY')) return 'JOUR';
+  if (upper.includes('NUIT') || upper.includes('NIGHT')) return 'NUIT';
+  return upper || 'NUIT';
+};
+
+// Order JOUR before NUIT (unknown types last), then group items by shift.
+const SHIFT_ORDER = ['JOUR', 'NUIT'];
+const shiftRank = (shift) => {
+  const idx = SHIFT_ORDER.indexOf(shift);
+  return idx === -1 ? SHIFT_ORDER.length : idx;
+};
+const groupByShift = (items) => {
+  const buckets = new Map();
+  items.forEach((item) => {
+    const shift = normalizeShift(item.shift_type);
+    if (!buckets.has(shift)) buckets.set(shift, []);
+    buckets.get(shift).push(item);
+  });
+  return [...buckets.entries()].sort((a, b) => shiftRank(a[0]) - shiftRank(b[0]));
+};
+
 const AssignmentCard = ({ item }) => {
   const { t } = useLanguage();
+  const shift = normalizeShift(item.shift_type);
+  const defaults = shift === 'JOUR' ? { start: '08:00', end: '20:00' } : { start: '20:00', end: '08:00' };
+  const shiftLabel = shift === 'JOUR' ? t('calendar.dayShift') : t('calendar.nightShift');
   return (
     <div className="garde-assignment-card">
       <div className="mb-2 flex items-start justify-between gap-3">
         <span className="rounded-full bg-primary-soft px-2 py-0.5 text-[0.625rem] font-bold uppercase text-primary">
-          {item.shift_type || t('calendar.nightShift')}
+          {shiftLabel}
         </span>
-        <span className="text-xs text-muted-foreground">{item.start_time || '20:00'} - {item.end_time || '08:00'}</span>
+        <span className="text-xs text-muted-foreground">{item.start_time || defaults.start} - {item.end_time || defaults.end}</span>
       </div>
       <h4 className="font-display text-base font-bold text-foreground">{item.pharmacy_name || t('calendar.unnamedPharmacy')}</h4>
       <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
@@ -106,6 +137,30 @@ AssignmentCard.propTypes = {
   item: PropTypes.object,
 };
 
+// Renders one labelled block per shift type that exists for the day, so a
+// weekday shows only NUIT while a Sunday/holiday shows both JOUR and NUIT.
+const ShiftGroups = ({ items }) => {
+  const { t } = useLanguage();
+  return (
+    <>
+      {groupByShift(items).map(([shift, shiftItems]) => (
+        <div key={shift} className="space-y-2">
+          <p className="text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+            {shift === 'JOUR' ? t('calendar.dayShift') : t('calendar.nightShift')}
+          </p>
+          {shiftItems.map((item) => (
+            <AssignmentCard key={item.id} item={item} />
+          ))}
+        </div>
+      ))}
+    </>
+  );
+};
+
+ShiftGroups.propTypes = {
+  items: PropTypes.array,
+};
+
 const CalendarPage = () => {
   const { t } = useLanguage();
   const [calendarView, setCalendarView] = useState('month');
@@ -117,11 +172,15 @@ const CalendarPage = () => {
 
   useEffect(() => {
     let active = true;
+    const dateFrom = toIsoDate(startOfMonth(currentMonth));
+    const dateTo = toIsoDate(endOfMonth(currentMonth));
     const loadGardes = async () => {
       setLoading(true);
       setError('');
       try {
-        const response = await api.get('/api/admin/gardes', { params: { skip: 0, limit: 1000 } });
+        const response = await api.get('/api/admin/gardes', {
+          params: { skip: 0, limit: 2000, date_from: dateFrom, date_to: dateTo },
+        });
         if (!active) return;
         setGardes(Array.isArray(response.data) ? response.data : []);
       } catch (err) {
@@ -135,7 +194,18 @@ const CalendarPage = () => {
     return () => {
       active = false;
     };
-  }, []);
+  }, [currentMonth]);
+
+  // Move the selected day and, when it crosses into another month, sync the
+  // visible month so the day/week views trigger a refetch for the new range.
+  const focusDate = (date) => {
+    setSelectedDate(toIsoDate(date));
+    setCurrentMonth((prev) =>
+      prev.getFullYear() === date.getFullYear() && prev.getMonth() === date.getMonth()
+        ? prev
+        : startOfMonth(date)
+    );
+  };
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -232,11 +302,11 @@ const CalendarPage = () => {
                       if (calendarView === 'day') {
                         const d = new Date(selectedDate);
                         d.setDate(d.getDate() - 1);
-                        setSelectedDate(toIsoDate(d));
+                        focusDate(d);
                       } else if (calendarView === 'week') {
                         const d = new Date(selectedDate);
                         d.setDate(d.getDate() - 7);
-                        setSelectedDate(toIsoDate(d));
+                        focusDate(d);
                       } else {
                         setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
                       }
@@ -247,11 +317,11 @@ const CalendarPage = () => {
                       if (calendarView === 'day') {
                         const d = new Date(selectedDate);
                         d.setDate(d.getDate() + 1);
-                        setSelectedDate(toIsoDate(d));
+                        focusDate(d);
                       } else if (calendarView === 'week') {
                         const d = new Date(selectedDate);
                         d.setDate(d.getDate() + 7);
-                        setSelectedDate(toIsoDate(d));
+                        focusDate(d);
                       } else {
                         setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
                       }
@@ -261,6 +331,10 @@ const CalendarPage = () => {
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="h-3 w-3 rounded-full bg-amber-500" />
+                    {t('calendar.dayShift')}
+                  </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span className="h-3 w-3 rounded-full bg-blue-500" />
                     {t('calendar.nightShift')}
@@ -279,11 +353,9 @@ const CalendarPage = () => {
               </div>
 
               {calendarView === 'day' && (
-                <div className="p-6 space-y-3">
+                <div className="p-6 space-y-4">
                   {(gardesByDate.get(selectedDate) || []).length ? (
-                    (gardesByDate.get(selectedDate) || []).map((item) => (
-                      <AssignmentCard key={item.id} item={item} />
-                    ))
+                    <ShiftGroups items={gardesByDate.get(selectedDate) || []} />
                   ) : (
                     <div className="flex flex-col items-center justify-center gap-2 py-16 text-muted-foreground">
                       <CalendarDays className="h-10 w-10 opacity-30" />
@@ -379,7 +451,7 @@ const CalendarPage = () => {
               </div>
               <div className="mt-6 space-y-4">
                 {selectedDayGardes.length ? (
-                  selectedDayGardes.map((item) => <AssignmentCard key={item.id} item={item} />)
+                  <ShiftGroups items={selectedDayGardes} />
                 ) : (
                   <EmptyState
                     icon={CalendarDays}

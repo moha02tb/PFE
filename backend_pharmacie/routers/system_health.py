@@ -548,6 +548,23 @@ def _chatbot_endpoint_rows(chatbot_health: dict) -> list[list]:
     ]
 
 
+def _availability_percent(database_health: dict) -> float:
+    """Current service availability as a percentage, for the health score.
+
+    We have no historical-downtime tracking, so availability reflects whether
+    the backend can serve requests right now, derived from the database probe:
+    reachable and responsive -> 100, slow/degraded -> 99, unreachable -> 0.
+    This is distinct from the "Uptime" KPI, which reports how long the API
+    process has been running (e.g. "10m") for human context only.
+    """
+    status = database_health.get("status")
+    if status == "down":
+        return 0.0
+    if status == "warning":
+        return 99.0
+    return 100.0
+
+
 def _collect_system_health(db: Session) -> dict:
     database = _collect_database_health(db)
     imports = _collect_import_health(db)
@@ -574,6 +591,7 @@ def _collect_system_health(db: Session) -> dict:
         "generatedAt": _iso(_now()),
         "serverTime": _iso(_now()),
         "uptimeSeconds": uptime_seconds,
+        "uptimePercent": _availability_percent(database),
         "kpis": _collect_kpis(database, db),
         "services": services,
         "endpoints": _collect_endpoint_health(database, db),

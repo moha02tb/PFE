@@ -1,18 +1,22 @@
-@startuml
-!pragma layout smetana
+@startuml class_diagram
 skinparam backgroundColor white
 skinparam shadowing false
-skinparam dpi 180
+skinparam dpi 150
 skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #F6FAFE
+  BorderColor #2C6FA6
+  ArrowColor #2C6FA6
+}
 hide methods
 hide empty members
 
-package "Accounts" {
+package "Comptes & sécurité" {
   class Administrateur {
     id : Integer
     nomUtilisateur : String
     email : String
-    motDePasse : String
+    motDePasseHash : String
     role : AdminRoleEnum
     region_scope : String
     is_active : Boolean
@@ -20,19 +24,22 @@ package "Accounts" {
     created_at : DateTime
     last_login : DateTime
   }
-
   class Utilisateur {
     id : Integer
     nomUtilisateur : String
     email : String
-    motDePasse : String
+    motDePasseHash : String
     email_verified : Boolean
     source : SourceEnum
     is_active : Boolean
     created_at : DateTime
     last_login : DateTime
   }
-
+  enum AdminRoleEnum {
+    SUPER_ADMIN
+    ADMIN
+    ASSISTANT
+  }
   class RefreshToken {
     id : Integer
     entity_type : String
@@ -40,7 +47,6 @@ package "Accounts" {
     token_jti : String
     expires_at : DateTime
   }
-
   class LoginAttempt {
     id : Integer
     email : String
@@ -51,7 +57,7 @@ package "Accounts" {
   }
 }
 
-package "Operations" {
+package "Pharmacies & gardes" {
   class Pharmacie {
     id : Integer
     osm_id : BigInteger
@@ -62,7 +68,6 @@ package "Operations" {
     created_by : Integer
     created_at : DateTime
   }
-
   class GardeSchedule {
     id : Integer
     date : Date
@@ -73,7 +78,9 @@ package "Operations" {
     created_by : Integer
     created_at : DateTime
   }
+}
 
+package "Médicaments & audit" {
   class Medicine {
     id : Integer
     code_pct : String
@@ -83,7 +90,6 @@ package "Operations" {
     created_by : Integer
     created_at : DateTime
   }
-
   class AuditLog {
     id : Integer
     action : AuditActionEnum
@@ -94,7 +100,6 @@ package "Operations" {
     status : String
     created_at : DateTime
   }
-
   class SearchEvent {
     id : Integer
     event_type : String
@@ -106,30 +111,29 @@ package "Operations" {
   }
 }
 
-Administrateur "1" <-- "0..*" Administrateur : created_by
+Administrateur ..> AdminRoleEnum
+
 Administrateur "1" <-- "0..*" Pharmacie : created_by
 Administrateur "1" <-- "0..*" GardeSchedule : created_by
 Administrateur "1" <-- "0..*" Medicine : created_by
+Administrateur "1" <-- "0..*" AuditLog : actor_id
+Utilisateur "1" .. "0..*" RefreshToken : entity_id/entity_type
+Administrateur "1" .. "0..*" RefreshToken : entity_id/entity_type
+Pharmacie "0..1" .. "0..*" GardeSchedule : résolution par pharmacy_name
+
+note bottom of GardeSchedule
+Pas de clé étrangère directe —
+correspondance par nom à la requête.
+end note
 
 note right of RefreshToken
-Polymorphic link:
+Lien polymorphe :
 entity_type + entity_id
--> Administrateur or Utilisateur
+-> Administrateur ou Utilisateur
 end note
 
 note right of LoginAttempt
-Tracks auth attempts
-for admins and users
+Trace les tentatives d'authentification
+des administrateurs et des utilisateurs
 end note
-
-note right of AuditLog
-Stores sensitive actions,
-actors and targets
-end note
-
-note bottom of GardeSchedule
-pharmacy_name is resolved
-at query time
-end note
-
 @enduml

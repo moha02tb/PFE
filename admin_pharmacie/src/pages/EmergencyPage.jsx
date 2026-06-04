@@ -160,6 +160,9 @@ const fallbackCharts = {
 };
 
 const fallbackHealthData = {
+  // Availability percentage used by the health score. Distinct from the
+  // "Uptime" KPI string ("10m"), which is process-uptime display only.
+  uptimePercent: 99.97,
   kpis: [
     {
       label: 'Overall Status',
@@ -358,6 +361,8 @@ const normalizeChatbotData = (payload) => {
 };
 
 const normalizeHealthData = (payload = {}) => ({
+  uptimePercent:
+    typeof payload.uptimePercent === 'number' ? payload.uptimePercent : fallbackHealthData.uptimePercent,
   kpis: Array.isArray(payload.kpis) && payload.kpis.length ? payload.kpis : fallbackHealthData.kpis,
   services: Array.isArray(payload.services) && payload.services.length ? payload.services : fallbackHealthData.services,
   endpoints: Array.isArray(payload.endpoints) && payload.endpoints.length ? payload.endpoints : fallbackHealthData.endpoints,
@@ -762,7 +767,8 @@ const EmergencyPage = () => {
     });
   }, []);
 
-  const { kpis, services, endpoints, databaseMetrics, importMetrics, jobs, logs, charts, chatbot } = healthData;
+  const { kpis, services, endpoints, databaseMetrics, importMetrics, jobs, logs, charts, chatbot, uptimePercent } =
+    healthData;
 
   const serviceDistribution = useMemo(() => {
     const counts = services.reduce(
@@ -780,7 +786,10 @@ const EmergencyPage = () => {
     ].filter((item) => item.value > 0);
   }, [services]);
 
-  const uptimeValue = parseNumber(kpis.find((item) => item.label === 'Uptime')?.value || 99.97);
+  // Availability percentage (0-100) from the backend; drives the score and
+  // the "Uptime" availability bar. The "Uptime" KPI card keeps showing the
+  // process-uptime duration ("10m") as a human-readable label.
+  const uptimeValue = typeof uptimePercent === 'number' ? uptimePercent : 99.97;
   const errorRateValue = parseNumber(kpis.find((item) => item.label === 'Error Rate')?.value || 0.18);
   const databaseQuality = clamp(100 - parseNumber(databaseMetrics.find((item) => item[0] === 'Query response time')?.[1]) / 4);
   const failedRows = parseNumber(importMetrics.find((item) => item[0] === 'Failed rows')?.[1]);

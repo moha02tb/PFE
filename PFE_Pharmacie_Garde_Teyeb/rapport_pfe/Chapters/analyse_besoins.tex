@@ -5,21 +5,23 @@
 
 \section{Introduction}
 
-Après le cadrage général, l'analyse des besoins précise les services que PharmacieConnect doit fournir et
-les contraintes à respecter pour que ces services restent cohérents. Elle relie les attentes des citoyens,
-des administrateurs et des assistants régionaux aux modules réellement prévus : authentification, recherche
-mobile, gestion des pharmacies, plannings de garde, catalogue de médicaments, imports CSV, audit et
-assistant de premiers secours.
+L'analyse menée ici se concentre sur les usages réels de PharmacieConnect : la consultation rapide d'une
+pharmacie de garde par le citoyen, la mise à jour encadrée des données par l'administration et la validation
+des imports CSV. L'enjeu consiste à convertir le besoin général d'accès à l'information pharmaceutique en
+règles concrètes, directement exploitables par le backend FastAPI, l'interface React/Vite et l'application
+mobile Expo/React Native.
 
 \section{Acteurs}
 
-La plateforme distingue plusieurs acteurs afin de séparer la consultation publique des opérations
-d'administration. Cette séparation est importante, car les données de garde peuvent être consultées par tous
-les citoyens, alors que leur création, leur correction et leur import doivent rester réservés à des comptes
-autorisés.
+Les acteurs de PharmacieConnect ont été définis à partir des responsabilités réellement présentes dans
+l'application. Le citoyen consulte les données publiques sans intervenir sur leur contenu, tandis que les
+comptes d'administration modifient les pharmacies, les gardes et les médicaments à travers des routes
+protégées. Cette distinction est indispensable, car une erreur sur un planning de garde ou une localisation
+peut rendre l'information inutilisable au moment de la recherche. Le Tableau~\ref{tab:acteurs} récapitule
+ces acteurs et leurs responsabilités.
 
 \begin{longtable}{L{4cm}L{10cm}}
-    \caption{Acteurs de la plateforme PharmacieConnect\\ \small Source : Auteur}\\
+    \caption{Acteurs de la plateforme PharmacieConnect\\ \small Source : Auteur}\label{tab:acteurs}\\
     \toprule
     \textbf{Acteur} & \textbf{Rôle dans le système} \\
     \midrule
@@ -37,12 +39,14 @@ autorisés.
 
 \section{Besoins fonctionnels détaillés}
 
-Les besoins fonctionnels sont organisés par module afin de garder une séparation claire entre le parcours
-citoyen, la gestion administrative et les mécanismes transversaux. Cette organisation facilite ensuite la
-conception des endpoints, des services backend, des pages web et des écrans mobiles.
+Les besoins fonctionnels ont été regroupés selon les modules développés dans le dépôt : authentification,
+pharmacies, gardes, médicaments, administration, application mobile et assistant de premiers secours. Ce
+découpage correspond aux contrats API utilisés par les clients web et mobile. Il permet également de vérifier
+que chaque fonctionnalité décrite dans le rapport possède une traduction concrète dans les routes FastAPI,
+les services métier ou les écrans de l'application, comme le détaille le Tableau~\ref{tab:besoins-fonctionnels}.
 
 \begin{longtable}{L{4cm}L{10cm}}
-    \caption{Besoins fonctionnels principaux\\ \small Source : Auteur}\\
+    \caption{Besoins fonctionnels principaux\\ \small Source : Auteur}\label{tab:besoins-fonctionnels}\\
     \toprule
     \textbf{Module} & \textbf{Fonctionnalités attendues} \\
     \midrule
@@ -54,7 +58,7 @@ conception des endpoints, des services backend, des pages web et des écrans mob
     Authentification & Connexion, inscription, vérification email, rafraîchissement de session, déconnexion, modification du profil et changement de mot de passe. \\
     Recherche de pharmacies & Recherche par texte, consultation paginée, détail d'une pharmacie, recherche par gouvernorat et recherche par proximité à partir des coordonnées GPS. \\
     Pharmacies de garde & Consultation publique par date, création manuelle, modification, suppression et import CSV des plannings côté administration. \\
-    Gestion des pharmacies & Création, modification, suppression, consultation, pagination, filtrage régional et import CSV avec retour des erreurs ligne par ligne. \\
+    Gestion des pharmacies & Ajout, mise à jour, retrait et consultation des fiches, pagination, filtrage régional et import CSV avec retour des erreurs ligne par ligne. \\
     Gestion des médicaments & Import CSV, mise à jour par code PCT, recherche par nom commercial, DCI ou code PCT, consultation du détail et pagination. \\
     Assistant de premiers secours & Réponse extractive aux questions de premiers secours, récupération hybride, score de confiance, avertissement de sécurité et réponse de repli lorsque la confiance est insuffisante. \\
     Administration & Tableau de bord, gestion des assistants, contrôle des autorisations, carte administrative, indicateurs opérationnels et consultation des journaux d'audit. \\
@@ -64,9 +68,11 @@ conception des endpoints, des services backend, des pages web et des écrans mob
 
 \section{Besoins non fonctionnels}
 
-Les besoins non fonctionnels expriment les qualités attendues de la plateforme. Dans PharmacieConnect, ils
-influencent directement la conception du backend, les règles d'import, le comportement des interfaces et la
-validation des parcours sensibles.
+Les contraintes non fonctionnelles retenues proviennent directement des risques identifiés dans
+PharmacieConnect. La sécurité concerne surtout les routes d'administration, les imports CSV et les comptes
+assistants. La performance est liée à la pagination des pharmacies et des médicaments. La fiabilité dépend
+de la validation des coordonnées GPS, des dates de garde et des colonnes CSV obligatoires. Ces contraintes
+orientent donc la conception autant que les fonctionnalités visibles par l'utilisateur.
 
 \begin{itemize}
     \item \textbf{Sécurité} : protéger les routes administratives, hacher les mots de passe, utiliser des jetons JWT,
@@ -85,8 +91,11 @@ validation des parcours sensibles.
 
 \section{Règles de gestion}
 
-Les règles de gestion suivantes encadrent le comportement de PharmacieConnect et servent de référence pour
-la conception des services backend :
+Les règles de gestion ci-dessous correspondent aux contrôles appliqués côté serveur. Elles ne sont pas
+laissées aux interfaces clientes, car un appel direct à l'API pourrait contourner une restriction affichée
+uniquement dans React ou React Native. Le backend vérifie donc les droits, le périmètre régional, la validité
+des coordonnées, la structure des fichiers importés et la journalisation des opérations sensibles avant toute
+écriture persistante :
 
 \begin{itemize}
     \item une route d'administration ne peut être appelée que par un compte authentifié et autorisé ;
@@ -101,12 +110,14 @@ la conception des services backend :
     \item les actions sensibles doivent être journalisées dans les logs d'audit avec un acteur, une action, une cible et un statut.
 \end{itemize}
 
-\section{Descriptions textuelles des cas d'utilisation}
+\section{Spécification détaillée des cas d'utilisation}
 
-\subsection{Cas d'utilisation : authentification}
+\subsection{Authentification}
+
+Le Tableau~\ref{tab:uc-authentification} décrit ce cas d'utilisation.
 
 \begin{longtable}{L{4cm}L{10cm}}
-    \caption{Description textuelle du cas d'utilisation Authentification\\ \small Source : Auteur}\\
+    \caption{Spécification du cas d'utilisation : authentification\\ \small Source : Auteur}\label{tab:uc-authentification}\\
     \toprule
     \textbf{Élément} & \textbf{Description} \\
     \midrule
@@ -118,16 +129,18 @@ la conception des services backend :
     Acteurs & Administrateur, assistant, utilisateur mobile \\
     Objectif & Donner à l'utilisateur l'accès aux fonctionnalités correspondant à son profil et à ses droits. \\
     Précondition & L'utilisateur possède un compte valide ou suit le processus d'inscription. \\
-    Scénario nominal & L'utilisateur saisit ses identifiants, le backend vérifie les informations, génère les jetons JWT et retourne les données de session. \\
+    Scénario nominal & L'utilisateur saisit ses identifiants depuis le tableau de bord ou l'application mobile. L'API FastAPI vérifie le compte, contrôle son état, enregistre la tentative de connexion, puis émet un jeton d'accès et un jeton de rafraîchissement. Le client conserve la session et n'affiche que les actions autorisées par le rôle retourné. \\
     Postcondition & L'utilisateur est authentifié, une session est créée et seules les fonctionnalités autorisées sont accessibles. \\
     Exceptions & Identifiants invalides, compte désactivé, email non vérifié ou jeton expiré. \\
     \bottomrule
 \end{longtable}
 
-\subsection{Cas d'utilisation : recherche d'une pharmacie}
+\subsection{Recherche d'une pharmacie}
+
+Le Tableau~\ref{tab:uc-recherche} en présente le déroulement.
 
 \begin{longtable}{L{4cm}L{10cm}}
-    \caption{Description textuelle du cas d'utilisation Recherche d'une pharmacie\\ \small Source : Auteur}\\
+    \caption{Spécification du cas d'utilisation : recherche d'une pharmacie\\ \small Source : Auteur}\label{tab:uc-recherche}\\
     \toprule
     \textbf{Élément} & \textbf{Description} \\
     \midrule
@@ -139,16 +152,18 @@ la conception des services backend :
     Acteur & Utilisateur mobile ou citoyen \\
     Objectif & Retrouver une pharmacie à partir d'un mot-clé, d'un gouvernorat ou de la position GPS. \\
     Précondition & L'application mobile est installée et l'API est accessible. \\
-    Scénario nominal & L'utilisateur saisit une recherche ou autorise la géolocalisation. L'application interroge l'API, puis le backend filtre les pharmacies, calcule éventuellement les distances et retourne les résultats. \\
+    Scénario nominal & L'utilisateur lance une recherche par nom, adresse ou gouvernorat, ou autorise l'utilisation de sa position GPS. L'application mobile transmet les critères à l'API, qui applique les filtres, vérifie les coordonnées disponibles et calcule la distance lorsque la position est fournie. Les résultats sont ensuite retournés avec les informations utiles à la consultation : nom, adresse, téléphone, gouvernorat et position cartographique. \\
     Postcondition & Les pharmacies correspondantes sont affichées sous forme de liste ou sur la carte. \\
     Exceptions & Position indisponible, recherche vide, absence de résultat ou indisponibilité temporaire de l'API. \\
     \bottomrule
 \end{longtable}
 
-\subsection{Cas d'utilisation : consultation des pharmacies de garde}
+\subsection{Consultation des pharmacies de garde}
+
+Le déroulé de ce cas d'utilisation est synthétisé dans le Tableau~\ref{tab:uc-consultation-gardes}.
 
 \begin{longtable}{L{4cm}L{10cm}}
-    \caption{Description textuelle du cas d'utilisation Consultation des gardes\\ \small Source : Auteur}\\
+    \caption{Spécification du cas d'utilisation : consultation des gardes\\ \small Source : Auteur}\label{tab:uc-consultation-gardes}\\
     \toprule
     \textbf{Élément} & \textbf{Description} \\
     \midrule
@@ -166,10 +181,12 @@ la conception des services backend :
     \bottomrule
 \end{longtable}
 
-\subsection{Cas d'utilisation : gestion des pharmacies}
+\subsection{Gestion des pharmacies}
+
+Le Tableau~\ref{tab:uc-gestion-pharmacies} en détaille les étapes.
 
 \begin{longtable}{L{4cm}L{10cm}}
-    \caption{Description textuelle du cas d'utilisation Gestion des pharmacies\\ \small Source : Auteur}\\
+    \caption{Spécification du cas d'utilisation : gestion des pharmacies\\ \small Source : Auteur}\label{tab:uc-gestion-pharmacies}\\
     \toprule
     \textbf{Élément} & \textbf{Description} \\
     \midrule
@@ -189,9 +206,17 @@ la conception des services backend :
 
 \section{Diagramme de cas d'utilisation}
 
-Le diagramme de cas d'utilisation synthétise les interactions entre les acteurs et la plateforme. Il sert de
-repère visuel pour relier les besoins exprimés aux fonctionnalités retenues dans les modules web, mobile et
-backend.
+Le diagramme de cas d'utilisation de PharmacieConnect distingue quatre acteurs. Le \textbf{visiteur},
+non authentifié, n'accède qu'aux fonctions publiques : rechercher une pharmacie, consulter les pharmacies
+de garde, visualiser la carte et parcourir le catalogue de médicaments. L'\textbf{utilisateur mobile}
+dispose en outre d'un compte, ce qui lui ouvre la création de compte, la connexion, la déconnexion, la
+gestion de son profil et l'accès à l'assistant de premiers secours. L'\textbf{administrateur} pilote la
+plateforme depuis le tableau de bord : gestion des pharmacies, des pharmacies de garde et du catalogue de
+médicaments, imports CSV, gestion des assistants et des utilisateurs, et consultation des journaux d'audit.
+L'\textbf{assistant régional} partage un sous-ensemble de ces opérations -- pharmacies, gardes et imports
+CSV -- mais restreint à son périmètre. Comme le résume la Figure~\ref{fig:use-case-detaille}, les actions
+sensibles s'appuient sur une authentification (\og se connecter \fg{}) et une vérification des rôles RBAC,
+ce qui matérialise la séparation entre les actions publiques et les actions protégées.
 
 \begin{figure}[H]
     \centering
@@ -202,7 +227,7 @@ backend.
 
 \section{Conclusion}
 
-Cette analyse précise les acteurs, les besoins et les règles de gestion de PharmacieConnect. Elle montre
-que la plateforme doit concilier consultation rapide, administration contrôlée, qualité des données et
-traçabilité. Le chapitre suivant transforme ces besoins en architecture, modèle de données, diagrammes et
-mécanismes de sécurité.
+Au terme de cette analyse, les acteurs, les besoins et les règles de gestion de PharmacieConnect sont
+posés. Il en ressort que la plateforme doit concilier consultation rapide, administration encadrée, qualité
+des données et traçabilité. Le chapitre suivant traduit ces besoins en architecture, modèle de données,
+diagrammes et mécanismes de sécurité.

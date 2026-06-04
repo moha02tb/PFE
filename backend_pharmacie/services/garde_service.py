@@ -346,12 +346,18 @@ class GardeService:
         skip: int = 0,
         limit: int = 100,
         region_scope: str | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
     ) -> list[dict]:
         query = apply_region_scope(
             self.db.query(models.GardeSchedule),
             models.GardeSchedule,
             region_scope,
         )
+        if date_from:
+            query = query.filter(models.GardeSchedule.date >= date_from)
+        if date_to:
+            query = query.filter(models.GardeSchedule.date <= date_to)
         rows = query.order_by(
             models.GardeSchedule.date.desc(),
             models.GardeSchedule.created_at.desc(),
